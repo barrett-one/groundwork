@@ -1,0 +1,4079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Groundwork</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0d12;--panel:#10131c;--card:#151924;
+  --b1:#1e2435;--b2:#252d42;
+  --tx:#dde3f0;--m1:#636d85;--m2:#8e98b0;
+  --ac:#4b7cf3;--ag:rgba(75,124,243,.15);
+  --gn:#3ecf8e;--yw:#f5c842;--rd:#ef5858;--or:#f59e42;--pu:#a78bfa;
+  --slot-b:#f59e42;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:flex;overflow:hidden}
+
+/* ── SIDEBAR ── */
+#side{background:var(--panel);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden;height:100vh;
+      width:440px;min-width:440px;transition:width .3s ease,min-width .3s ease}
+#side.compare-mode{width:880px;min-width:880px}
+#side-inner{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+
+/* header */
+#hd{padding:10px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0}
+#logo-wrap{justify-content:space-between}
+#logo-inner{display:flex;align-items:center;gap:10px}
+#logo-wrap{display:flex;align-items:center;gap:11px}
+#logo-svg{flex-shrink:0;filter:drop-shadow(0 0 5px rgba(75,124,243,.4))}
+#app-name{font-family:'Outfit',sans-serif;font-weight:900;font-size:18px;letter-spacing:-.5px;line-height:1}
+#gw-ground{color:var(--tx)}
+#gw-work{color:var(--ac)}
+#app-sub{font-size:10px;color:var(--m2);margin-top:3px}
+
+/* controls */
+#ctl{padding:12px 18px 14px;border-bottom:1px solid var(--b1);flex-shrink:0;display:flex;flex-direction:column;gap:9px;align-items:stretch}
+#ctl>div{width:100%;min-width:0}
+.lb{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#4a5470;margin-bottom:4px}
+.addr-row{display:flex;align-items:center;width:100%}
+.slot-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;
+  padding:4px 8px;border-radius:6px;flex-shrink:0;letter-spacing:.3px}
+.slot-badge.a{background:var(--ag);color:var(--ac);border:1px solid var(--ac)}
+.slot-badge.b{background:rgba(245,158,66,.12);color:var(--or);border:1px solid var(--or)}
+.addr-inp{flex:1;background:#1c2033;border:1.5px solid var(--b2);border-radius:8px;padding:8px 13px;
+  color:var(--tx);font-size:13.5px;outline:none;transition:all .2s;letter-spacing:-.2px;font-weight:400}
+.addr-inp:focus{border-color:var(--ac);background:#1c2033;box-shadow:0 0 0 3px rgba(75,124,243,.18)}
+.addr-inp::placeholder{color:#4a5470;font-size:13.5px}
+.addr-inp.b-inp:focus{border-color:var(--or);box-shadow:0 0 0 3px rgba(245,158,66,.15)}
+#compare-row{display:flex;align-items:center;gap:8px}
+#addr-b-wrap{flex:1;display:none}
+#addr-b-wrap.vis{display:flex;align-items:center;gap:8px;flex:1}
+.rr{display:flex;gap:6px}
+.rb{flex:1;padding:6px 0;background:var(--card);border:1.5px solid var(--b1);border-radius:7px;
+  color:#5a6480;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;text-align:center;font-weight:500}
+.rb:hover{border-color:var(--ac);color:var(--ac)}
+.rb.on{background:rgba(75,124,243,.18);border-color:var(--ac);color:#7badff;font-weight:700}
+.btn-row{display:flex;gap:8px}
+#btn{flex:1;padding:9px;background:var(--ac);border:none;border-radius:8px;color:#fff;
+  font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;transition:opacity .15s;letter-spacing:-.2px}
+#btn:hover{opacity:.88}
+#btn:disabled{opacity:.4;cursor:not-allowed}
+#compare-toggle{padding:11px 14px;background:var(--card);border:1px solid var(--b2);border-radius:8px;
+  color:var(--m2);font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+#compare-toggle:hover{border-color:var(--or);color:var(--or)}
+#compare-toggle.active{background:rgba(245,158,66,.1);border-color:var(--or);color:var(--or)}
+#export-btn{padding:11px 13px;background:var(--card);border:1px solid var(--b2);border-radius:8px;
+  color:var(--m2);font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+#export-btn:hover{border-color:var(--gn);color:var(--gn)}
+
+/* status */
+#sb{padding:7px 24px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--b1);min-height:32px;flex-shrink:0}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--m1);flex-shrink:0}
+.dot.run{background:var(--yw);animation:bk .9s ease-in-out infinite}
+.dot.ok{background:var(--gn)}.dot.err{background:var(--rd)}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
+#sm{font-size:11px;color:var(--m2)}
+#err-box{display:none;margin:0 24px;padding:10px 12px;margin-top:12px;background:rgba(239,88,88,.1);
+  border:1px solid rgba(239,88,88,.3);border-radius:8px;font-size:11.5px;color:var(--rd);line-height:1.5;flex-shrink:0;margin-bottom:0}
+
+/* results container */
+#res-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+.rcol{width:440px;min-width:440px;overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;
+  padding:12px 18px 20px;display:none;flex-direction:column;gap:8px;box-sizing:border-box}
+.rcol.vis{display:flex;align-content:flex-start}
+#col-0{display:flex;align-content:flex-start}
+.rcol.b-col{border-left:1px solid var(--b1)}
+
+/* cards */
+.hcard{background:var(--card);border:1px solid var(--b1);border-radius:8px;padding:14px 16px;position:relative}
+.hcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:8px 8px 0 0}
+.rcol > *{flex-shrink:0}
+.hcard{margin-bottom:0}
+
+.hcard.pop::before{background:var(--slot-accent,var(--ac))}
+.hcard.inc::before{background:var(--gn)}
+.hcard.biz::before{background:var(--or)}
+.hcard.hwy::before{background:var(--yw)}
+.hcard.grow::before{background:var(--pu)}
+.hcard.labor::before{background:var(--rd)}
+.hl{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--m2);margin-bottom:4px}
+.hn{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:600;letter-spacing:-1px;line-height:1}
+.hn.pending{color:var(--m1)}
+.hs{font-size:11.5px;color:var(--m2);margin-top:4px}
+.ra-label{font-size:11px;color:var(--m2);padding-left:9px;border-left:2px solid var(--b2);line-height:1.4;word-break:break-word}
+
+/* comparison bars */
+.cbar-wrap{margin-top:10px;padding-top:2px}
+.cbar-row{margin-bottom:7px}
+.cbar-label{font-size:10.5px;color:var(--m2);margin-bottom:4px;display:flex;justify-content:space-between}
+.cbar-track{background:var(--b1);border-radius:4px;height:6px;overflow:hidden}
+.cbar-fill{height:6px;border-radius:4px;transition:width .9s cubic-bezier(.22,.68,0,1.2)}
+.cbar-note{font-size:10px;color:var(--m1);margin-top:4px}
+
+/* income bar */
+.ibar-wrap{margin-top:9px;background:var(--b1);border-radius:4px;height:6px;overflow:hidden}
+.ibar{height:6px;border-radius:4px;background:var(--gn);transition:width .8s cubic-bezier(.22,.68,0,1.2)}
+
+/* stat grid */
+.gr{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sc{background:var(--card);border:1px solid var(--b1);border-radius:7px;padding:10px 12px}
+.sl{font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--m1);margin-bottom:3px}
+.sv{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600}
+.su{font-size:10px;color:var(--m2);margin-top:1px}
+
+/* growth */
+.grow-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:7px}
+.grow-year{font-size:10px;color:var(--m2)}
+.grow-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600}
+.grow-delta{font-size:12px;font-weight:600;margin-top:6px}
+
+/* labor */
+.labor-grid{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.labor-row{display:flex;justify-content:space-between;align-items:center}
+.labor-lbl{font-size:11px;color:var(--m2)}
+.labor-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+
+
+
+
+
+
+
+#progress{display:none;padding:6px 20px;border-bottom:1px solid var(--b1);flex-shrink:0}
+#progress.vis{display:flex;align-items:center;gap:0}
+.ps{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--m1);white-space:nowrap}
+.ps-dot{width:5px;height:5px;border-radius:50%;background:var(--m1);flex-shrink:0;transition:background .3s}
+.ps.done .ps-dot{background:var(--gn)}
+.ps.active .ps-dot{background:var(--yw);animation:bk .9s ease-in-out infinite}
+.ps.active{color:var(--m2)}
+.ps-arrow{color:var(--m1);font-size:9px;margin:0 4px}
+
+#compare-banner{display:none;padding:7px 20px;background:rgba(245,158,66,.07);
+  border-bottom:1px solid rgba(245,158,66,.2);font-size:11px;color:var(--m2);flex-shrink:0}
+#compare-banner.vis{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cb-addr{font-weight:500;color:var(--tx);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cb-sep{color:var(--m1);font-size:13px}
+
+
+
+
+
+#summary-text[contenteditable="true"]{
+  outline:none;border:1px solid var(--ac);border-radius:6px;
+  padding:10px 12px;margin:-10px -12px;
+  background:rgba(75,124,243,.04);cursor:text}
+#summary-text[contenteditable="true"]:focus{border-color:var(--ac)}
+#summary-meta{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 22px;border-top:1px solid #1e2435;font-size:10.5px;color:var(--m2);flex-shrink:0}
+#wc-display{}
+#edit-hint{color:var(--m1)}
+
+
+#summary-instructions-wrap{padding:12px 22px 0;flex-shrink:0}
+#summary-instructions-label{font-size:10px;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--m2);margin-bottom:5px;display:block}
+#summary-instructions{width:100%;background:#151924;border:1px solid var(--b2);
+  border-radius:7px;padding:9px 12px;color:var(--tx);font-family:'DM Sans',sans-serif;
+  font-size:12px;line-height:1.5;resize:none;outline:none;height:60px;
+  transition:border-color .2s,box-shadow .2s}
+#summary-instructions:focus{border-color:var(--ac);box-shadow:0 0 0 2px var(--ag)}
+#summary-instructions::placeholder{color:var(--m1)}
+
+/* market summary — chat interface */
+#summary-modal{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.8);z-index:9999;
+  align-items:center;justify-content:center;padding:20px}
+#summary-modal.vis{display:flex}
+#summary-box{
+  background:var(--bg);width:100%;max-width:760px;height:88vh;
+  display:flex;flex-direction:column;
+  border-radius:14px;border:1px solid var(--b2);
+  box-shadow:0 24px 80px rgba(0,0,0,.7);
+  animation:smFadeIn .18s ease;overflow:hidden}
+@keyframes smFadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@keyframes thinkPulse{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* header */
+#summary-hdr{
+  padding:14px 20px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0;
+  border-bottom:1px solid var(--b1);background:var(--panel)}
+#summary-hdr-left{display:flex;align-items:center;gap:10px}
+#summary-claude-icon{
+  width:26px;height:26px;border-radius:7px;
+  background:var(--ac);color:#fff;
+  font-family:'Outfit',sans-serif;font-weight:800;font-size:13px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#summary-title{
+  font-family:'Outfit',sans-serif;font-weight:700;
+  font-size:14px;color:var(--tx);letter-spacing:-.3px}
+#summary-subtitle{
+  font-size:11px;color:var(--m1);font-weight:400;
+  margin-left:6px;font-family:'DM Sans',sans-serif}
+#summary-hdr-right{display:flex;align-items:center;gap:6px}
+#summary-copy-hdr{
+  padding:5px 12px;background:none;border:1px solid var(--b2);
+  border-radius:7px;color:var(--m2);font-size:12px;cursor:pointer;
+  transition:all .15s;white-space:nowrap}
+#summary-copy-hdr:hover{border-color:var(--gn);color:var(--gn)}
+#summary-copy-hdr.copied{border-color:var(--gn);color:var(--gn);background:rgba(62,207,142,.08)}
+#summary-close{
+  background:none;border:1px solid var(--b2);color:var(--m1);
+  width:30px;height:30px;border-radius:7px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;transition:all .15s}
+#summary-close:hover{background:var(--b1);color:var(--tx);border-color:var(--b2)}
+
+/* messages scroll area */
+#summary-msgs{
+  flex:1;overflow-y:auto;
+  padding:20px 24px;
+  display:flex;flex-direction:column;gap:12px;
+  min-height:0;scroll-behavior:smooth}
+#summary-msgs::-webkit-scrollbar{width:3px}
+#summary-msgs::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.rcol::-webkit-scrollbar{width:4px}
+.rcol::-webkit-scrollbar-track{background:transparent}
+.rcol::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+.rcol::-webkit-scrollbar-thumb:hover{background:var(--m1)}
+
+/* user messages */
+.sm-msg{display:flex;flex-direction:column;gap:0}
+.sm-msg.user{align-items:flex-end}
+.sm-msg.user .sm-bubble{
+  background:var(--b2);border:none;
+  border-radius:18px 18px 4px 18px;
+  padding:10px 16px;font-size:13px;
+  color:var(--tx);max-width:65%;
+  font-family:'DM Sans',sans-serif;line-height:1.5}
+.sm-avatar{display:none}/* hide avatars — cleaner look */
+
+/* AI response card */
+.sm-msg.ai-msg{align-items:stretch}
+.sm-bubble.ai{
+  background:var(--card);
+  border:1px solid var(--b1);
+  border-radius:12px;
+  padding:20px 22px;
+  font-size:13.5px;line-height:1.85;
+  color:var(--tx);
+  font-family:'DM Sans',sans-serif;
+  white-space:pre-wrap}
+.sm-bubble.thinking{
+  background:var(--card);border:1px solid var(--b1);border-radius:12px;
+  padding:16px 20px;display:flex;align-items:center;gap:10px;
+  color:var(--m2);font-size:13px}
+.sm-thinking-dots{display:flex;gap:5px;align-items:center}
+.sm-thinking-dots span{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--ac);display:block;
+  animation:thinkPulse 1.4s ease-in-out infinite}
+.sm-thinking-dots span:nth-child(2){animation-delay:.15s}
+.sm-thinking-dots span:nth-child(3){animation-delay:.3s}
+
+/* copy button under AI message */
+.sm-actions{
+  display:flex;gap:8px;margin-top:8px;padding-left:2px}
+.sm-act-btn{
+  background:none;border:1px solid var(--b1);
+  border-radius:6px;padding:5px 12px;
+  font-size:11.5px;color:var(--m2);
+  cursor:pointer;transition:all .15s}
+.sm-act-btn:hover{border-color:var(--b2);color:var(--tx);background:var(--b1)}
+.sm-act-btn.copied{color:var(--gn);border-color:rgba(62,207,142,.25);background:rgba(62,207,142,.06)}
+
+/* suggested follow-up prompts */
+.sm-suggestions{
+  display:flex;flex-direction:column;gap:6px;
+  margin-top:10px}
+.sm-suggestion{
+  background:none;border:1px solid var(--b1);
+  border-radius:8px;padding:9px 14px;
+  text-align:left;cursor:pointer;
+  font-size:12.5px;color:var(--m2);
+  font-family:'DM Sans',sans-serif;
+  transition:all .15s;display:flex;align-items:center;gap:8px}
+.sm-suggestion:hover{
+  border-color:var(--ac);color:var(--tx);
+  background:var(--ag)}
+.sm-suggestion::before{
+  content:'→';color:var(--ac);font-size:13px;flex-shrink:0}
+
+/* input area */
+#summary-input-wrap{
+  padding:14px 20px 16px;flex-shrink:0;
+  border-top:1px solid var(--b1);
+  background:var(--panel)}
+#summary-input-hint{display:none}/* hide — cleaner */
+#summary-input-inner{
+  background:var(--card);border:1px solid var(--b2);
+  border-radius:12px;
+  padding:12px 12px 12px 16px;
+  display:flex;align-items:flex-end;gap:10px;
+  transition:border-color .2s,box-shadow .2s}
+#summary-input-inner:focus-within{
+  border-color:var(--ac);box-shadow:0 0 0 3px var(--ag)}
+#summary-chat-input{
+  flex:1;background:none;border:none;color:var(--tx);
+  font-family:'DM Sans',sans-serif;font-size:13.5px;line-height:1.5;
+  resize:none;outline:none;min-height:44px;max-height:120px}
+#summary-chat-input::placeholder{color:var(--m1)}
+#summary-send{
+  background:var(--ac);border:none;border-radius:8px;
+  width:34px;height:34px;flex-shrink:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;transition:opacity .15s}
+#summary-send:hover{opacity:.85}
+#summary-send:disabled{opacity:.25;cursor:default;background:var(--b2)}
+
+/* sidebar generate button */
+#gen-summary-btn{
+  display:none;width:100%;padding:11px 14px;
+  background:var(--ac);border:none;border-radius:9px;
+  color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:opacity .15s;
+  align-items:center;justify-content:center;gap:8px;letter-spacing:-.1px}
+#gen-summary-btn:hover{opacity:.88}
+#gen-summary-btn.vis{display:flex}
+#gen-summary-btn .gsb-icon{font-size:14px}
+
+/* market rents card */
+.rent-loading{font-size:12px;color:var(--m2);margin-top:6px;display:flex;align-items:center;gap:6px}
+/* address autocomplete */
+.addr-wrap{position:relative;flex:1;width:100%}
+.ac-drop{position:absolute;top:calc(100% + 3px);left:0;right:0;
+  background:#1a1f2e;border:1px solid var(--b2);border-radius:8px;
+  z-index:9999;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none}
+.ac-drop.vis{display:block}
+.ac-item{padding:9px 13px;font-size:12.5px;color:var(--tx);cursor:pointer;
+  border-bottom:1px solid var(--b1);line-height:1.35}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.sel{background:var(--b1);color:var(--ac)}
+.ac-item-main{font-weight:500}
+.ac-item-sub{font-size:11px;color:var(--m2);margin-top:1px}
+
+
+/* saved analyses */
+#save-btn{display:none;padding:8px 16px;background:var(--b1);
+  border:1px solid var(--b2);border-radius:7px;color:var(--tx);
+  font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+#save-btn:hover{background:var(--b2);border-color:var(--gn);color:var(--gn)}
+#save-btn.vis{display:block}
+#save-form{display:none;gap:6px;margin-top:4px}
+#save-form.vis{display:flex}
+#save-name{flex:1;background:var(--card);border:1px solid var(--b2);border-radius:6px;
+  padding:8px 11px;color:var(--tx);font-size:12.5px;outline:none}
+#save-name:focus{border-color:var(--gn)}
+#save-confirm{padding:8px 14px;background:var(--gn);border:none;border-radius:6px;
+  color:#000;font-size:12px;font-weight:600;cursor:pointer}
+#saves-panel{padding:10px 18px 14px;display:none;flex-direction:column;gap:7px;
+  border-top:1px solid var(--b1);flex-shrink:0}
+#saves-panel.vis{display:flex}
+.saves-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.saves-hdr-left{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--m1)}
+.saves-hdr-right{display:flex;gap:8px;align-items:center}
+#saves-search{background:var(--b1);border:1px solid var(--b2);border-radius:6px;
+  padding:5px 9px;color:var(--tx);font-size:11.5px;outline:none;width:130px;
+  transition:border-color .2s}
+#saves-search:focus{border-color:var(--ac)}
+#saves-search::placeholder{color:var(--m1)}
+#saves-clear-btn{background:none;border:none;color:var(--m1);font-size:11px;
+  cursor:pointer;padding:0;transition:color .15s}
+#saves-clear-btn:hover{color:var(--rd)}
+#saves-list{display:flex;flex-direction:column;gap:5px;
+  max-height:220px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+#saves-body{overflow:hidden;transition:max-height .25s ease}
+#saves-body.collapsed{max-height:0!important}
+#saves-list::-webkit-scrollbar{width:3px}
+#saves-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.save-item{background:var(--b1);border:1px solid transparent;border-radius:8px;
+  padding:8px 10px;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:10px}
+.save-item:hover{border-color:var(--b2);background:#1a1f2e}
+.save-item-icon{width:28px;height:28px;border-radius:6px;background:var(--ag);
+  border:1px solid var(--ac);display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:var(--ac);font-weight:700;flex-shrink:0;font-family:'Outfit',sans-serif}
+.save-item-left{flex:1;overflow:hidden;min-width:0}
+.save-name-label{font-size:12px;font-weight:600;color:var(--tx);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.save-meta{font-size:10px;color:var(--m1);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.save-item-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+.save-stat-pill{font-family:'IBM Plex Mono',monospace;font-size:10px;
+  color:var(--gn);font-weight:600}
+.save-stat-inc{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ac)}
+.save-del{background:none;border:none;color:var(--m1);font-size:13px;
+  cursor:pointer;padding:2px 4px;transition:color .15s;border-radius:4px;line-height:1}
+.save-del:hover{color:var(--rd);background:rgba(239,88,88,.1)}
+
+
+/* market rents card */
+.rent-loading{font-size:12px;color:var(--m2);margin-top:6px;display:flex;align-items:center;gap:6px}
+
+
+
+/* action panel */
+#action-panel{padding:14px 18px 10px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;
+  border-top:1px solid var(--b1)}
+#action-row2{display:flex;align-items:center;gap:8px}
+#action-row2 #save-btn{flex-shrink:0;width:auto;padding:7px 14px;
+  border-radius:7px;font-size:12px;display:none}
+#action-row2 #save-btn.vis{display:block}
+#save-form{display:none;gap:6px}
+#save-form.vis{display:flex}
+#save-name{flex:1;background:var(--b1);border:1px solid var(--b2);border-radius:7px;
+  padding:8px 11px;color:var(--tx);font-size:12.5px;outline:none;transition:border-color .2s}
+#save-name:focus{border-color:var(--gn)}
+#save-confirm{padding:8px 14px;background:var(--gn);border:none;border-radius:7px;
+  color:#000;font-size:12px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;flex-shrink:0}
+
+
+
+/* ── EMPLOYER SIZE FILTER ── */
+.biz-size-filters{display:none;gap:4px;margin:10px 0 8px;flex-wrap:wrap;align-items:center}
+.bsf{padding:3px 10px;background:none;border:1px solid var(--b1);border-radius:20px;
+  color:var(--m1);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  cursor:pointer;transition:all .18s;white-space:nowrap;letter-spacing:.2px}
+.bsf:hover{border-color:var(--m1);color:var(--m2)}
+.bsf.on{background:rgba(245,158,66,.14);border-color:var(--or);color:var(--or);
+  box-shadow:0 0 0 1px rgba(245,158,66,.2)}
+.biz-size-row{display:grid;grid-template-columns:1fr auto;align-items:center;
+  padding:6px 0;border-bottom:1px solid rgba(30,36,53,.6);gap:8px;transition:opacity .2s}
+.biz-size-row:last-child{border-bottom:none}
+.biz-size-row.active{opacity:1!important}
+.biz-size-row.inactive{opacity:.45}
+.biz-size-left{display:flex;flex-direction:column;gap:1px}
+.biz-size-label{font-size:11px;color:var(--m2);line-height:1}
+.biz-size-right{display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.biz-size-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;
+  color:var(--tx);transition:color .2s;line-height:1}
+.biz-size-val.active-val{color:var(--or)}
+.biz-size-mult{font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;
+  font-family:'IBM Plex Mono',monospace;line-height:1.4}
+.biz-size-mult.gn{background:rgba(62,207,142,.12);color:#3ecf8e}
+.biz-size-mult.ac{background:rgba(75,124,243,.12);color:#7badff}
+.biz-size-mult.yw{background:rgba(245,200,66,.12);color:#f5c842}
+.biz-size-mult.rd{background:rgba(239,88,88,.12);color:#ef5858}
+.biz-size-avg{font-size:9.5px;color:var(--m1);white-space:nowrap}
+.biz-size-rows{margin-top:0;padding:0 1px}
+
+.hwy-label{background:none!important;border:none!important;box-shadow:none!important}
+.hwy-label span{
+  background:rgba(11,13,18,.82);border:1px solid #4b7cf3;
+  color:#7badff;font-family:'IBM Plex Mono',monospace;
+  font-size:10px;font-weight:700;letter-spacing:.3px;
+  padding:2px 7px;border-radius:4px;
+  white-space:nowrap;pointer-events:none;
+  display:inline-block}
+
+/* circle/drivetime mode toggle */
+#mode-toggle{display:none;align-items:center;gap:0;
+  background:var(--b1);border-radius:8px;padding:2px;border:1px solid var(--b2)}
+#mode-toggle.vis{display:flex}
+/* mode-btn: see pill style below */
+#drive-status{font-size:10.5px;color:var(--m1);white-space:nowrap;flex-shrink:0}
+
+/* drive-time isochrone */
+#drive-ctl{padding:8px 18px;border-bottom:1px solid var(--b1);
+  flex-shrink:0;display:flex;align-items:center;gap:8px}
+.drive-lbl{font-size:10px;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--m2);white-space:nowrap}
+.drb{padding:5px 10px;background:none;border:1px solid var(--b1);border-radius:6px;
+  color:var(--m2);font-size:11.5px;cursor:pointer;transition:all .15s}
+.drb:hover{border-color:var(--b2);color:var(--tx)}
+.drb.on{background:rgba(245,158,66,.12);border-color:var(--or);color:var(--or)}
+#drive-status{font-size:10.5px;color:var(--m1);margin-left:auto;white-space:nowrap}
+
+
+/* embedded badge in address input */
+.addr-wrap-badge{display:flex;align-items:center;position:relative;width:100%}
+.addr-badge{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;
+  padding:2px 6px;border-radius:4px;z-index:1;pointer-events:none;flex-shrink:0}
+.addr-badge.a{background:var(--ag);color:var(--ac);border:1px solid var(--ac)}
+.addr-badge.b{background:rgba(245,158,66,.12);color:var(--or);border:1px solid var(--or)}
+.addr-wrap-badge .addr-inp{padding-left:42px;width:100%}
+.addr-wrap-badge .ac-drop{top:calc(100% + 4px)}
+
+
+/* broker intel */
+#broker-intel{display:none;gap:6px;padding:0;flex-direction:column}
+#broker-intel.vis{display:flex}
+#broker-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--m2);padding-bottom:2px;border-bottom:1px solid var(--b1)}
+#broker-btns{display:flex;gap:6px}
+.broker-btn{flex:1;padding:8px 0;background:var(--b1);border:1.5px solid var(--b2);
+  border-radius:8px;color:var(--m2);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .18s;text-align:center}
+.broker-btn:hover{background:var(--b2);color:var(--tx)}
+.broker-btn.active{border-color:var(--ac);color:#fff;background:var(--ac)}
+
+/* api key settings */
+#api-key-bar{display:flex;align-items:center;gap:8px;margin-left:auto}
+#api-key-bar.has-key #api-key-inp{flex:1;background:var(--b1);border:1px solid var(--b2);border-radius:7px;
+  padding:9px 12px;color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:12px;
+  outline:none;transition:border-color .2s;min-width:0}
+#api-key-inp:focus{border-color:var(--ac)}
+#api-key-inp::placeholder{color:var(--m1);font-family:'DM Sans',sans-serif;font-size:12px}
+#api-key-save{padding:8px 14px;background:var(--ac);border:none;border-radius:7px;
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
+  font-family:'Outfit',sans-serif;transition:opacity .15s;flex-shrink:0}
+#api-key-save:hover{opacity:.85}
+#api-key-toggle{flex:1;background:none;border:1px solid var(--b1);color:var(--m1);
+  font-size:11.5px;cursor:pointer;padding:9px 0;border-radius:7px;
+  white-space:nowrap;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+#api-key-toggle:hover{border-color:var(--b2);color:var(--m2)}
+#api-key-dot{width:7px;height:7px;border-radius:50%;background:var(--m1);flex-shrink:0;transition:background .3s}
+#api-key-dot.ok{background:var(--gn)}
+#api-key-label{font-size:11.5px}
+#api-key-form{display:none;gap:6px;width:100%}
+#api-key-form.vis{display:flex}
+
+/* tooltips */
+[data-tip]{position:relative;cursor:help}
+[data-tip]::after{
+  content:attr(data-tip);
+  position:absolute;bottom:calc(100% + 7px);left:0;
+  background:#1a1f2e;color:var(--tx);
+  font-size:10.5px;line-height:1.5;
+  padding:7px 10px;border-radius:6px;
+  width:230px;pointer-events:none;
+  opacity:0;transition:opacity .15s;z-index:9999;
+  font-family:'DM Sans',sans-serif;letter-spacing:0;
+  text-transform:none;font-weight:400;
+  border:1px solid var(--b2);white-space:normal;
+  box-shadow:0 4px 12px rgba(0,0,0,.4)
+}
+[data-tip]:hover::after{opacity:1;transition-delay:.35s}
+[data-tip]::after{transition:opacity .15s .0s}
+
+/* ── TOOLTIP: instant hide, delayed show ── */
+[data-tip]:not(:hover)::after{transition-delay:0s}
+
+
+
+/* portfolio stat grid */
+.port-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.port-stat{background:var(--b1);border-radius:6px;padding:6px 8px;text-align:center}
+.port-stat-v{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--tx)}
+.port-stat-l{font-size:9px;color:var(--m1);margin-top:2px;letter-spacing:.3px}
+.port-transport{display:flex;gap:10px;margin-top:6px;font-size:10px;color:var(--m1);flex-wrap:wrap}
+
+
+
+#port-back-btn{display:none;width:100%;padding:8px 14px;background:none;
+  border:1px solid var(--b2);border-radius:8px;color:var(--m2);font-size:12px;
+  cursor:pointer;transition:all .15s;text-align:left;margin-bottom:2px}
+#port-back-btn:hover{border-color:var(--ac);color:var(--ac)}
+#port-back-btn.vis{display:block}
+
+
+#port-controls{padding:8px 18px;border-bottom:1px solid var(--b1);
+  display:flex;flex-direction:column;gap:7px;flex-shrink:0;background:var(--panel)}
+#port-radius-row,#port-drive-row{display:flex;align-items:center;gap:8px}
+
+/* portfolio analyze all */
+#port-analyze-btn{padding:6px 12px;background:none;border:1px solid var(--b2);
+  border-radius:7px;color:var(--m2);font-size:11.5px;cursor:pointer;
+  transition:all .15s;white-space:nowrap}
+#port-analyze-btn:hover{border-color:var(--ac);color:var(--ac)}
+#port-analyze-btn.running{border-color:var(--yw);color:var(--yw);cursor:default}
+#port-progress-bar{height:2px;background:var(--b1);flex-shrink:0;display:none}
+#port-progress-fill{height:100%;background:var(--ac);width:0%;transition:width .4s}
+#port-progress-bar.vis{display:block}
+.port-card.queued{border-color:rgba(106,118,143,.25);opacity:.7}
+.port-card.analyzing{border-color:var(--yw)!important;animation:cardPulse 1.2s ease-in-out infinite;opacity:1}
+.port-card.analyzed{border-color:rgba(62,207,142,.5);box-shadow:0 0 0 1px rgba(62,207,142,.1)}
+@keyframes cardPulse{0%,100%{border-color:rgba(245,200,66,.3)}50%{border-color:var(--yw)}}
+
+
+/* ── EPA ENVIRONMENTAL ── */
+
+/* ── PORTFOLIO MODULE ── */
+#port-btn{padding:6px 13px;background:none;border:1px solid var(--b2);
+  border-radius:7px;color:var(--m2);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+#port-btn:hover{border-color:var(--ac);color:var(--ac)}
+#port-btn.active{background:var(--ag);border-color:var(--ac);color:var(--ac)}
+#port-btn .port-count{background:var(--ac);color:#fff;font-size:10px;font-weight:700;
+  padding:1px 5px;border-radius:3px;display:none}
+#port-btn .port-count.vis{display:inline-block}
+
+/* Portfolio sidebar */
+#port-panel{display:none;flex-direction:column;height:100%;overflow:hidden;background:var(--panel)}
+#port-panel.vis{display:flex}
+#port-hdr{padding:14px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between}
+#port-hdr-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:var(--tx)}
+#port-add-btn{padding:6px 12px;background:var(--ac);border:none;border-radius:7px;
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;
+  transition:opacity .15s}
+#port-add-btn:hover{opacity:.85}
+#port-filters{padding:8px 20px;border-bottom:1px solid var(--b1);
+  display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.pf-btn{padding:4px 10px;background:none;border:1px solid var(--b1);border-radius:5px;
+  color:var(--m2);font-size:11px;cursor:pointer;transition:all .15s}
+.pf-btn.on{border-color:var(--ac);color:var(--ac);background:var(--ag)}
+.pf-btn:hover{border-color:var(--b2);color:var(--tx)}
+#port-list{flex:1;overflow-y:auto;padding:10px 16px;display:flex;flex-direction:column;gap:8px}
+#port-list::-webkit-scrollbar{width:3px}
+#port-list::-webkit-scrollbar-thumb{background:var(--b2)}
+#port-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;color:var(--m1);font-size:13px;text-align:center;gap:8px;padding:40px 20px}
+#port-empty svg{opacity:.3}
+
+/* Portfolio property cards */
+.port-card{background:var(--card);border:1px solid var(--b1);border-radius:10px;
+  padding:12px 14px;cursor:pointer;transition:all .15s;position:relative}
+.port-card:hover{border-color:var(--b2);background:#181d2a}
+.port-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.port-card-name{font-size:13.5px;font-weight:600;color:var(--tx);
+  letter-spacing:-.2px;line-height:1.3;flex:1}
+.port-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.ps-owned{background:#3ecf8e}
+.ps-target{background:#4b7cf3}
+.ps-loi{background:#f59e42}
+.ps-sold{background:#6a768f}
+.port-card-addr{font-size:11px;color:var(--m2);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.port-card-meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.port-type-badge{font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px}
+.pt-industrial{background:rgba(75,124,243,.15);color:#7badff}
+.pt-office{background:rgba(167,139,250,.15);color:#c4b5fd}
+.pt-retail{background:rgba(245,158,66,.15);color:#fbbf72}
+.pt-mixed{background:rgba(62,207,142,.15);color:#6ee7b7}
+.port-card-stats{font-size:10.5px;color:var(--m1);margin-left:auto}
+.port-card-actions{display:flex;gap:6px;margin-top:10px}
+.port-act-btn{flex:1;padding:6px 0;background:none;border:1px solid var(--b1);
+  border-radius:6px;color:var(--m2);font-size:11px;cursor:pointer;transition:all .15s;text-align:center}
+.port-act-btn:hover{border-color:var(--b2);color:var(--tx)}
+.port-act-btn.primary{background:var(--ac);border-color:var(--ac);color:#fff}
+.port-act-btn.primary:hover{opacity:.88}
+.port-del-btn{position:absolute;top:10px;right:10px;background:none;border:none;
+  color:var(--m1);font-size:14px;cursor:pointer;padding:2px 5px;
+  border-radius:4px;transition:color .15s;line-height:1}
+.port-del-btn:hover{color:var(--rd)}
+
+/* Add property form */
+#port-form{display:none;padding:14px 20px;border-top:1px solid var(--b1);flex-shrink:0;
+  background:var(--panel);flex-direction:column;gap:8px}
+#port-form.vis{display:flex}
+.pf-label{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--m1);margin-bottom:3px}
+.pf-input{width:100%;background:var(--b1);border:1px solid var(--b2);border-radius:7px;
+  padding:8px 11px;color:var(--tx);font-size:13px;outline:none;transition:border-color .2s}
+.pf-input:focus{border-color:var(--ac)}
+.pf-row{display:flex;gap:8px}
+.pf-select{flex:1;background:var(--b1);border:1px solid var(--b2);border-radius:7px;
+  padding:8px 10px;color:var(--tx);font-size:12px;outline:none;cursor:pointer}
+#port-form-btns{display:flex;gap:8px}
+#port-form-save{flex:1;padding:9px;background:var(--ac);border:none;border-radius:7px;
+  color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+#port-form-cancel{padding:9px 14px;background:none;border:1px solid var(--b2);
+  border-radius:7px;color:var(--m2);font-size:12px;cursor:pointer}
+
+/* Map portfolio pins */
+.port-pin{background:none!important;border:none!important;box-shadow:none!important}
+.port-pin-inner{width:28px;height:28px;border-radius:50%;border:2px solid #fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#fff;font-family:'Outfit',sans-serif;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;transition:transform .15s}
+.port-pin-inner:hover{transform:scale(1.15)}
+.pin-owned{background:#3ecf8e}
+.pin-target{background:#4b7cf3}
+.pin-loi{background:#f59e42}
+.pin-sold{background:#6a768f}
+
+/* sidebar collapse */
+#side{transition:width .3s ease,min-width .3s ease}
+#side.collapsed{width:0!important;min-width:0!important;overflow:hidden;border:none}
+#side-toggle{position:fixed;top:50%;left:400px;transform:translateY(-50%);
+  z-index:1000;background:var(--panel);border:1px solid var(--b2);border-radius:0 6px 6px 0;
+  padding:10px 6px;cursor:pointer;color:var(--m2);font-size:13px;line-height:1;
+  transition:left .3s ease,color .15s;user-select:none}
+#side-toggle:hover{color:var(--tx)}
+#side.collapsed~#side-toggle{left:0;border-radius:0 6px 6px 0}
+/* map click hint */
+#map-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+  background:rgba(16,19,28,.85);border:1px solid var(--b2);border-radius:20px;
+  padding:6px 14px;font-size:11px;color:var(--m2);pointer-events:none;
+  transition:opacity .6s;z-index:500;white-space:nowrap}
+#map-hint.fade{opacity:0!important}
+/* compare delta badges */
+.delta{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  font-weight:600;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.delta.pos{background:rgba(62,207,142,.15);color:#3ecf8e}
+.delta.neg{background:rgba(239,88,88,.15);color:#ef5858}
+.delta.neu{background:rgba(106,118,143,.12);color:#6a768f}
+/* housing stat card accent */
+.hcard.house::before{background:#60a5fa}
+/* airport/port in hwy list */
+.hwy-section{margin-top:8px;padding-top:8px;border-top:1px solid var(--b1)}
+.hwy-section-lbl{font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);margin-bottom:5px}
+
+
+
+.hcard.sec .hn{font-size:22px;letter-spacing:-.5px}
+.hcard.sec{padding:12px 14px}
+
+/* pulsing analysis circle */
+}
+.leaflet-overlay-pane .pulse-active{animation:circPulse 1.4s ease-in-out infinite}
+
+/* PDF tip overlay */
+#pdf-tip{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;
+  justify-content:center;z-index:99999}
+#pdf-tip-inner{background:var(--panel);border:1px solid var(--b2);border-radius:12px;
+  padding:28px 32px;max-width:320px;text-align:center}
+#pdf-tip-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;margin-bottom:12px}
+#pdf-tip-body{font-size:13px;color:var(--m2);line-height:1.6;margin-bottom:20px}
+#pdf-tip-body strong{color:var(--tx)}
+#pdf-tip-btn{width:100%;padding:11px;background:var(--ac);border:none;border-radius:8px;
+  color:#fff;font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer}
+#pdf-tip-btn:hover{opacity:.88}
+/* collapsible cards */
+.card-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;margin-bottom:2px;-webkit-tap-highlight-color:transparent}
+.card-hdr:hover .card-chev{opacity:1}
+.card-chev{font-size:12px;color:var(--m2);opacity:.45;transition:transform .2s ease,opacity .15s;flex-shrink:0;line-height:1;margin-left:8px}
+.hcard.collapsed .card-chev{transform:rotate(-90deg)}
+.card-body{overflow:hidden;max-height:1200px;opacity:1;transition:max-height .3s ease,opacity .2s ease}
+.hcard.collapsed .card-body{max-height:0;opacity:0}
+.hcard.collapsed{padding-bottom:14px}
+/* sector breakdown */
+#breakdown-toggle-0,#breakdown-toggle-1{background:none;border:none;color:var(--ac);font-size:11px;
+  cursor:pointer;padding:0;margin-top:8px;display:none;align-items:center;gap:4px;font-family:'DM Sans',sans-serif}
+#breakdown-toggle-0:hover,#breakdown-toggle-1:hover{opacity:.75}
+.arr{transition:transform .2s}
+.bt-open .arr{transform:rotate(90deg)}
+.bk-wrap{overflow:hidden;max-height:0;transition:max-height .35s ease}
+.bk-wrap.open{max-height:800px}
+.sector-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.s-row{display:flex;align-items:center;gap:7px}
+.s-name{font-size:10.5px;color:var(--m2);width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-bar-wrap{flex:1;background:var(--b1);border-radius:4px;height:6px;overflow:hidden}
+.s-bar{height:6px;border-radius:4px;background:var(--or);transition:width .6s cubic-bezier(.22,.68,0,1.2)}
+.s-ct{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx);width:32px;text-align:right;flex-shrink:0}
+
+/* interstate */
+.hwy-list{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.hwy-row{display:flex;align-items:center;gap:7px}
+.hwy-badge{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+  background:var(--b2);border-radius:3px;padding:2px 6px;color:var(--yw);white-space:nowrap;flex-shrink:0}
+.hwy-name{font-size:10.5px;color:var(--m2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.hwy-dist{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;white-space:nowrap;flex-shrink:0}
+
+/* share toast */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--gn);
+  border-radius:8px;padding:10px 16px;font-size:12px;color:var(--gn);opacity:0;
+  transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:9999}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* map */
+#map{flex:1}
+.leaflet-tile-pane{/* CartoDB dark tiles - no filter needed */}
+.leaflet-marker-pane,.leaflet-shadow-pane,.leaflet-overlay-pane svg{filter:none!important}
+.leaflet-popup-content-wrapper{background:var(--card);border:1px solid var(--b2);border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);color:var(--tx);font-family:'DM Sans',sans-serif}
+.leaflet-popup-tip{background:var(--card)}
+.leaflet-popup-content{font-size:13px;line-height:1.6}
+.leaflet-control-attribution{background:rgba(11,13,18,.8)!important;color:var(--m1)!important;font-size:10px!important}
+
+/* ── PRINT / PDF ── */
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+  body{flex-direction:column;height:100dvh;overflow:hidden;display:flex}
+
+  /* Sidebar becomes full-width bottom panel */
+  #side{
+    width:100%!important;min-width:0!important;
+    height:58dvh;max-height:58dvh;border-right:none;
+    border-top:1px solid var(--b1);
+    order:2;transition:none;
+    overflow-y:auto;overflow-x:hidden;flex-shrink:0
+  }
+  #side.collapsed{height:48px!important}
+  #side.collapsed #side-inner{overflow:hidden}
+
+  /* Map takes top portion */
+  #map{
+    flex:1;order:1;height:42dvh;min-height:42dvh;
+    width:100%;flex-shrink:0
+  }
+
+  /* Port panel full width */
+  #port-panel{width:100%}
+
+  /* Header compact */
+  #hd{padding:8px 14px 8px}
+  #logo-wrap{gap:8px}
+  #app-name{font-size:15px}
+  #port-btn{font-size:11px;padding:5px 10px}
+  #hd-toggle{display:none}
+
+  /* Controls */
+  #ctl{padding:10px 14px 10px}
+  .addr-wrap-badge .addr-inp{font-size:13px;padding:7px 11px 7px 38px}
+  .rb{font-size:10.5px;padding:6px 0}
+
+  /* Drive ctl */
+  #drive-ctl{padding:6px 14px;gap:6px;flex-wrap:wrap}
+  .drb{font-size:10.5px;padding:5px 10px}
+  #mode-toggle{width:100%}
+  .mode-btn{flex:1;text-align:center}
+
+  /* Scrollable results */
+  #side-inner{overflow-y:auto!important;overflow-x:hidden}
+  .hcard{padding:12px 14px}
+  .hcard-title{font-size:10px}
+
+  /* Action panel */
+  #action-panel{padding:10px 14px 8px}
+  #action-row2{gap:6px}
+  #action-row2 #save-btn,#api-key-toggle{padding:8px 0;font-size:11.5px}
+
+  /* Saves panel */
+  #saves-panel{padding:8px 14px 10px}
+  #saves-search{width:100px}
+
+  /* Buttons */
+  #btn{padding:10px;font-size:13px}
+  #compare-btn,#pdf-btn{padding:9px 10px;font-size:12px}
+
+  /* Summary modal */
+  #summary-box{width:100%;max-width:100%;height:92dvh;border-radius:14px 14px 0 0}
+  #summary-modal{align-items:flex-end}
+
+  /* Portfolio panel */
+  #port-hdr{padding:10px 14px 8px}
+  #port-filters{padding:6px 14px}
+  #port-list{padding:8px 12px}
+  .port-card{padding:10px 12px}
+  .port-stat-grid{grid-template-columns:repeat(3,1fr);gap:4px}
+  .port-stat-v{font-size:11px}
+
+  /* Typography adjustments */
+  .big-num{font-size:28px}
+  .labor-val{font-size:12px}
+}
+
+@media (max-width: 480px) {
+  #side{height:58dvh}
+  #map{min-height:38dvh}
+  .rb[data-r="15"],.rb[data-r="25"]{display:none}
+  .drb[data-min="30"]{display:none}
+  #compare-btn,#pdf-btn{display:none}
+  .big-num{font-size:24px}
+}
+
+@media print {
+  @page{margin:12mm 12mm;size:A4}
+  /* Force dark background colors to print */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  body{background:#0b0d12!important;color:#dde3f0!important;display:block;font-family:'DM Sans',sans-serif}
+  #map,#ctl,#sb,#err-box,#compare-toggle,#export-btn,#btn,#toast,#pdf-tip,#progress,#map-hint,#hd-toggle{display:none!important}
+  #side{width:100%!important;min-width:unset!important;border:none;overflow:visible;background:#0b0d12!important}
+  #side-inner{overflow:visible;height:auto}
+  #hd{padding:0 0 14px;border-bottom:1px solid #1e2435!important;margin-bottom:14px}
+  #res-wrap{display:block;overflow:visible}
+  .rcol{width:100%!important;min-width:unset!important;display:flex!important;
+    overflow:visible;padding:0;flex-wrap:wrap;gap:10px;align-content:flex-start}
+  .rcol.b-col{border-left:none;border-top:1px solid #1e2435!important;margin-top:16px;padding-top:16px}
+  #side.compare-mode .rcol{width:49%!important;display:inline-flex!important;vertical-align:top;box-sizing:border-box}
+  /* Cards: dark with accent bars */
+  .hcard{background:#151924!important;border:1px solid #1e2435!important;border-radius:8px;
+    break-inside:avoid;page-break-inside:avoid;padding:12px 14px;margin-bottom:0;flex-shrink:0;width:100%}
+  .hcard::before{border-radius:8px 8px 0 0}
+  /* Two-column grid layout for stat cards */
+  .gr{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  .sc{background:#151924!important;border:1px solid #1e2435!important;border-radius:6px;padding:10px 12px}
+  /* Typography */
+  .hn{font-size:26px!important;color:#dde3f0!important}
+  .hn.pending{display:none}
+  .hl{color:#6a768f!important}
+  .hs,.ra-label,.grow-year,.labor-lbl,.s-name,.hwy-name,.cbar-note,.cbar-label{color:#6a768f!important}
+  .sv{color:#dde3f0!important}
+  .sl{color:#4a5470!important}
+  .su{color:#6a768f!important}
+  .hwy-badge{background:#252d42!important;color:#f5c842!important}
+  .hwy-dist,.grow-val,.labor-val,.s-ct{color:#dde3f0!important}
+  /* Color bars - keep accent colors */
+  .cbar-track,.ibar-wrap,.s-bar-wrap{background:#1e2435!important}
+  /* Sector breakdown: force open for PDF */
+  .bk-wrap{max-height:none!important;overflow:visible!important;display:block!important}
+  .bclass-val,.bclass-sub,.bclass-note{color:#dde3f0!important}
+  #breakdown-toggle-0,#breakdown-toggle-1{display:none!important}
+  .sector-list{display:flex!important;flex-direction:column;gap:5px}
+  .biz-size-rows{display:block!important}.biz-size-filters{display:none!important}
+  /* Print header */
+  #print-header{display:block}
+  .print-ts{font-size:10px;color:#6a768f!important;margin-top:3px}
+  /* Accent colors preserved */
+  .card-body{max-height:none!important;opacity:1!important}
+  .card-chev{display:none!important}
+  .hcard.collapsed .card-body{max-height:none!important;opacity:1!important}
+  .hcard.collapsed{padding-bottom:14px}
+  .hcard.pop::before{background:#4b7cf3!important}
+  .hcard.grow::before{background:#a78bfa!important}
+  .hcard.inc::before{background:#3ecf8e!important}
+  .hcard.labor::before{background:#ef5858!important}
+  .hcard.biz::before{background:#f59e42!important}
+  .hcard.hwy::before{background:#f5c842!important}
+  .name-rcbo{color:#4b7cf3!important}
+  #app-sub{color:#6a768f!important}
+}
+#print-header{display:none;padding:0 0 14px;border-bottom:1px solid #1e2435;margin-bottom:14px}
+
+/* ── COUNT-UP ANIMATION ── */
+@keyframes countUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.hn.loaded{animation:countUp .35s cubic-bezier(.22,.68,0,1.2) both}
+.sv.loaded{animation:countUp .3s cubic-bezier(.22,.68,0,1.2) both}
+
+/* ── SHIMMER SKELETON ── */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.hn.pending,.labor-val.pending{
+  background:linear-gradient(90deg,var(--b1) 25%,var(--b2) 50%,var(--b1) 75%);
+  background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;
+  border-radius:4px;color:transparent!important;min-width:60px;display:inline-block}
+.labor-val.pending{min-width:40px;height:16px;vertical-align:middle}
+
+/* ── CARD HOVER STATES ── */
+.hcard{transition:border-color .2s,box-shadow .2s}
+.hcard:hover{border-color:var(--b2);box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.sc{transition:border-color .2s,background .2s,transform .15s}
+.sc:hover{border-color:var(--b2);background:#1a1f2e;transform:translateY(-1px)}
+
+/* ── CARD ENTRANCE ANIMATION ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.hcard.anim{animation:cardIn .3s cubic-bezier(.22,.68,0,1.2) both}
+.hcard.anim:nth-child(1){animation-delay:.02s}
+.hcard.anim:nth-child(2){animation-delay:.07s}
+.hcard.anim:nth-child(3){animation-delay:.12s}
+.hcard.anim:nth-child(4){animation-delay:.17s}
+.hcard.anim:nth-child(5){animation-delay:.22s}
+.hcard.anim:nth-child(6){animation-delay:.27s}
+
+/* ── LABOR INLINE BARS ── */
+.labor-row{display:flex;flex-direction:column;gap:3px;padding:4px 0;border-bottom:1px solid rgba(30,36,53,.5)}
+.labor-row:last-child{border-bottom:none}
+.labor-top{display:flex;justify-content:space-between;align-items:center}
+.labor-lbl{font-size:11px;color:var(--m2)}
+.labor-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.labor-bar-wrap{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;margin-top:1px}
+.labor-bar{height:3px;border-radius:2px;transition:width .8s cubic-bezier(.22,.68,0,1.2);width:0%}
+.labor-state-note{font-size:9.5px;color:var(--m1);margin-top:1px}
+
+/* ── GROWTH CARD UPGRADE ── */
+.grow-delta{font-size:13px;font-weight:700;margin-top:10px;display:flex;align-items:center;gap:7px;line-height:1}
+.grow-delta-arrow{font-size:18px;line-height:1}
+.grow-delta-pct{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-1px}
+.grow-delta-detail{font-size:10.5px;color:var(--m1);line-height:1.4}
+.grow-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:5px;padding:3px 0}
+.grow-year{font-size:10px;color:var(--m1);letter-spacing:.3px}
+.grow-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600}
+
+/* ── MODE TOGGLE PILL STYLE (match biz filters) ── */
+#mode-toggle{background:none;border:none;padding:0;border-radius:0}
+.mode-btn{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid var(--b1);cursor:pointer;transition:all .18s;background:none;
+  color:var(--m1);font-family:'IBM Plex Mono',monospace;letter-spacing:.2px}
+.mode-btn:hover{border-color:var(--m1);color:var(--m2)}
+.mode-btn.on{background:rgba(75,124,243,.14);border-color:var(--ac);color:var(--ac);
+  box-shadow:0 0 0 1px rgba(75,124,243,.2)}
+
+/* ── STAT GRID ACCENT TOPS ── */
+.gr{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sc{background:var(--card);border:1px solid var(--b1);border-radius:7px;
+  padding:10px 12px;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--b2);border-radius:7px 7px 0 0;transition:background .2s}
+.sc:hover::before{background:var(--ac)}
+
+/* ── RESULTS REVEAL ── */
+.rcol.vis>.hcard{opacity:0}
+.rcol.vis>.hcard.revealed{opacity:1}
+
+
+/* ── ANALYSIS MODE SELECTOR ── */
+#mode-tabs{display:flex;gap:0;background:var(--b1);border-radius:9px;padding:3px;border:1px solid var(--b1);margin-bottom:7px}
+.mtab{flex:1;padding:7px 10px;border-radius:7px;font-size:12px;font-weight:600;
+  border:none;cursor:pointer;transition:all .2s;background:none;color:var(--m1);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-family:'DM Sans',sans-serif;letter-spacing:-.1px}
+.mtab:hover{color:var(--m2)}
+.mtab.active{background:var(--card);color:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.mtab.active.circle-tab{color:var(--ac)}
+.mtab.active.drive-tab{color:var(--or)}
+.mtab-icon{font-size:13px;line-height:1}
+#drive-options{display:none;gap:5px;flex-wrap:wrap;align-items:center}
+#drive-options.vis{display:flex}
+#drive-ctl{display:none!important}
+#mode-toggle{display:none!important}
+#drive-status-new{font-size:10px;color:var(--m1);margin-left:4px}
+#drive-ctl{display:none!important}
+</style>
+</head>
+<body>
+<div id="side">
+ <div id="side-inner">
+  <div id="hd">
+   <div id="logo-wrap">
+    <div id="logo-inner">
+    <svg id="logo-svg" width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+     <circle cx="16" cy="16" r="15" stroke="#4b7cf3" stroke-width="1" stroke-opacity=".3"/>
+     <circle cx="16" cy="16" r="10" stroke="#4b7cf3" stroke-width="1" stroke-opacity=".5"/>
+     <circle cx="16" cy="16" r="6" stroke="#4b7cf3" stroke-width="1.2" stroke-opacity=".8"/>
+     <rect x="12.5" y="12" width="7" height="8" rx=".5" fill="#4b7cf3"/>
+     <rect x="14" y="15" width="1.5" height="2" rx=".2" fill="#0b0d12"/>
+     <rect x="16.5" y="15" width="1.5" height="2" rx=".2" fill="#0b0d12"/>
+     <rect x="14.5" y="12" width="3" height="1.2" rx=".2" fill="#3ecf8e"/>
+     <line x1="16" y1="1" x2="16" y2="4" stroke="#4b7cf3" stroke-width="1.2" stroke-opacity=".6"/>
+     <line x1="16" y1="28" x2="16" y2="31" stroke="#4b7cf3" stroke-width="1.2" stroke-opacity=".6"/>
+     <line x1="1" y1="16" x2="4" y2="16" stroke="#4b7cf3" stroke-width="1.2" stroke-opacity=".6"/>
+     <line x1="28" y1="16" x2="31" y2="16" stroke="#4b7cf3" stroke-width="1.2" stroke-opacity=".6"/>
+    </svg>
+    <div>
+     <div id="app-name"><span id="gw-ground">Ground</span><span id="gw-work">work</span></div>
+     
+    </div>
+    </div><!-- /logo-inner -->
+    <button id="port-btn" onclick="togglePortfolio()" title="Portfolio">⬡ Portfolio<span class="port-count" id="port-count">0</span></button>
+    <button id="hd-toggle" onclick="toggleSidebar()" title="Toggle sidebar">‹</button>
+   </div>
+  </div>
+
+  <div id="ctl">
+   <div>
+    <div class="addr-row">
+     <div class="addr-wrap addr-wrap-badge">
+       <span class="addr-badge a">A</span>
+       <input class="addr-inp" id="inp-a" type="text" placeholder="Enter address or click map" autocomplete="off"/>
+       <div class="ac-drop" id="ac-a"></div>
+     </div>
+    </div>
+    <div id="compare-row" style="margin-top:6px">
+     <div id="addr-b-wrap">
+      <div class="addr-wrap addr-wrap-badge">
+        <span class="addr-badge b">B</span>
+        <input class="addr-inp b-inp" id="inp-b" type="text" placeholder="Enter address" autocomplete="off"/>
+        <div class="ac-drop" id="ac-b"></div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div>
+    <div id="mode-tabs">
+     <button class="mtab circle-tab active" id="mtab-circle" onclick="switchModeTab('circle')">
+      <span class="mtab-icon">⬤</span>Radius
+     </button>
+     <button class="mtab drive-tab" id="mtab-drive" onclick="switchModeTab('drive')">
+      <span class="mtab-icon">◷</span>Drive Time
+     </button>
+    </div>
+    <div class="rr" id="circle-options">
+     <button type="button" class="rb" data-r="1">1 mi</button>
+     <button type="button" class="rb" data-r="3">3 mi</button>
+     <button type="button" class="rb on" data-r="5">5 mi</button>
+     <button type="button" class="rb" data-r="10">10 mi</button>
+     <button type="button" class="rb" data-r="15">15 mi</button>
+     <button type="button" class="rb" data-r="25">25 mi</button>
+    </div>
+    <div id="drive-options">
+     <button class="drb" data-min="10" onclick="setDriveTime(10)">10 min</button>
+     <button class="drb" data-min="15" onclick="setDriveTime(15)">15 min</button>
+     <button class="drb" data-min="20" onclick="setDriveTime(20)">20 min</button>
+     <button class="drb" data-min="30" onclick="setDriveTime(30)">30 min</button>
+     <span id="drive-status-new"></span>
+    </div>
+   </div>
+   <div class="btn-row">
+    <button id="btn">Analyze</button>
+    <button type="button" id="compare-toggle" onclick="toggleCompare()">＋ Compare</button>
+    <button type="button" id="export-btn" onclick="exportPDF()">↓ PDF</button>
+   </div>
+  </div>
+
+  <div id="sb"><div class="dot" id="dot"></div><span id="sm">Enter an address to begin</span></div>
+  <div id="compare-banner"><span class="slot-badge a" style="font-size:9px;padding:2px 5px">A</span><span class="cb-addr" id="cb-a">—</span><span class="cb-sep">vs</span><span class="slot-badge b" style="font-size:9px;padding:2px 5px">B</span><span class="cb-addr" id="cb-b">—</span></div>
+  <div id="progress"><div class="ps" id="ps-geo"><div class="ps-dot"></div>Geocode</div><div class="ps-arrow">›</div><div class="ps" id="ps-census"><div class="ps-dot"></div>Census</div><div class="ps-arrow">›</div><div class="ps" id="ps-income"><div class="ps-dot"></div>Income</div><div class="ps-arrow">›</div><div class="ps" id="ps-transport"><div class="ps-dot"></div>Transport</div></div>
+  <div id="drive-ctl"><div id="mode-toggle"><button class="mode-btn on" id="mb-circle" onclick="setAnalysisMode('circle')">⬤ Circle</button><button class="mode-btn" id="mb-drive" onclick="setAnalysisMode('drive')">◷ Drive Time</button></div><span class="drive-lbl" style="margin-left:4px">Drive Time</span><button class="drb" data-min="10" onclick="setDriveTime(10)">10 min</button><button class="drb" data-min="15" onclick="setDriveTime(15)">15 min</button><button class="drb" data-min="20" onclick="setDriveTime(20)">20 min</button><button class="drb" data-min="30" onclick="setDriveTime(30)">30 min</button><button class="drb" onclick="clearDriveTime()" style="margin-left:auto;font-size:11px">✕ Clear</button><span id="drive-status"></span></div>
+  <div id="err-box"></div>
+
+  <div id="res-wrap">
+   <!-- Slot A -->
+   <div class="rcol" id="col-0">
+    <div id="print-header">
+     <div id="app-name" style="font-family:Outfit,sans-serif;font-weight:900;font-size:18px">Ground<span style="color:#4b7cf3">work</span> — Site Analysis Report</div>
+     <div class="print-ts" id="print-ts"></div>
+    </div>
+    <div class="ra-label" id="ra-0"></div>
+    <div class="hcard pop"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-0">—</div><div class="hs" id="rs-0"></div>
+     <div class="cbar-wrap" id="cbar-0" style="display:none">
+      <div class="cbar-row"><div class="cbar-label"><span id="nat-lbl-0"></span><span style="color:var(--m1)" id="nat-ref-0"></span></div><div class="cbar-track"><div class="cbar-fill" id="nat-bar-0"></div></div></div>
+      <div class="cbar-row" id="st-row-0" style="display:none"><div class="cbar-label"><span id="st-lbl-0"></span><span style="color:var(--m1)" id="st-ref-0"></span></div><div class="cbar-track"><div class="cbar-fill" id="st-bar-0"></div></div></div>
+      <div class="cbar-note" id="cbar-note-0"></div>
+     </div>
+    </div>
+    <div class="hcard grow"><div class="hl" data-tip="2020 vs 2010 Census population for the same block groups. Some boundaries may have changed between Census years.">Population Growth</div>
+     <div class="grow-row"><span class="grow-year">2010</span><span class="grow-val" id="pop10-0">…</span></div>
+     <div class="grow-row"><span class="grow-year">2020</span><span class="grow-val" id="pop20-0">…</span></div>
+     <div class="grow-delta" id="grow-delta-0"></div>
+    </div>
+    <div class="hcard inc"><div class="hl" data-tip="Population-weighted median household income across all block groups in the radius. Source: ACS 2022 5-year estimates.">Median Household Income</div><div class="hn pending" id="ri-0">…</div><div class="ibar-wrap"><div class="ibar" id="ibar-0" style="width:0%"></div></div><div class="hs" id="ictx-0"></div></div>
+    <div class="hcard labor"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
+     <div class="labor-grid" id="labor-0">
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="% of working-age population (16+) employed or actively seeking work">Labor force participation</span><span class="labor-val pending" id="lfpr-0">…</span></div>
+       <div class="labor-bar-wrap" id="lfpr-0-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="lfpr-0-note"></div>
+      </div>
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="% of the civilian labor force currently unemployed and seeking work">Unemployment rate</span><span class="labor-val pending" id="unemp-0">…</span></div>
+       <div class="labor-bar-wrap" id="unemp-0-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="unemp-0-note"></div>
+      </div>
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="% of population 25+ who have completed a bachelor's degree or higher">Bachelor's degree or higher</span><span class="labor-val pending" id="bach-0">…</span></div>
+       <div class="labor-bar-wrap" id="bach-0-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="bach-0-note"></div>
+      </div>
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="Total population aged 16+ within the radius (Census working-age definition)">Working-age pop (16+)</span><span class="labor-val pending" id="wapop-0">…</span></div>
+       <div class="labor-bar-wrap" id="wapop-0-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="wapop-0-note"></div>
+      </div>
+     </div>
+    </div>
+    <div class="gr">
+     <div class="sc"><div class="sl" title="People per square mile within the analysis circle">Pop Density</div><div class="sv" id="rd-0">—</div><div class="su">people / sq mi</div></div>
+     <div class="sc"><div class="sl" title="Total housing units (occupied + vacant). Source: 2020 Census">Housing Units</div><div class="sv" id="rh-0">—</div><div class="su">2020 Census</div></div>
+     <div class="sc"><div class="sl" title="Average people per occupied housing unit (population ÷ housing units)">Avg HH Size</div><div class="sv" id="hhsz-0">—</div><div class="su">people / household</div></div>
+     <div class="sc"><div class="sl" title="Median estimated market value of owner-occupied homes. Source: ACS 2022">Median Home Value</div><div class="sv" id="hmv-0">—</div><div class="su">ACS 2022 estimate</div></div>
+     <div class="sc"><div class="sl" title="Census block groups whose centroid falls within the radius. Each has 600–3,000 residents.">Block Groups</div><div class="sv" id="rbg-0">—</div><div class="su">census units</div></div>
+     <div class="sc"><div class="sl" title="Total area of the analysis circle (π × radius²) in square miles">Area</div><div class="sv" id="rarea-0">—</div><div class="su">sq miles</div></div>
+    </div>
+    <div class="hcard biz sec"><div class="hl" data-tip="Employer businesses by size tier. Filter by employee count to see the competitive tenant landscape. State comparison adjusts for radius or drive-time area. Source: Census ZIP Business Patterns 2018.">Employer Businesses</div><div class="hn pending" id="rbiz-0">…</div><div class="hs" id="biz-sub-0"></div>
+     <div class="biz-size-filters" id="bsf-0">
+       <button class="bsf on" data-size="all" onclick="setBizFilter(0,'all')">All (1+)</button>
+       <button class="bsf" data-size="10" onclick="setBizFilter(0,'10')">10+</button>
+       <button class="bsf" data-size="50" onclick="setBizFilter(0,'50')">50+</button>
+       <button class="bsf" data-size="100" onclick="setBizFilter(0,'100')">100+</button>
+     </div>
+     <div class="biz-size-rows" id="biz-size-rows-0"></div>
+     <div class="hs" id="biz-ctx-0" style="margin-top:4px;font-size:10.5px"></div>
+     <button type="button" id="breakdown-toggle-0" onclick="toggleBreakdown(0)"><span class="arr">▸</span> By sector</button>
+     <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
+    </div>
+    <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
+   </div>
+
+   <!-- Slot B -->
+   <div class="rcol b-col" id="col-1">
+    <div class="ra-label" id="ra-1"></div>
+    <div class="hcard pop" style="--slot-accent:var(--slot-b)"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-1">—</div><div class="hs" id="rs-1"></div>
+     <div class="cbar-wrap" id="cbar-1" style="display:none">
+      <div class="cbar-row"><div class="cbar-label"><span id="nat-lbl-1"></span><span style="color:var(--m1)" id="nat-ref-1"></span></div><div class="cbar-track"><div class="cbar-fill" id="nat-bar-1"></div></div></div>
+      <div class="cbar-row" id="st-row-1" style="display:none"><div class="cbar-label"><span id="st-lbl-1"></span><span style="color:var(--m1)" id="st-ref-1"></span></div><div class="cbar-track"><div class="cbar-fill" id="st-bar-1"></div></div></div>
+      <div class="cbar-note" id="cbar-note-1"></div>
+     </div>
+    </div>
+    <div class="hcard grow"><div class="hl" data-tip="2020 vs 2010 Census population for the same block groups. Some boundaries may have changed between Census years.">Population Growth</div>
+     <div class="grow-row"><span class="grow-year">2010</span><span class="grow-val" id="pop10-1">…</span></div>
+     <div class="grow-row"><span class="grow-year">2020</span><span class="grow-val" id="pop20-1">…</span></div>
+     <div class="grow-delta" id="grow-delta-1"></div>
+    </div>
+    <div class="hcard inc"><div class="hl" data-tip="Population-weighted median household income across all block groups in the radius. Source: ACS 2022 5-year estimates.">Median Household Income</div><div class="hn pending" id="ri-1">…</div><div class="ibar-wrap"><div class="ibar" id="ibar-1" style="width:0%"></div></div><div class="hs" id="ictx-1"></div></div>
+    <div class="hcard labor"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
+     <div class="labor-grid">
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="% of working-age population (16+) employed or actively seeking work">Labor force participation</span><span class="labor-val pending" id="lfpr-1">…</span></div>
+       <div class="labor-bar-wrap" id="lfpr-1-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="lfpr-1-note"></div>
+      </div>
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="% of the civilian labor force currently unemployed and seeking work">Unemployment rate</span><span class="labor-val pending" id="unemp-1">…</span></div>
+       <div class="labor-bar-wrap" id="unemp-1-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="unemp-1-note"></div>
+      </div>
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="% of population 25+ who have completed a bachelor's degree or higher">Bachelor's degree or higher</span><span class="labor-val pending" id="bach-1">…</span></div>
+       <div class="labor-bar-wrap" id="bach-1-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="bach-1-note"></div>
+      </div>
+      <div class="labor-row">
+       <div class="labor-top"><span class="labor-lbl" title="Total population aged 16+ within the radius (Census working-age definition)">Working-age pop (16+)</span><span class="labor-val pending" id="wapop-1">…</span></div>
+       <div class="labor-bar-wrap" id="wapop-1-bar"><div class="labor-bar"></div></div>
+       <div class="labor-state-note" id="wapop-1-note"></div>
+      </div>
+     </div>
+    </div>
+    <div class="gr">
+     <div class="sc"><div class="sl" title="People per square mile within the analysis circle">Pop Density</div><div class="sv" id="rd-1">—</div><div class="su">people / sq mi</div></div>
+     <div class="sc"><div class="sl" title="Total housing units (occupied + vacant). Source: 2020 Census">Housing Units</div><div class="sv" id="rh-1">—</div><div class="su">2020 Census</div></div>
+     <div class="sc"><div class="sl" title="Average people per occupied housing unit (population ÷ housing units)">Avg HH Size</div><div class="sv" id="hhsz-1">—</div><div class="su">people / household</div></div>
+     <div class="sc"><div class="sl" title="Median estimated market value of owner-occupied homes. Source: ACS 2022">Median Home Value</div><div class="sv" id="hmv-1">—</div><div class="su">ACS 2022 estimate</div></div>
+     <div class="sc"><div class="sl" title="Census block groups whose centroid falls within the radius. Each has 600–3,000 residents.">Block Groups</div><div class="sv" id="rbg-1">—</div><div class="su">census units</div></div>
+     <div class="sc"><div class="sl" title="Total area of the analysis circle (π × radius²) in square miles">Area</div><div class="sv" id="rarea-1">—</div><div class="su">sq miles</div></div>
+    </div>
+    <div class="hcard biz sec"><div class="hl" data-tip="Employer businesses by size tier. Filter by employee count to see the competitive tenant landscape. State comparison adjusts for radius or drive-time area. Source: Census ZIP Business Patterns 2018.">Employer Businesses</div><div class="hn pending" id="rbiz-1">…</div><div class="hs" id="biz-sub-1"></div>
+     <div class="biz-size-filters" id="bsf-1">
+       <button class="bsf on" data-size="all" onclick="setBizFilter(1,'all')">All (1+)</button>
+       <button class="bsf" data-size="10" onclick="setBizFilter(1,'10')">10+</button>
+       <button class="bsf" data-size="50" onclick="setBizFilter(1,'50')">50+</button>
+       <button class="bsf" data-size="100" onclick="setBizFilter(1,'100')">100+</button>
+     </div>
+     <div class="biz-size-rows" id="biz-size-rows-1"></div>
+     <div class="hs" id="biz-ctx-1" style="margin-top:4px;font-size:10.5px"></div>
+     <button type="button" id="breakdown-toggle-1" onclick="toggleBreakdown(1)"><span class="arr">▸</span> By sector</button>
+     <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
+    </div>
+    <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
+   </div>
+  </div><!-- /res-wrap -->
+  <div id="action-panel">
+    <div id="broker-intel">
+      <div id="broker-lbl">Broker Intel</div>
+      <div id="broker-btns">
+        <button class="broker-btn" data-type="industrial" onclick="brokerIntel('industrial')">Industrial</button>
+        <button class="broker-btn" data-type="office" onclick="brokerIntel('office')">Office</button>
+        <button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button>
+      </div>
+    </div>
+    <button id="port-back-btn" onclick="goBackToPortfolio()">← Back to Portfolio</button>
+      <button id="add-port-btn" onclick="addCurrentToPortfolio()" style="display:none;width:100%;padding:8px 14px;background:none;border:1px solid var(--b2);border-radius:9px;color:var(--m2);font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gn)';this.style.color='var(--gn)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--m2)'">+ Add to Portfolio</button>
+    <button id="gen-summary-btn" onclick="generateSummary()"><span class="gsb-icon">✦</span>Generate Market Summary</button>
+    <div id="action-row2">
+      <button id="save-btn" onclick="showSaveForm()">Save Analysis</button>
+      <button id="api-key-toggle" onclick="toggleApiKeyForm()">
+        <span id="api-key-dot"></span><span id="api-key-label">Add API Key</span>
+      </button>
+    </div>
+    <div id="api-key-form">
+      <input id="api-key-inp" type="password" placeholder="sk-ant-api03-…" autocomplete="off"/>
+      <button id="api-key-save" onclick="saveApiKey()">Save</button>
+    </div>
+    <div id="save-form"><input id="save-name" type="text" placeholder="Name this analysis…" maxlength="40"/><button id="save-confirm" onclick="confirmSave()">Save</button></div>
+  </div>
+  <div id="saves-panel"><div class="saves-hdr" onclick="toggleSavesPanel()" style="cursor:pointer"><span class="saves-hdr-left">Saved Analyses <span id="saves-chevron" style="font-size:9px;margin-left:3px;color:var(--m1)">▾</span></span><div class="saves-hdr-right" onclick="event.stopPropagation()"><button id="saves-clear-btn" onclick="clearAllSaves()" title="Clear all">Clear all</button></div></div><div id="saves-body"><input id="saves-search" type="text" placeholder="Filter…" oninput="filterSaves(this.value)" onclick="event.stopPropagation()" style="display:none"/><div id="saves-list"></div></div></div>
+ </div><!-- /side-inner -->
+  <!-- PORTFOLIO PANEL -->
+  <div id="port-panel">
+   <div id="port-hdr"><div id="port-hdr-title">Portfolio</div><div style="display:flex;gap:6px"><button id="port-analyze-btn" onclick="analyzeAll()">⟳ Analyze All</button><button id="port-add-btn" onclick="showPortForm()">+ Add</button></div></div>
+   <div id="port-progress-bar"><div id="port-progress-fill"></div></div>
+   <div id="port-filters"><button class="pf-btn on" data-filter="all" onclick="setPortFilter(this,'all')">All</button><button class="pf-btn" data-filter="owned" onclick="setPortFilter(this,'owned')">Owned</button><button class="pf-btn" data-filter="target" onclick="setPortFilter(this,'target')">Target</button><button class="pf-btn" data-filter="loi" onclick="setPortFilter(this,'loi')">Under LOI</button></div>
+   <div id="port-controls">
+     <div id="port-radius-row"><span style="font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);flex-shrink:0">Radius</span><div style="display:flex;gap:4px;flex:1"><button class="rb" data-r="1" onclick="setPortRadius(this,1)">1 mi</button><button class="rb" data-r="3" onclick="setPortRadius(this,3)">3 mi</button><button class="rb on" data-r="5" onclick="setPortRadius(this,5)">5 mi</button><button class="rb" data-r="10" onclick="setPortRadius(this,10)">10 mi</button><button class="rb" data-r="15" onclick="setPortRadius(this,15)">15 mi</button></div></div>
+     <div id="port-drive-row"><span style="font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);flex-shrink:0">Drive Time</span><div style="display:flex;gap:4px;flex:1"><button class="drb" data-min="10" onclick="setPortDrive(this,10)">10 min</button><button class="drb" data-min="15" onclick="setPortDrive(this,15)">15 min</button><button class="drb" data-min="20" onclick="setPortDrive(this,20)">20 min</button><button class="drb" data-min="30" onclick="setPortDrive(this,30)">30 min</button><button class="drb" onclick="clearPortDrive()" style="margin-left:auto;font-size:10px;color:var(--m1)">✕</button></div></div>
+   </div>
+   <div id="port-list"><div id="port-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div>No properties yet</div><div style="font-size:11px;color:var(--m1)">Add properties to track your portfolio</div></div></div>
+   <div id="port-form">
+     <div><div class="pf-label">Property Name</div><input class="pf-input" id="pf-name" placeholder="e.g. 47 October Hill Rd"/></div>
+     <div><div class="pf-label">Address</div><input class="pf-input" id="pf-addr" placeholder="Full address"/></div>
+     <div class="pf-row">
+       <div style="flex:1"><div class="pf-label">Asset Type</div><select class="pf-select" id="pf-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="mixed">Mixed Use</option></select></div>
+       <div style="flex:1"><div class="pf-label">Status</div><select class="pf-select" id="pf-status"><option value="target">Acquisition Target</option><option value="owned">Owned</option><option value="loi">Under LOI</option><option value="sold">Sold</option></select></div>
+     </div>
+     <div><div class="pf-label">Notes (optional)</div><input class="pf-input" id="pf-notes" placeholder="SF, price, cap rate, thesis…"/></div>
+     <div id="port-form-btns"><button id="port-form-save" onclick="savePortProp()">Save Property</button><button id="port-form-cancel" onclick="hidePortForm()">Cancel</button></div>
+   </div>
+  </div>
+  <!-- END PORTFOLIO -->
+
+</div><!-- /side -->
+<div id="map-hint">Click map to analyze a location</div>
+<div id="map"></div>
+<div id="toast">🔗 Link copied to clipboard</div>
+
+<script>
+// ═══════════════ CONSTANTS ═══════════════
+var NAT_DENSITY=87.3;
+var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
+var NAICS_LABEL={'11':'Agriculture','21':'Mining/Oil & Gas','22':'Utilities','23':'Construction','31':'Manufacturing','32':'Manufacturing','33':'Manufacturing','42':'Wholesale Trade','44':'Retail Trade','45':'Retail Trade','48':'Transportation','49':'Warehousing','51':'Information & Tech','52':'Finance & Insurance','53':'Real Estate','54':'Professional Services','55':'Management','56':'Admin & Support','61':'Education','62':'Healthcare','71':'Arts & Entertainment','72':'Food & Hospitality','81':'Other Services','92':'Government'};
+var NAICS_MERGE={'32':'31','33':'31','45':'44','49':'48'};
+var SLOT_COLOR=['#4b7cf3','#f59e42'];
+
+// ═══════════════ STATE ═══════════════
+var radius=5, compareMode=false;
+var circles=[null,null], markers=[null,null], pulseCircle=null;
+var slotCache=[{},{}];
+var MAP;
+
+
+// ── COLLAPSIBLE CARDS ──
+function initCollapsible() {
+  document.querySelectorAll('.hcard').forEach(function(card) {
+    // Skip if already initialized
+    if (card.querySelector('.card-hdr')) return;
+    var hl = card.querySelector(':scope > .hl');
+    if (!hl) return;
+
+    // Build header row: [hl label] [chevron]
+    var hdr = document.createElement('div');
+    hdr.className = 'card-hdr';
+    card.insertBefore(hdr, hl);
+    hdr.appendChild(hl);
+    var chev = document.createElement('span');
+    chev.className = 'card-chev';
+    chev.textContent = '▾';
+    hdr.appendChild(chev);
+
+    // Wrap all remaining children in .card-body
+    var body = document.createElement('div');
+    body.className = 'card-body';
+    while (card.children[1]) body.appendChild(card.children[1]);
+    card.appendChild(body);
+
+    hdr.addEventListener('click', function() {
+      card.classList.toggle('collapsed');
+    });
+  });
+}
+// Run on load; also re-run after each analysis to catch dynamically shown cards
+
+
+// ══ SIDEBAR TOGGLE ══
+function toggleSidebar(){
+  var side=document.getElementById('side');
+  var btn=document.getElementById('hd-toggle');
+  side.classList.toggle('collapsed');
+  var collapsed=side.classList.contains('collapsed');
+
+  btn.textContent=collapsed?'›':'‹';
+  btn.title=collapsed?'Show sidebar':'Hide sidebar';
+  setTimeout(function(){MAP.invalidateSize();},310);
+}
+
+// ══ MAJOR US SEAPORTS (hardcoded, instant haversine) ══
+var MAJOR_PORTS=[
+  ['Port of Boston',42.3555,-70.9890,'General Cargo'],
+  ['Port of New York/New Jersey',40.6895,-74.1745,'Container'],
+  ['Port of Philadelphia',39.9200,-75.1350,'Bulk'],
+  ['Port of Baltimore',39.2610,-76.5733,'Bulk/Container'],
+  ['Port of Norfolk (Hampton Roads)',36.9460,-76.3020,'Bulk/Container'],
+  ['Port of Charleston',32.7640,-79.9250,'Container'],
+  ['Port of Jacksonville',30.3322,-81.6557,'General'],
+  ['Port of Miami',25.7745,-80.1700,'Container'],
+  ['Port of Tampa',27.9354,-82.4488,'Bulk'],
+  ['Port of New Orleans',29.9511,-90.0623,'Bulk'],
+  ['Port of Mobile',30.6954,-88.0430,'Bulk'],
+  ['Port of Corpus Christi',27.8006,-97.3964,'Bulk'],
+  ['Port of Houston',29.7413,-95.0785,'Bulk/Container'],
+  ['Port of Baton Rouge',30.4515,-91.1871,'Bulk'],
+  ['Port of Oakland',37.7955,-122.2760,'Container'],
+  ['Port of Los Angeles',33.7395,-118.2614,'Container'],
+  ['Port of Long Beach',33.7566,-118.2220,'Container'],
+  ['Port of Richmond CA',37.9235,-122.3947,'Bulk'],
+  ['Port of Portland OR',45.5051,-122.6750,'Bulk'],
+  ['Port of Seattle',47.5996,-122.3370,'Container'],
+  ['Port of Tacoma',47.2529,-122.4194,'Container'],
+  ['Port of Chicago/Burns Harbor',41.6298,-87.1968,'General'],
+  ['Port of Cleveland',41.5097,-81.6984,'Bulk'],
+  ['Port of Detroit',42.3314,-83.0458,'Bulk'],
+  ['Port of Savannah',31.9970,-81.0500,'Container'],
+];
+
+function getNearestPort(lat,lon){
+  var res=MAJOR_PORTS.map(function(p){
+    return{name:p[0],dist:hav(lat,lon,p[1],p[2]),type:p[3]};
+  });
+  res.sort(function(a,b){return a.dist-b.dist;});
+  return res.slice(0,3);
+}
+
+
+// ══ MAJOR US AIRPORTS (hardcoded, instant haversine) ══
+var MAJOR_AIRPORTS=[
+  ['Boston Logan','BOS',42.3656,-71.0096],
+  ['New York JFK','JFK',40.6413,-73.7781],
+  ['New York Newark','EWR',40.6895,-74.1745],
+  ['New York LaGuardia','LGA',40.7769,-73.8740],
+  ['Philadelphia','PHL',39.8744,-75.2424],
+  ['Baltimore/Washington','BWI',39.1754,-76.6682],
+  ['Washington Dulles','IAD',38.9531,-77.4565],
+  ['Washington Reagan','DCA',38.8521,-77.0377],
+  ['Charlotte','CLT',35.2144,-80.9473],
+  ['Atlanta','ATL',33.6407,-84.4277],
+  ['Orlando','MCO',28.4312,-81.3081],
+  ['Miami','MIA',25.7959,-80.2870],
+  ['Fort Lauderdale','FLL',26.0742,-80.1506],
+  ['Tampa','TPA',27.9755,-82.5332],
+  ["Chicago O'Hare",'ORD',41.9742,-87.9073],
+  ['Chicago Midway','MDW',41.7868,-87.7522],
+  ['Detroit','DTW',42.2162,-83.3554],
+  ['Cleveland','CLE',41.4117,-81.8498],
+  ['Pittsburgh','PIT',40.4915,-80.2329],
+  ['Minneapolis','MSP',44.8820,-93.2218],
+  ['Dallas/Fort Worth','DFW',32.8998,-97.0403],
+  ['Houston Intercontinental','IAH',29.9902,-95.3368],
+  ['Denver','DEN',39.8561,-104.6737],
+  ['Salt Lake City','SLC',40.7884,-111.9778],
+  ['Phoenix','PHX',33.4373,-112.0078],
+  ['Las Vegas','LAS',36.0840,-115.1537],
+  ['Los Angeles','LAX',33.9425,-118.4081],
+  ['San Francisco','SFO',37.6213,-122.3790],
+  ['Seattle/Tacoma','SEA',47.4502,-122.3088],
+  ['Portland','PDX',45.5898,-122.5951],
+  ['Nashville','BNA',36.1245,-86.6782],
+  ['Austin','AUS',30.1975,-97.6664],
+  ['Raleigh-Durham','RDU',35.8801,-78.7880],
+  ['New Orleans','MSY',29.9934,-90.2580],
+  ['Indianapolis','IND',39.7173,-86.2944],
+  ['Kansas City','MCI',39.2976,-94.7139],
+  ['St. Louis','STL',38.7487,-90.3700],
+  ['San Diego','SAN',32.7338,-117.1933],
+  ['Sacramento','SMF',38.6954,-121.5908],
+  ['San Jose','SJC',37.3626,-121.9290],
+];
+
+function getNearestAirport(lat,lon){
+  var res=MAJOR_AIRPORTS.map(function(a){
+    return{name:a[0],iata:a[1],dist:hav(lat,lon,a[2],a[3])};
+  });
+  res.sort(function(a,b){return a.dist-b.dist;});
+  return res.slice(0,3);
+}
+
+// ══ RENDER TRANSPORT (interstate + airport + port) ══
+function renderTransport(s,hwys,airports,ports){
+  // Interstates
+  if(hwys&&hwys.length){
+    var hwyEl=el('rhwy-'+s);
+    if(hwyEl){
+      hwyEl.innerHTML=(hwys[0].ref?'<span style="font-size:18px;font-family:IBM Plex Mono,monospace;font-weight:700;color:var(--yw)">'+hwys[0].ref+'</span> <span style="font-size:14px;font-weight:400;color:var(--m2)">'+hwys[0].dist.toFixed(1)+' mi</span>':'<span>'+hwys[0].dist.toFixed(1)+' mi</span>');
+      hwyEl.classList.remove('pending');
+    }
+    el('hwy-'+s).innerHTML=hwys.map(function(h){
+      return '<div class="hwy-row"><span class="hwy-badge">'+(h.ref||'HWY')+'</span>'
+        +'<span class="hwy-name">'+(h.name||'')+'</span>'
+        +'<span class="hwy-dist">'+h.dist.toFixed(1)+' mi</span></div>';
+    }).join('');
+  } else {
+    el('rhwy-'+s).textContent='N/A';el('rhwy-'+s).classList.remove('pending');
+  }
+  // Airports
+  if(airports&&airports.length){
+    el('air-sec-'+s).style.display='block';
+    el('air-'+s).innerHTML=airports.map(function(a){
+      return '<div class="hwy-row"><span class="hwy-badge">'+a.iata+'</span>'
+        +'<span class="hwy-name">'+a.name+'</span>'
+        +'<span class="hwy-dist">'+a.dist.toFixed(0)+' mi</span></div>';
+    }).join('');
+  }
+  // Seaports
+  if(ports&&ports.length){
+    el('port-sec-'+s).style.display='block';
+    el('port-'+s).innerHTML=ports.map(function(p){
+      return '<div class="hwy-row"><span class="hwy-badge" style="color:#60a5fa">⚓</span>'
+        +'<span class="hwy-name">'+p.name+'</span>'
+        +'<span class="hwy-dist">'+p.dist.toFixed(0)+' mi</span></div>';
+    }).join('');
+  }
+}
+
+// ══ COMPARE DELTAS ══
+function renderDeltas(s0,s1){
+  if(!s0||!s1) return;
+  var pairs=[
+    ['rp',null,'pop'],['ri',null,'income'],
+    ['rd',null,'density'],['rh',null,'hu'],
+    ['hhsz',null,'hhsz'],['hmv',null,'hmv']
+  ];
+  // For each metric in slot 1, compute delta vs slot 0
+  var metrics={};
+  ['pop','inc','density','hu','hhsz','hmv'].forEach(function(k){
+    var v0=slotCache[0][k], v1=slotCache[1][k];
+    if(!v0||!v1) return;
+    var delta=(v1-v0)/v0*100;
+    var sign=delta>0?'pos':delta<0?'neg':'neu';
+    var label=(delta>0?'+':'')+delta.toFixed(1)+'%';
+    metrics[k]={delta:delta,sign:sign,label:label};
+  });
+  // Attach delta badges to slot 1 values
+  var targets={
+    'pop':'rp-1','inc':'ri-1','density':'rd-1',
+    'hu':'rh-1','hhsz':'hhsz-1','hmv':'hmv-1'
+  };
+  for(var k in metrics){
+    var target=el(targets[k]);
+    if(!target) continue;
+    // Remove existing delta
+    var existing=target.parentNode.querySelector('.delta');
+    if(existing) existing.remove();
+    var badge=document.createElement('span');
+    badge.className='delta '+metrics[k].sign;
+    badge.textContent=metrics[k].label;
+    target.insertAdjacentElement('afterend',badge);
+  }
+}
+
+
+// ── API KEY MANAGEMENT ──
+var API_KEY_STORAGE = 'groundwork_apikey';
+
+function getApiKey(){
+  try{ return localStorage.getItem(API_KEY_STORAGE)||''; }catch(e){ return ''; }
+}
+
+function saveApiKey(){
+  var inp = el('api-key-inp');
+  var key = inp ? inp.value.trim() : '';
+  if(!key){ alert('Please enter a valid API key'); return; }
+  try{ localStorage.setItem(API_KEY_STORAGE, key); }catch(e){}
+  inp.value = '';
+  updateApiKeyUI();
+  toggleApiKeyForm();
+}
+
+function updateApiKeyUI(){
+  var key = getApiKey();
+  var dot = el('api-key-dot');
+  var label = el('api-key-label');
+  if(dot) dot.className = key ? 'ok' : '';
+  if(label) label.textContent = key ? 'API Key Set' : 'Add API Key';
+}
+
+function toggleApiKeyForm(){
+  var form = el('api-key-form');
+  if(!form) return;
+  var vis = form.classList.toggle('vis');
+  if(vis){
+    el('api-key-inp').focus();
+    var lbl=el('api-key-label'); if(lbl) lbl.textContent='Cancel';
+  } else { updateApiKeyUI(); }
+}
+
+// Add key on Enter
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && document.activeElement === el('api-key-inp')) saveApiKey();
+});
+
+// Init on load
+updateApiKeyUI();
+
+
+
+// ── DUAL ANALYSIS MODE ──
+var analysisMode='circle'; // 'circle' or 'drive'
+var driveCache={}; // stores drive-time analysis results per slot
+
+function setAnalysisMode(mode){
+  if(mode===analysisMode) return;
+  analysisMode=mode;
+  el('mb-circle')&&el('mb-circle').classList.toggle('on',mode==='circle');
+  el('mb-drive')&&el('mb-drive').classList.toggle('on',mode==='drive');
+  var mtc=el('mtab-circle'),mtd=el('mtab-drive');
+  if(mtc)mtc.classList.toggle('active',mode==='circle');
+  if(mtd)mtd.classList.toggle('active',mode==='drive');
+  var co=el('circle-options'),dro=el('drive-options');
+  if(co)co.style.display=mode==='circle'?'flex':'none';
+  if(dro)dro.classList.toggle('vis',mode==='drive');
+  updateAnalyzeBtn();
+
+  if(mode==='drive'){
+    if(!driveMin){
+      document.querySelectorAll('.drb[data-min]').forEach(function(b){
+        b.classList.toggle('on',parseInt(b.getAttribute('data-min'))===15);
+      });
+      driveMin=15;
+    }
+    if(driveCache[0]){
+      applyDriveResults(0,driveCache[0]);
+    } else if(slotCache[0].lat){
+      runDriveAnalysis(0,slotCache[0].lat,slotCache[0].lon,driveMin);
+    } else {
+      showErr('Enter an address and click Analyze first.');
+      analysisMode='circle';
+      el('mb-circle').classList.add('on');
+      el('mb-drive').classList.remove('on');
+    }
+  } else {
+    if(slotCache[0].circleCache){
+      // Restore cached circle results
+      var c=slotCache[0].circleCache;
+      renderPop(0,c.pop,c.hu,c.area);
+      slotCache[0].area=c.area;
+      slotCache[0].stateData=c.stateData;
+      renderIncome(0,c.income,c.lfpr,c.unempRate,c.bachRate,c.homeValue,c.workingAgePop,c.hu,c.stateData);
+      renderBiz(0,c.bizData,c.stateData);
+      renderGrowth(0,c.pop,c.data2010);
+      renderComparisons(0,c.pop,c.area,c.stateData);
+      if(c.hwyData) slotCache[0].hwy=c.hwyData;
+      if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;driveActive=false;}
+      var statusEl=el('drive-status');if(statusEl)statusEl.textContent='';
+    } else if(slotCache[0].lat){
+      // Run circle analysis
+      var addr3=el('ra-0')?el('ra-0').textContent:el('inp-a').value.trim();
+      if(addr3) runSlot(0,addr3,radius);
+    }
+  }
+}
+
+
+function simplifyPoly(coords,targetPoints){
+  if(coords.length<=targetPoints) return coords;
+  var step=Math.floor(coords.length/targetPoints);
+  var out=[];
+  for(var i=0;i<coords.length;i+=step){out.push(coords[i]);}
+  out.push(coords[0]); // close ring
+  return out;
+}
+
+async function fetchBGsPolygon(rings){
+  // rings: array of [lon,lat] pairs (ESRI ring format)
+  var geomObj=JSON.stringify({rings:[rings],spatialReference:{wkid:4326}});
+  var url='https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer/11/query'
+    +'?geometry='+encodeURIComponent(geomObj)
+    +'&geometryType=esriGeometryPolygon'
+    +'&spatialRel=esriSpatialRelIntersects'
+    +'&outFields=GEOID,CENTLAT,CENTLON,POP100,HU100&returnGeometry=false&f=json';
+  var r=await fetch(url);
+  if(!r.ok) throw new Error('Census polygon query failed');
+  var d=await r.json();
+  if(d.error) throw new Error('Census: '+d.error.message);
+  return(d.features||[]).map(function(f){return f.attributes;}).filter(function(bg){return bg.CENTLAT&&bg.CENTLON;});
+}
+
+async function runDriveAnalysis(s,lat,lon,min){
+  var statusEl=el('drive-status');
+  if(statusEl) statusEl.textContent='Analyzing '+min+'-min drive…';
+
+  try{
+    // Fetch isochrone
+    var ctrl=new AbortController();
+    var tid=setTimeout(function(){ctrl.abort();},15000);
+    var resp=await fetch('https://valhalla1.openstreetmap.de/isochrone',{
+      method:'POST',signal:ctrl.signal,
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({locations:[{lon:lon,lat:lat}],costing:'auto',contours:[{time:min}],polygons:true})
+    });
+    clearTimeout(tid);
+    if(!resp.ok) throw new Error('Isochrone failed');
+    var iso=await resp.json();
+    var feature=iso.features&&iso.features[0];
+    if(!feature) throw new Error('No polygon');
+
+    // Get coords [lon,lat] and simplify
+    var rawCoords=feature.geometry.coordinates[0]; // [lon,lat] pairs
+    var simplified=simplifyPoly(rawCoords,80);
+    // Convert to ESRI ring format (already [lon,lat])
+    var rings=simplified;
+
+    // Draw isochrone on map
+    if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;}
+    driveLayer=L.geoJSON(iso,{style:function(){return{color:'#3ecf8e',fillColor:'#3ecf8e',fillOpacity:0.07,weight:2,opacity:0.7,dashArray:'6 4'};}}).addTo(MAP);
+    driveActive=true;
+    if(statusEl) statusEl.textContent=min+'-min drive radius';
+    var dsn=el('drive-status-new');if(dsn)dsn.textContent=min+' min';
+
+    // Query Census with polygon
+    var bgs=await fetchBGsPolygon(rings);
+    if(!bgs.length) throw new Error('No block groups in drive time area');
+
+    // Calculate stats
+    var pop=0,hu=0;
+    bgs.forEach(function(bg){pop+=bg.POP100||0;hu+=bg.HU100||0;});
+    var approxArea=polygonAreaSqMi(rawCoords); // shoelace formula
+
+    var stateFips=bgs[0].GEOID.slice(0,2);
+    var [incData,bizData,stateData,data2010]=await Promise.all([
+      fetchIncomeLabor(bgs),
+      fetchBiz(lat,lon,Math.sqrt(approxArea/Math.PI)||5),
+      fetchState(stateFips),
+      fetch2010(bgs)
+    ]);
+
+    // Store results
+    driveCache[s]={pop:pop,hu:hu,approxArea:approxArea,bgs:bgs,
+      incData:incData,bizData:bizData,stateData:stateData,data2010:data2010,
+      lat:lat,lon:lon,min:min,polyRing:rings};
+
+    applyDriveResults(s,driveCache[s]);
+
+    // Show toggle
+    el('mode-toggle').classList.add('vis');
+
+  }catch(e){
+    if(statusEl) statusEl.textContent='Drive time analysis failed';
+    setAnalysisMode('circle');
+  }
+}
+
+function applyDriveResults(s,cache){
+  if(!cache) return;
+  slotCache[s].area=cache.approxArea;
+  // Re-run EPA with drive polygon
+    renderPop(s,cache.pop,cache.hu,cache.approxArea);
+  el('rs-'+s).textContent='within '+cache.min+'-min drive · '+fmt(cache.hu)+' housing units';
+  slotCache[s].stateData=cache.stateData;
+  if(cache.incData) renderIncome(s,cache.incData.income,cache.incData.lfpr,cache.incData.unempRate,cache.incData.bachRate,cache.incData.homeValue,cache.incData.workingAgePop,cache.hu,cache.stateData);
+  else renderIncome(s,null,null,null,null,null,null,null,cache.stateData);
+  renderBiz(s,cache.bizData,cache.stateData);
+  renderGrowth(s,cache.pop,cache.data2010);
+  renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
+  el('rbg-'+s).textContent=fmt(cache.bgs.length);
+}
+
+function applyCircleResults(s){
+  // Re-run slot to restore circle results
+  var addr=el('ra-'+s)?el('ra-'+s).textContent:'';
+  if(addr) run();
+}
+
+// ── DRIVE-TIME ISOCHRONE ──
+var driveLayer = null;
+var driveActive = false;
+var driveMin = 0;
+
+function setDriveTime(min){
+  driveMin=min; analysisMode='drive';
+  el('mb-drive')&&el('mb-drive').classList.add('on');
+  el('mb-circle')&&el('mb-circle').classList.remove('on');
+  var mtc=el('mtab-circle'),mtd=el('mtab-drive');
+  if(mtc)mtc.classList.remove('active');
+  if(mtd)mtd.classList.add('active');
+  var co=el('circle-options'),dro=el('drive-options');
+  if(co)co.style.display='none';
+  if(dro)dro.classList.add('vis');
+  document.querySelectorAll('.drb[data-min]').forEach(function(b){
+    b.classList.toggle('on',parseInt(b.getAttribute('data-min'))===min);
+  });
+  updateAnalyzeBtn();
+  if(analysisMode==='drive'&&slotCache[0].lat){
+    driveCache[0]=null; // clear cache so fresh analysis runs
+    runDriveAnalysis(0,slotCache[0].lat,slotCache[0].lon,min);
+  } else {
+    fetchIsochrone(min); // just draw the circle visually
+    // Auto-switch to drive mode if we have a result
+    if(slotCache[0].lat){
+      analysisMode='drive';
+      el('mb-circle').classList.remove('on');
+      el('mb-drive').classList.add('on');
+      driveCache[0]=null;
+      runDriveAnalysis(0,slotCache[0].lat,slotCache[0].lon,min);
+    }
+  }
+}
+
+function clearDriveTime(){
+  driveMin=0; driveActive=false;
+  if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;}
+  document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
+  var ds=el('drive-status');if(ds)ds.textContent='';
+  var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
+  updateAnalyzeBtn();
+}
+
+async function fetchIsochrone(min){
+  var center = slotCache[0] && slotCache[0].lat ? [slotCache[0].lat, slotCache[0].lon] : null;
+  // Get center from current marker
+  if(!center && markers[0]){
+    var ll = markers[0].getLatLng();
+    center = [ll.lat, ll.lng];
+  }
+  if(!center){ el('drive-status').textContent='Run analysis first'; return; }
+
+  el('drive-status').textContent = 'Loading…';
+  if(driveLayer){ MAP.removeLayer(driveLayer); driveLayer=null; }
+
+  try{
+    var ctrl = new AbortController();
+    var tid = setTimeout(function(){ctrl.abort();}, 15000);
+    var resp = await fetch('https://valhalla1.openstreetmap.de/isochrone', {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        locations: [{lon: center[1], lat: center[0]}],
+        costing: 'auto',
+        contours: [{time: min}],
+        polygons: true
+      })
+    });
+    clearTimeout(tid);
+    if(!resp.ok) throw new Error('API error');
+    var data = await resp.json();
+    if(!data.features || !data.features.length) throw new Error('No polygon');
+
+    driveLayer = L.geoJSON(data, {
+      style: function(){
+        return {
+          color: '#f59e42',
+          fillColor: '#f59e42',
+          fillOpacity: 0.07,
+          weight: 2,
+          opacity: 0.7,
+          dashArray: '6 4'
+        };
+      }
+    }).addTo(MAP);
+
+    driveActive = true;
+    el('drive-status').textContent = min + '-min drive radius';
+  }catch(e){
+    el('drive-status').textContent = 'Unavailable';
+  }
+}
+
+// Show drive-ctl after analysis, store center coords
+function showDriveCtl(){
+  el('drive-ctl').classList.add('vis');
+}
+
+
+
+
+
+var portRadius=5;
+var portDriveMin=0;
+var portDriveLayers=[];
+
+function setPortRadius(btn,r){
+  portRadius=r;
+  document.querySelectorAll('#port-radius-row .rb').forEach(function(b){
+    b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===r);
+  });
+  // Also sync main radius
+  radius=r;
+  document.querySelectorAll('#ctl .rb').forEach(function(b){
+    b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===r);
+  });
+  // Redraw circles if analyzed
+  if(portCircles.length) analyzeAll();
+}
+
+function setPortDrive(btn,min){
+  portDriveMin=min;
+  document.querySelectorAll('#port-drive-row .drb[data-min]').forEach(function(b){
+    b.classList.toggle('on',parseInt(b.getAttribute('data-min'))===min);
+  });
+  fetchPortDriveTime(min);
+}
+
+function clearPortDrive(){
+  portDriveMin=0;
+  document.querySelectorAll('#port-drive-row .drb[data-min]').forEach(function(b){b.classList.remove('on');});
+  portDriveLayers.forEach(function(l){MAP.removeLayer(l);});
+  portDriveLayers=[];
+}
+
+async function fetchPortDriveTime(min){
+  // Clear existing drive layers
+  portDriveLayers.forEach(function(l){MAP.removeLayer(l);});
+  portDriveLayers=[];
+  var props=getPortfolio();
+  var filtered=portFilter==='all'?props:props.filter(function(p){return p.status===portFilter;});
+  var withCoords=filtered.filter(function(p){return p.lat&&p.lon;});
+  if(!withCoords.length) return;
+
+  await Promise.all(withCoords.map(async function(p){
+    try{
+      var ctrl=new AbortController();
+      var tid=setTimeout(function(){ctrl.abort();},15000);
+      var resp=await fetch('https://valhalla1.openstreetmap.de/isochrone',{
+        method:'POST',signal:ctrl.signal,
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({locations:[{lon:p.lon,lat:p.lat}],costing:'auto',contours:[{time:min}],polygons:true})
+      });
+      clearTimeout(tid);
+      if(!resp.ok) return;
+      var data=await resp.json();
+      var color=STATUS_COLORS[p.status]||'#4b7cf3';
+      var layer=L.geoJSON(data,{style:function(){return{color:color,fillColor:color,fillOpacity:0.05,weight:1.5,opacity:0.6,dashArray:'6 4'};}}).addTo(MAP);
+      portDriveLayers.push(layer);
+    }catch(e){}
+  }));
+}
+
+// ── PORTFOLIO NAVIGATION ──
+var portReturnMode=false;
+
+function analyzePortFull(id){
+  var props=getPortfolio();
+  var p=props.find(function(x){return x.id===id;});
+  if(!p) return;
+  portReturnMode=true;
+  // Exit portfolio mode
+  if(portMode) togglePortfolio();
+  // Set address + radius
+  el('inp-a').value=p.address;
+  radius=p.radius||5;
+  document.querySelectorAll('.rb').forEach(function(b){
+    b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===radius);
+  });
+  run();
+  // Show back button after slight delay
+  setTimeout(function(){
+    var bb=el('port-back-btn');if(bb)bb.classList.add('vis');
+  },500);
+}
+
+function goBackToPortfolio(){
+  portReturnMode=false;
+  var bb=el('port-back-btn');if(bb)bb.classList.remove('vis');
+  if(!portMode) togglePortfolio();
+}
+
+// ── PORTFOLIO: ANALYZE ALL ──
+var portCircles=[];
+
+function clearPortCircles(){
+  portCircles.forEach(function(c){MAP.removeLayer(c);});
+  portCircles=[];
+}
+
+var STATUS_COLORS={owned:'#3ecf8e',target:'#4b7cf3',loi:'#f59e42',sold:'#6a768f'};
+
+async function analyzeAll(){
+  var props=getPortfolio();
+  if(!props.length) return;
+  var btn=el('port-analyze-btn');
+  btn.textContent='Analyzing…';btn.classList.add('running');
+  var pb=el('port-progress-bar');
+  var pf=el('port-progress-fill');
+  pb.classList.add('vis');pf.style.width='0%';
+  clearPortCircles();
+
+  var total=props.length;
+  var done=0;
+
+  var allHwyElements=[];
+  // Re-render with queued state on all cards
+  renderPortfolio();
+  props.forEach(function(p){
+    var card=el('pc-'+p.id);
+    if(card) card.classList.add('queued');
+  });
+
+  // Run in batches of 2 to avoid hammering Census API
+  var results={};
+  for(var i=0;i<props.length;i+=2){
+    var batch=props.slice(i,i+2);
+    btn.textContent='Analyzing '+(i+1)+'/'+total+(i+1<total?'-'+Math.min(i+2,total):'')+'…';
+    await Promise.all(batch.map(async function(p){
+      var card=el('pc-'+p.id);
+      if(card){card.classList.remove('queued');card.classList.add('analyzing');}
+      try{
+        // Geocode if no lat/lon
+        var lat=p.lat,lon=p.lon;
+        if(!lat||!lon){
+          var geo=await geocode(p.address);
+          lat=geo.lat;lon=geo.lon;
+        }
+        var r=p.radius||5;
+        var bgs=await fetchBGs(lat,lon,r);
+        if(!bgs.length) throw new Error('No data');
+        var pop=0,hu=0;
+        bgs.forEach(function(bg){pop+=bg.POP100||0;hu+=bg.HU100||0;});
+        var area=Math.PI*r*r;
+        var stateFips=bgs[0].GEOID.slice(0,2);
+        var incData=await fetchIncomeLabor(bgs);
+        var stateData=await fetchState(stateFips);
+        var data2010=await fetch2010(bgs);
+        var hwyResult=await fetchHwy(lat,lon);
+        if(hwyResult&&hwyResult.elements) hwyResult.elements.forEach(function(e){allHwyElements.push(e);});
+
+        var natExp=Math.round(NAT_DENSITY*area);
+
+        // Store results
+        results[p.id]={
+          lat:lat,lon:lon,pop:pop,hu:hu,
+          density:Math.round(pop/area),
+          income:incData?incData.income:0,
+          hmv:incData?incData.homeValue:0,
+          hhsz:hu>0?pop/hu:0,
+          lfpr:incData&&incData.lfpr?pct(incData.lfpr*100):'',
+          unemp:incData&&incData.unempRate?pct(incData.unempRate*100):'',
+          bach:incData&&incData.bachRate?pct(incData.bachRate*100):'',
+          wapop:incData?incData.workingAgePop:0,
+          pop10:data2010?data2010.pop:0,
+          growthNote:data2010&&data2010.pop?(function(){
+            var d=pop-data2010.pop,pc=d/data2010.pop*100;
+            return(d>=0?'\u25b2':'\u25bc')+' '+Math.abs(d).toLocaleString()+' ('+Math.abs(pc).toFixed(1)+'%) since 2010';
+          })():'',
+          natComp:(pop/natExp).toFixed(1)+'\u00d7 national avg',
+          radius:r
+        };
+
+        // Draw circle on map
+        var color=STATUS_COLORS[p.status]||'#4b7cf3';
+        var circle=L.circle([lat,lon],{
+          radius:r*1609.34,color:color,fillColor:color,
+          fillOpacity:0.06,weight:2,opacity:0.5,dashArray:'4 3'
+        }).addTo(MAP);
+        circle.bindTooltip('<b>'+p.name+'</b><br>'+Math.round(pop/1000)+'K pop · $'+Math.round((incData&&incData.income||0)/1000)+'K HHI',{sticky:true});
+        portCircles.push(circle);
+
+        if(card){card.classList.remove('analyzing','queued');card.classList.add('analyzed');}
+      }catch(e){
+        if(card){card.classList.remove('analyzing','queued');}
+      }
+      done++;
+      pf.style.width=Math.round(done/total*100)+'%';
+    }));
+  }
+
+  // Save results back to portfolio
+  var updated=getPortfolio().map(function(p){
+    var r=results[p.id];
+    return r?Object.assign({},p,r):p;
+  });
+  setPortfolio(updated);
+
+  // Draw all highways
+  if(allHwyElements.length) drawHighways(allHwyElements);
+  // Re-render cards with stats + fit map
+  renderPortfolio();
+  renderPortPins();
+  if(portCircles.length){
+    var grp=L.featureGroup(portCircles.concat(portPins));
+    MAP.fitBounds(grp.getBounds().pad(0.15));
+  }
+
+  btn.textContent='\u2713 Analyzed';btn.classList.remove('running');
+  setTimeout(function(){btn.textContent='\u27f3 Analyze All';},3000);
+  pb.classList.remove('vis');pf.style.width='0%';
+}
+
+
+// Shoelace formula for polygon area (coords = [[lon,lat],...])
+function polygonAreaSqMi(coords){
+  var n=coords.length;
+  if(n<3) return 0;
+  var area=0;
+  for(var i=0;i<n;i++){
+    var j=(i+1)%n;
+    area+=coords[i][0]*coords[j][1];
+    area-=coords[j][0]*coords[i][1];
+  }
+  area=Math.abs(area)/2;
+  // Convert from degrees² to sq miles (1 deg lat ≈ 69mi, 1 deg lon ≈ 69*cos(lat) mi)
+  var midLat=coords.reduce(function(s,c){return s+c[1];},0)/n;
+  var latMi=69.0;
+  var lonMi=69.0*Math.cos(midLat*Math.PI/180);
+  return area*latMi*lonMi;
+}
+
+// ── HIGHWAY MAP LAYER ──
+var hwyMapLayer=null;
+
+function drawHighways(elements){
+  if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
+  if(!elements||!elements.length) return;
+
+  // Use a layerGroup to hold lines + labels together
+  hwyMapLayer=L.layerGroup().addTo(MAP);
+
+  var seen={};
+  elements.forEach(function(el){
+    var tags=el.tags||{};
+    var ref=tags.ref||tags.name||'';
+    if(!ref||!el.geometry||!el.geometry.length) return;
+    if(!seen[ref]) seen[ref]=[];
+    seen[ref].push(el.geometry.map(function(pt){return [pt.lat,pt.lon];}));
+  });
+
+  Object.keys(seen).forEach(function(ref){
+    var allCoords=[];
+    seen[ref].forEach(function(coords){
+      if(coords.length<2) return;
+      // Draw polyline
+      L.polyline(coords,{
+        color:'#4b7cf3',weight:3,opacity:0.55,
+        lineJoin:'round',lineCap:'round'
+      }).addTo(hwyMapLayer);
+      allCoords=allCoords.concat(coords);
+    });
+    // Place one label at midpoint of all segments
+    if(allCoords.length){
+      var mid=allCoords[Math.floor(allCoords.length/2)];
+      L.marker([mid[0],mid[1]],{
+        icon:L.divIcon({
+          className:'hwy-label',
+          html:'<span>'+ref+'</span>',
+          iconSize:[0,0],iconAnchor:[0,0]
+        }),
+        interactive:false,zIndexOffset:-100
+      }).addTo(hwyMapLayer);
+    }
+  });
+}
+
+
+// ════════════════════════════════════════════════════════
+// PORTFOLIO MODULE
+// ════════════════════════════════════════════════════════
+var PORT_KEY='groundwork_portfolio';
+var portMode=false;
+var portFilter='all';
+var portPins=[];
+var portEditId=null;
+
+function getPortfolio(){
+  try{return JSON.parse(localStorage.getItem(PORT_KEY)||'[]');}catch(e){return[];}
+}
+function setPortfolio(props){
+  try{localStorage.setItem(PORT_KEY,JSON.stringify(props));}catch(e){}
+}
+
+// Status config
+var STATUS={
+  owned:{label:'Owned',dot:'ps-owned',pin:'pin-owned',letter:'O'},
+  target:{label:'Target',dot:'ps-target',pin:'pin-target',letter:'T'},
+  loi:{label:'Under LOI',dot:'ps-loi',pin:'pin-loi',letter:'L'},
+  sold:{label:'Sold',dot:'ps-sold',pin:'pin-sold',letter:'S'}
+};
+var TYPE_CLS={industrial:'pt-industrial',office:'pt-office',retail:'pt-retail',mixed:'pt-mixed'};
+
+function togglePortfolio(){
+  portMode=!portMode;
+  el('port-btn').classList.toggle('active',portMode);
+  el('port-panel').classList.toggle('vis',portMode);
+  el('side-inner').style.display=portMode?'none':'';
+  if(portMode){
+    renderPortfolio();
+    renderPortPins();
+  } else {
+    clearPortPins();
+    clearPortCircles();
+    clearPortDrive();
+    if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
+  }
+}
+
+function setPortFilter(btn,filter){
+  portFilter=filter;
+  document.querySelectorAll('.pf-btn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  renderPortfolio();
+  renderPortPins();
+}
+
+function renderPortfolio(){
+  var props=getPortfolio();
+  var list=el('port-list');
+  var filtered=portFilter==='all'?props:props.filter(function(p){return p.status===portFilter;});
+  updatePortCount();
+
+  if(!filtered.length){
+    list.innerHTML='<div id="port-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--m1);font-size:13px;text-align:center;gap:8px;padding:40px 20px"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div>No properties yet</div><div style="font-size:11px;color:var(--m1)">Run an analysis and click &quot;Add to Portfolio&quot;</div></div>';
+    return;
+  }
+
+  var cards='';
+  filtered.forEach(function(p){
+    var st=STATUS[p.status]||STATUS.target;
+    var tc=TYPE_CLS[p.type]||'pt-mixed';
+    var typeLabel=p.type?p.type.charAt(0).toUpperCase()+p.type.slice(1):'';
+    var hasStats=p.pop>0;
+    var pop=p.pop?Math.round(p.pop/1000).toLocaleString()+'K':'—';
+    var inc=p.income?'$'+Math.round(p.income/1000)+'K':'—';
+    var den=p.density?p.density.toLocaleString():'—';
+    var hmv=p.hmv?'$'+Math.round(p.hmv/1000)+'K':'—';
+    var lfpr=p.lfpr||'—';
+    var unemp=p.unemp||'—';
+    var biz=p.biz||'—';
+    var hwy=p.hwy||'—';
+
+    cards+='<div class="port-card" id="pc-'+p.id+'" onclick="analyzePortFull('+p.id+')"'
+      +' onmouseenter="highlightPortPin('+p.id+',true)"'
+      +' onmouseleave="highlightPortPin('+p.id+',false)">'
+      +'<button class="port-del-btn" onclick="event.stopPropagation();delPortProp('+p.id+')">×</button>'
+
+      // Header
+      +'<div class="port-card-top">'
+      +'<div>'
+      +'<div class="port-card-name">'+p.name+'</div>'
+      +'<div class="port-card-addr">'+p.address+'</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+      +'<div class="port-status-dot '+st.dot+'" style="width:10px;height:10px" title="'+st.label+'"></div>'
+      +'<span class="port-type-badge '+tc+'" style="font-size:9px">'+typeLabel+'</span>'
+      +'</div>'
+      +'</div>'
+
+      // Stats grid (only if analyzed)
+      +(hasStats
+        ?'<div class="port-stat-grid">'
+          +'<div class="port-stat"><div class="port-stat-v">'+pop+'</div><div class="port-stat-l">Population</div></div>'
+          +'<div class="port-stat"><div class="port-stat-v" style="color:var(--gn)">'+inc+'</div><div class="port-stat-l">Med HHI</div></div>'
+          +'<div class="port-stat"><div class="port-stat-v">'+den+'</div><div class="port-stat-l">Density/mi²</div></div>'
+          +'<div class="port-stat"><div class="port-stat-v">'+hmv+'</div><div class="port-stat-l">Home Value</div></div>'
+          +'<div class="port-stat"><div class="port-stat-v">'+lfpr+'</div><div class="port-stat-l">LFPR</div></div>'
+          +'<div class="port-stat"><div class="port-stat-v">'+unemp+'</div><div class="port-stat-l">Unemploy.</div></div>'
+          +'</div>'
+          +(p.growthNote?'<div style="font-size:10.5px;margin-top:4px;color:'+(p.growthNote.indexOf('\u25b2')>=0?'var(--gn)':'var(--rd)')+'">'+p.growthNote+'</div>':'')
+          +'<div class="port-transport"><span>🛣 '+hwy+'</span><span>✈ '+(p.airport||'—')+'</span><span>🏢 '+biz+' biz</span></div>'
+        :'<div style="font-size:11px;color:var(--m1);margin-top:6px;padding:6px 0;border-top:1px solid var(--b1)">Not yet analyzed — click Analyze to load stats</div>'
+      )
+
+      +(p.notes?'<div style="font-size:11px;color:var(--m2);margin-top:6px;padding-top:6px;border-top:1px solid var(--b1);line-height:1.5">'+p.notes+'</div>':'')
+
+      +'<div class="port-card-actions">'
+      +'<button class="port-act-btn primary" onclick="event.stopPropagation();analyzePort('+p.id+')">Analyze</button>'
+      +'<button class="port-act-btn" onclick="event.stopPropagation();brokerPort('+p.id+')">Broker Intel</button>'
+      +'</div>'
+      +'</div>';
+  });
+  list.innerHTML=cards;
+}
+
+
+function updatePortCount(){
+  var n=getPortfolio().length;
+  var cnt=el('port-count');
+  if(cnt){cnt.textContent=n;cnt.classList.toggle('vis',n>0);}
+}
+
+// ── Map pins ──
+function renderPortPins(){
+  clearPortPins();
+  var props=getPortfolio();
+  var filtered=portFilter==='all'?props:props.filter(function(p){return p.status===portFilter;});
+  filtered.forEach(function(p){
+    if(!p.lat||!p.lon) return;
+    var st=STATUS[p.status]||STATUS.target;
+    var icon=L.divIcon({
+      className:'port-pin',
+      html:'<div class="port-pin-inner '+st.pin+'" title="'+p.name+'">'+st.letter+'</div>',
+      iconSize:[28,28],iconAnchor:[14,14]
+    });
+    var marker=L.marker([p.lat,p.lon],{icon:icon,zIndexOffset:500})
+      .addTo(MAP)
+      .bindPopup(
+        '<div style="font-family:\'DM Sans\',sans-serif;min-width:160px">'
+        +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+p.name+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-bottom:8px">'+p.address+'</div>'
+        +'<div style="font-size:11px;color:#888">'+st.label+(p.type?' · '+p.type:'')+'</div>'
+        +(p.notes?'<div style="font-size:11px;margin-top:6px;color:#aaa">'+p.notes+'</div>':'')
+        +'<button onclick="analyzePort('+p.id+')" style="margin-top:10px;width:100%;padding:7px;background:#4b7cf3;border:none;border-radius:6px;color:#fff;font-weight:600;cursor:pointer;font-size:12px">Analyze</button>'
+        +'</div>',
+        {maxWidth:220}
+      );
+    marker._portId=p.id;
+    portPins.push(marker);
+  });
+  // Fit map to portfolio if we have pins
+  if(portPins.length>0){
+    var group=L.featureGroup(portPins);
+    MAP.fitBounds(group.getBounds().pad(0.2));
+  }
+}
+
+
+function highlightPortPin(id,on){
+  portPins.forEach(function(m){
+    var el2=m.getElement();
+    if(!el2) return;
+    var inner=el2.querySelector('.port-pin-inner');
+    if(!inner) return;
+    inner.style.transform=on&&m._portId===id?'scale(1.3)':'scale(1)';
+    inner.style.boxShadow=on&&m._portId===id?'0 0 0 3px rgba(255,255,255,.3)':'';
+  });
+}
+
+function clearPortPins(){
+  portPins.forEach(function(m){MAP.removeLayer(m);});
+  portPins=[];
+}
+
+// ── Add / Edit ──
+function showPortForm(prefillFromAnalysis){
+  el('port-form').classList.add('vis');
+  el('port-add-btn').style.display='none';
+  if(prefillFromAnalysis){
+    var d=buildDataPayload();
+    var addr=d.address||'';
+    el('pf-name').value=addr.split(',')[0];
+    el('pf-addr').value=addr;
+  } else {
+    el('pf-name').value='';
+    el('pf-addr').value='';
+    el('pf-notes').value='';
+  }
+  el('pf-name').focus();
+}
+
+function hidePortForm(){
+  el('port-form').classList.remove('vis');
+  el('port-add-btn').style.display='block';
+  portEditId=null;
+}
+
+async function savePortProp(){
+  var name=el('pf-name').value.trim();
+  var addr=el('pf-addr').value.trim();
+  if(!name||!addr){alert('Name and address are required.');return;}
+
+  el('port-form-save').textContent='Saving…';
+  el('port-form-save').disabled=true;
+
+  // Geocode address
+  var lat=0,lon=0;
+  try{
+    var geo=await geocode(addr);
+    lat=geo.lat;lon=geo.lon;
+  }catch(e){}
+
+  var props=getPortfolio();
+  var now=Date.now();
+  var prop={
+    id:portEditId||now,
+    name:name,
+    address:addr,
+    type:el('pf-type').value,
+    status:el('pf-status').value,
+    notes:el('pf-notes').value.trim(),
+    lat:lat,lon:lon,
+    addedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    radius:radius,
+    // Stats from current analysis if available
+    pop:slotCache[0].pop||0,
+    income:slotCache[0].income||0,
+    density:slotCache[0].density||0,
+    hu:slotCache[0].hu||0,
+    hmv:slotCache[0].hmv||0,
+    hhsz:slotCache[0].hhsz||0,
+    growthNote:el('grow-delta-0')?el('grow-delta-0').textContent:'',
+    lfpr:el('lfpr-0')?el('lfpr-0').textContent:'',
+    unemp:el('unemp-0')?el('unemp-0').textContent:'',
+    bach:el('bach-0')?el('bach-0').textContent:'',
+    wapop:slotCache[0].pop||0,
+    biz:el('rbiz-0')?el('rbiz-0').textContent:'',
+    hwy:el('rhwy-0')?el('rhwy-0').textContent:'',
+    airport:el('air-0')&&el('air-0').querySelector('.hwy-name')?el('air-0').querySelector('.hwy-name').textContent:'',
+    natComp:el('nat-lbl-0')?el('nat-lbl-0').textContent:''
+  };;
+
+  if(portEditId){
+    var idx=props.findIndex(function(p){return p.id===portEditId;});
+    if(idx>=0) props[idx]=prop;
+  } else {
+    props.unshift(prop);
+  }
+  setPortfolio(props);
+  hidePortForm();
+  renderPortfolio();
+  renderPortPins();
+
+  el('port-form-save').textContent='Save Property';
+  el('port-form-save').disabled=false;
+}
+
+function delPortProp(id){
+  var props=getPortfolio().filter(function(p){return p.id!==id;});
+  setPortfolio(props);
+  renderPortfolio();
+  renderPortPins();
+}
+
+function analyzePort(id){
+  var props=getPortfolio();
+  var p=props.find(function(x){return x.id===id;});
+  if(!p) return;
+  // Switch to analysis mode
+  if(portMode) togglePortfolio();
+  el('inp-a').value=p.address;
+  radius=p.radius||5;
+  document.querySelectorAll('.rb').forEach(function(b){
+    b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===radius);
+  });
+  run();
+}
+
+function brokerPort(id){
+  var props=getPortfolio();
+  var p=props.find(function(x){return x.id===id;});
+  if(!p) return;
+  if(portMode) togglePortfolio();
+  el('inp-a').value=p.address;
+  radius=p.radius||5;
+  // Run analysis then trigger broker intel
+  run().then(function(){
+    setTimeout(function(){brokerIntel(p.type||'industrial');},500);
+  });
+}
+
+// Add to portfolio from analysis
+function addCurrentToPortfolio(){
+  if(!portMode) togglePortfolio();
+  showPortForm(true);
+}
+
+// Update portfolio cache when analysis completes
+function updatePortfolioFromAnalysis(addr,lat,lon,pop,income,radius2){
+  var props=getPortfolio();
+  var idx=props.findIndex(function(p){
+    return p.address.toLowerCase().indexOf(addr.split(',')[0].toLowerCase())>=0;
+  });
+  if(idx>=0){
+    props[idx].lat=lat;props[idx].lon=lon;
+    props[idx].pop=pop;props[idx].income=income;
+    props[idx].radius=radius2;
+    setPortfolio(props);
+  }
+}
+
+// Init
+updatePortCount();
+
+
+// ── MIGRATION: consolidate all previous key names → groundwork_* ──
+(function(){
+  var migrations=[
+    {old:['credatapro_saves','rcbo_saves','cre_saves','propscout_saves'],key:'groundwork_saves'},
+    {old:['credatapro_portfolio','rcbo_portfolio','cre_portfolio','propscout_portfolio'],key:'groundwork_portfolio'},
+    {old:['credatapro_apikey','rcbo_apikey','cre_apikey','propscout_apikey','groundwork_api_key'],key:'groundwork_apikey'}
+  ];
+  migrations.forEach(function(m){
+    if(localStorage.getItem(m.key)) return;
+    m.old.forEach(function(oldKey){
+      var val=localStorage.getItem(oldKey);
+      if(val) localStorage.setItem(m.key,val);
+    });
+  });
+})();
+
+
+// ════════════════════════════════════════════════════════
+// EPA ENVIRONMENTAL RISK
+// ════════════════════════════════════════════════════════
+var epaMode=''; // 'circle' or 'drive'
+
+
+// Point-in-polygon (ray casting) for drive-time mode
+
+
+
+
+
+
+
+
+// ── COUNT-UP ANIMATION ──
+function animateNumber(el, targetText, delay) {
+  if(!el) return;
+  // Extract numeric part
+  var numMatch = targetText.replace(/,/g,'').match(/[\d.]+/);
+  if(!numMatch) { el.textContent=targetText; el.classList.add('loaded'); return; }
+  var target = parseFloat(numMatch[0]);
+  var prefix = targetText.slice(0, targetText.search(/[\d]/));
+  var suffix = targetText.slice(targetText.search(/[\d]/)+numMatch[0].length);
+  var isInt = !targetText.includes('.');
+  var duration = 600;
+  var start = null;
+  el.classList.remove('pending');
+  setTimeout(function(){
+    el.classList.add('loaded');
+    function step(ts){
+      if(!start) start=ts;
+      var progress=Math.min((ts-start)/duration,1);
+      var ease=1-Math.pow(1-progress,3);
+      var cur=target*ease;
+      if(isInt){
+        el.textContent=prefix+Math.round(cur).toLocaleString('en-US')+suffix;
+      } else {
+        el.textContent=prefix+cur.toFixed(1)+suffix;
+      }
+      if(progress<1) requestAnimationFrame(step);
+      else el.textContent=prefix+(isInt?target.toLocaleString('en-US'):target.toFixed(1))+suffix;
+    }
+    requestAnimationFrame(step);
+  }, delay||0);
+}
+
+// ── CARD ENTRANCE ──
+function animateCards(colId) {
+  var col = el(colId);
+  if(!col) return;
+  var cards = col.querySelectorAll('.hcard');
+  cards.forEach(function(card, i) {
+    card.classList.remove('anim');
+    void card.offsetWidth; // reflow
+    setTimeout(function(){ card.classList.add('anim'); }, i * 55);
+  });
+}
+
+// ── LABOR BAR UPDATE ──
+function setLaborBar(elId, val, stateVal, higherGood, color) {
+  var barWrap = document.querySelector('#'+elId+'-bar');
+  var stateNote = document.querySelector('#'+elId+'-note');
+  if(!barWrap) return;
+  var pct = stateVal ? Math.min((val/stateVal)*50, 95) : Math.min(val*100, 95);
+  barWrap.querySelector('.labor-bar').style.width = pct+'%';
+  barWrap.querySelector('.labor-bar').style.background = color||'var(--ac)';
+  if(stateNote && stateVal) {
+    var ratio = val/stateVal;
+    var col = higherGood ? (ratio>=1.05?'var(--gn)':ratio<0.9?'var(--yw)':'var(--m1)') 
+                         : (ratio<=0.95?'var(--gn)':ratio>1.1?'var(--yw)':'var(--m1)');
+    stateNote.style.color = col;
+  }
+}
+
+// ── UNIFIED MODE TAB SWITCHER ──
+function switchModeTab(mode){
+  var isCircle=mode==='circle';
+  var mtc=el('mtab-circle'),mtd=el('mtab-drive');
+  var co=el('circle-options'),dro=el('drive-options');
+  if(mtc){mtc.classList.toggle('active',isCircle);}
+  if(mtd){mtd.classList.toggle('active',!isCircle);}
+  if(co) co.style.display=isCircle?'flex':'none';
+  if(dro) dro.classList.toggle('vis',!isCircle);
+  if(isCircle){
+    analysisMode='circle';driveMin=0;
+    document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
+    var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
+    if(slotCache[0].circleCache) setAnalysisMode('circle');
+  } else {
+    analysisMode='drive';
+    if(!driveMin){
+      driveMin=15;
+      document.querySelectorAll('.drb[data-min]').forEach(function(b){
+        b.classList.toggle('on',parseInt(b.getAttribute('data-min'))===15);
+      });
+    }
+  }
+  updateAnalyzeBtn();
+}
+
+function updateAnalyzeBtn(){
+  var btn=el('btn');if(!btn) return;
+  var mtd=el('mtab-drive');
+  var isDrive=mtd&&mtd.classList.contains('active');
+  btn.textContent=(isDrive&&driveMin)?'Analyze · '+driveMin+' min':'Analyze';
+}
+
+// ═══════════════ MAP INIT ═══════════════
+MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
+initCollapsible();
+// Force map to recalculate size after layout settles
+window.addEventListener('load',function(){setTimeout(function(){MAP.invalidateSize();},100);});
+window.addEventListener('resize',function(){MAP.invalidateSize();});
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
+  maxZoom:16,attribution:'© <a href="https://www.esri.com">Esri</a> · US Census'
+}).addTo(MAP);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{
+  maxZoom:16,attribution:''
+}).addTo(MAP);
+
+
+// Pulsing circle during analysis
+function showPulse(lat,lon,r){
+  stopPulse();
+  pulseCircle=L.circle([lat,lon],{
+    radius:r*1609.34,color:'#3ecf8e',fillColor:'#3ecf8e',
+    fillOpacity:.04,weight:3,opacity:.9,className:'pulse-active'
+  }).addTo(MAP);
+  MAP.fitBounds(pulseCircle.getBounds(),{padding:[40,40]});
+}
+function stopPulse(){
+  if(pulseCircle){MAP.removeLayer(pulseCircle);pulseCircle=null;}
+}
+
+
+// ── ADDRESS AUTOCOMPLETE ──
+var acTimers={a:null,b:null};
+function setupAutocomplete(inputId,dropId){
+  var inp=el(inputId), drop=el(dropId);
+  if(!inp||!drop) return;
+  var slotKey=inputId.slice(-1); // 'a' or 'b'
+  inp.addEventListener('input',function(){
+    clearTimeout(acTimers[slotKey]);
+    var q=inp.value.trim();
+    if(q.length<3){drop.classList.remove('vis');return;}
+    acTimers[slotKey]=setTimeout(function(){fetchSuggestions(q,inp,drop);},300);
+  });
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){drop.classList.remove('vis');}
+    if(e.key==='ArrowDown'){
+      var items=drop.querySelectorAll('.ac-item');
+      var sel=drop.querySelector('.ac-item.sel');
+      if(sel){sel.classList.remove('sel');var next=sel.nextElementSibling;if(next)next.classList.add('sel');}
+      else if(items[0])items[0].classList.add('sel');
+      e.preventDefault();
+    }
+    if(e.key==='ArrowUp'){
+      var items=drop.querySelectorAll('.ac-item');
+      var sel=drop.querySelector('.ac-item.sel');
+      if(sel){sel.classList.remove('sel');var prev=sel.previousElementSibling;if(prev)prev.classList.add('sel');}
+      e.preventDefault();
+    }
+    if(e.key==='Enter'){
+      var sel=drop.querySelector('.ac-item.sel');
+      if(sel&&drop.classList.contains('vis')){
+        inp.value=sel.dataset.addr;
+        drop.classList.remove('vis');
+        e.stopPropagation();
+        run();
+      }
+    }
+  });
+  document.addEventListener('click',function(e){
+    if(!inp.contains(e.target)&&!drop.contains(e.target))drop.classList.remove('vis');
+  });
+}
+
+async function fetchSuggestions(query,inp,drop){
+  try{
+    var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(query)+'&countrycodes=us&limit=5&addressdetails=1');
+    if(!r.ok) return;
+    var data=await r.json();
+    if(!data.length){drop.classList.remove('vis');return;}
+    drop.innerHTML=data.map(function(d){
+      var addr=d.address||{};
+      var main=[addr.house_number,addr.road].filter(Boolean).join(' ')||d.display_name.split(',')[0];
+      var sub=[addr.city||addr.town||addr.village,addr.state].filter(Boolean).join(', ');
+      return '<div class="ac-item" data-addr="'+d.display_name.split(',').slice(0,3).join(',').replace(/"/g,'&quot;')+'">'
+        +'<div class="ac-item-main">'+main+'</div>'
+        +(sub?'<div class="ac-item-sub">'+sub+'</div>':'')
+        +'</div>';
+    }).join('');
+    drop.querySelectorAll('.ac-item').forEach(function(item){
+      item.addEventListener('click',function(){
+        inp.value=item.dataset.addr;
+        drop.classList.remove('vis');
+        run();
+      });
+    });
+    drop.classList.add('vis');
+  }catch(e){}
+}
+
+// Init autocomplete after MAP setup
+setupAutocomplete('inp-a','ac-a');
+setupAutocomplete('inp-b','ac-b');
+
+// Map click to analyze (must be after MAP init)
+MAP.on('click',function(e){
+  var inp=document.getElementById('inp-a');
+  var lat=e.latlng.lat.toFixed(5),lon=e.latlng.lng.toFixed(5);
+  inp.value=lat+','+lon;
+  run();
+});
+var mh=document.getElementById('map-hint');
+if(mh) mh.style.opacity='0.8';
+
+// ═══════════════ UTILS ═══════════════
+function hav(lat1,lon1,lat2,lon2){var R=3958.8,p=Math.PI/180,dl=(lat2-lat1)*p,dn=(lon2-lon1)*p;var a=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(lat1*p)*Math.cos(lat2*p)*Math.sin(dn/2)*Math.sin(dn/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function ptSeg(px,py,ax,ay,bx,by){var dx=bx-ax,dy=by-ay;if(!dx&&!dy)return hav(py,px,ay,ax);var t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy)));return hav(py,px,ay+t*dy,ax+t*dx);}
+function fmt(n){return(n||0).toLocaleString('en-US');}
+function pct(n){return n.toFixed(1)+'%';}
+function setStatus(t,m){document.getElementById('dot').className='dot'+(t?' '+t:'');document.getElementById('sm').textContent=m;}
+function showErr(m){var e=document.getElementById('err-box');e.textContent='⚠ '+m;e.style.display='block';}
+function clearErr(){document.getElementById('err-box').style.display='none';}
+function incColor(v){return v>=120000?'#3ecf8e':v>=80000?'#4b7cf3':v>=55000?'#f5c842':'#ef5858';}
+function incLabel(v){return v>=120000?'High income':v>=80000?'Upper-middle income':v>=55000?'Middle income':'Lower-middle income';}
+function el(id){return document.getElementById(id);}
+
+// ═══════════════ RADIUS BUTTONS ═══════════════
+document.querySelectorAll('.rb').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.rb').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on'); radius=parseFloat(b.getAttribute('data-r'));
+  });
+});
+el('inp-a').addEventListener('keydown',function(e){if(e.key==='Enter')run();});
+el('inp-b').addEventListener('keydown',function(e){if(e.key==='Enter')run();});
+el('btn').addEventListener('click',run);
+
+// ═══════════════ COMPARE MODE ═══════════════
+function toggleCompare(){
+  compareMode=!compareMode;
+  el('compare-toggle').classList.toggle('active',compareMode);
+  el('compare-toggle').textContent=compareMode?'✕ Compare':'＋ Compare';
+  el('addr-b-wrap').classList.toggle('vis',compareMode);
+  el('side').classList.toggle('compare-mode',compareMode);
+  if(!compareMode){
+    el('col-1').classList.remove('vis');
+    if(circles[1]){MAP.removeLayer(circles[1]);circles[1]=null;}
+    if(markers[1]){MAP.removeLayer(markers[1]);markers[1]=null;}
+  }
+}
+
+// ═══════════════ BREAKDOWN TOGGLE ═══════════════
+function toggleBreakdown(slot){
+  var btn=el('breakdown-toggle-'+slot);
+  var wrap=el('bk-'+slot);
+  btn.classList.toggle('bt-open');
+  wrap.classList.toggle('open');
+}
+
+// ═══════════════ MAP DRAW ═══════════════
+function drawSlot(slot,lat,lon,r,pop,medInc){
+  if(circles[slot]) MAP.removeLayer(circles[slot]);
+  if(markers[slot]) MAP.removeLayer(markers[slot]);
+  slotCache[slot].lat=lat; slotCache[slot].lon=lon; slotCache[slot].r=r;
+  slotCache[slot].pop=pop;
+  var fillColor=slot===1?SLOT_COLOR[1]:(medInc&&!compareMode?incColor(medInc):SLOT_COLOR[slot]);
+  var strokeColor=slot===1?SLOT_COLOR[1]:'#3ecf8e';
+  circles[slot]=L.circle([lat,lon],{radius:r*1609.34,color:strokeColor,fillColor:fillColor,fillOpacity:.07,weight:2,dashArray:'6 4',opacity:.8}).addTo(MAP);
+  var icon=L.divIcon({html:'<div style="width:10px;height:10px;background:'+strokeColor+';border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px rgba(62,207,142,.4)"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
+  markers[slot]=L.marker([lat,lon],{icon:icon}).addTo(MAP);
+  refreshPopup(slot,medInc);
+  var bounds=[];
+  for(var i=0;i<2;i++){if(circles[i])bounds.push(circles[i].getBounds());}
+  if(bounds.length===1) MAP.fitBounds(bounds[0],{padding:[40,40]});
+  else if(bounds.length===2) MAP.fitBounds(bounds[0].extend(bounds[1]),{padding:[40,40]});
+}
+
+function refreshPopup(slot,medInc){
+  if(!markers[slot]) return;
+  var c=slotCache[slot];
+  var pop=c.pop, pop10=c.pop10, inc=medInc||c.income, biz=c.biz, hwy=c.hwy;
+  if(pop==null) return;
+  var color=slot===1?SLOT_COLOR[1]:(inc&&!compareMode?incColor(inc):SLOT_COLOR[slot]);
+  var h='<div style="font-family:DM Sans,sans-serif;min-width:160px">';
+  h+='<div style="font-family:IBM Plex Mono,monospace;font-size:18px;font-weight:600;letter-spacing:-.5px">'+fmt(pop)+'</div>';
+  h+='<div style="font-size:11px;color:#6a768f;margin-bottom:6px">people within '+c.r+'-mile radius</div>';
+  if(inc) h+='<div style="font-size:12px;margin-bottom:3px"><span style="color:'+color+'">$'+fmt(inc)+'</span> med. household income</div>';
+  if(pop10&&pop10>0){var d=pop-pop10,pct2=(d/pop10*100).toFixed(1),arrow=d>=0?'▲':'▼',col2=d>=0?'#3ecf8e':'#ef5858';h+='<div style="font-size:12px;margin-bottom:3px"><span style="color:'+col2+'">'+arrow+' '+Math.abs(pct2)+'%</span> since 2010 ('+fmt(pop10)+')</div>';}
+  if(biz&&biz.total) h+='<div style="font-size:12px;margin-bottom:3px"><span style="color:#f59e42">'+fmt(biz.total)+'</span> employer businesses</div>';
+  if(hwy&&hwy.length) h+='<div style="font-size:12px"><span style="color:#f5c842">'+(hwy[0].ref||'HWY')+'</span> '+(hwy[0].dist.toFixed(1))+' mi away</div>';
+  h+='</div>';
+  markers[slot].bindPopup(h);
+  if(markers[slot].isPopupOpen()) markers[slot].openPopup();
+}
+
+// ═══════════════ URL SHARING ═══════════════
+function updateURL(){
+  var p=new URLSearchParams();
+  var a=el('inp-a').value.trim();
+  if(a) p.set('a',a);
+  p.set('r',radius);
+  if(compareMode){var b=el('inp-b').value.trim();if(b) p.set('b',b);}
+  history.replaceState({},'','?'+p.toString());
+}
+function shareURL(){
+  updateURL();
+  var url=window.location.href;
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){showToast();});}
+  else{var ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast();}
+}
+function showToast(){var t=el('toast');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+// ═══════════════ PDF EXPORT ═══════════════
+function exportPDF(){
+  // Un-collapse all cards
+  var collapsed = document.querySelectorAll('.hcard.collapsed');
+  collapsed.forEach(function(c){ c.classList.remove('collapsed'); });
+  // Open sector breakdowns
+  [0,1].forEach(function(s){
+    var bk=el('bk-'+s); if(bk) bk.classList.add('open');
+  });
+  el('print-ts').textContent='Generated '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})+' · '+radius+'-mile radius';
+
+  // Show Chrome tip overlay
+  var tip = document.getElementById('pdf-tip');
+  if(!tip){
+    tip = document.createElement('div');
+    tip.id = 'pdf-tip';
+    tip.innerHTML = '<div id="pdf-tip-inner"><div id="pdf-tip-title">Before you print</div>'
+      +'<div id="pdf-tip-body">In the Chrome print dialog, enable<br><strong>☑ Background graphics</strong><br>to preserve the dark theme.</div>'
+      +'<button onclick="closePdfTip()" id="pdf-tip-btn">Got it — open print dialog</button></div>';
+    document.body.appendChild(tip);
+    // Add click-outside to close
+    tip.addEventListener('click', function(e){ if(e.target===tip) closePdfTip(); });
+  } else {
+    tip.style.display='flex';
+  }
+}
+
+function closePdfTip(){
+  var tip=document.getElementById('pdf-tip');
+  if(tip) tip.style.display='none';
+  window.print();
+  // Restore collapsed state (user's collapsed cards stay open — feels right for PDF workflow)
+}
+
+// ═══════════════ LOAD FROM URL ═══════════════
+(function(){
+  var p=new URLSearchParams(window.location.search);
+  if(p.get('a')) el('inp-a').value=p.get('a');
+  if(p.get('r')){
+    var r=parseFloat(p.get('r'));
+    radius=r;
+    document.querySelectorAll('.rb').forEach(function(b){b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===r);});
+  }
+  if(p.get('b')){
+    toggleCompare();
+    el('inp-b').value=p.get('b');
+  }
+  if(p.get('a')) setTimeout(run,400);
+})();
+
+// ═══════════════ RESET SLOT ═══════════════
+function resetSlot(s){
+  ['rp','rs','ri','rbiz','rhwy','pop10','pop20'].forEach(function(id){
+    var e=el(id+'-'+s); if(e){e.textContent='…';e.classList.add('pending');}
+  });
+  ['biz-ctx-0','biz-ctx-1'].forEach(function(id){var e=el(id);if(e){e.textContent='';e.style.color='';}});
+  ['lfpr','unemp','bach','wapop'].forEach(function(id){
+    var e=el(id+'-'+s); if(e){e.textContent='…';e.classList.add('pending');}
+    // Clear bars
+    var bar=el(id+'-'+s+'-bar');
+    if(bar){var b=bar.querySelector('.labor-bar');if(b)b.style.width='0%';}
+    var note=el(id+'-'+s+'-note');
+    if(note) note.innerHTML='';
+  });
+  ['grow-delta','biz-sub','ictx','ra'].forEach(function(id){
+    var e=el(id+'-'+s); if(e) e.textContent='';
+  });
+  el('ibar-'+s).style.width='0%';
+  el('cbar-'+s).style.display='none';
+  var bt=el('breakdown-toggle-'+s); if(bt) bt.style.display='none';
+  var bk=el('bk-'+s); if(bk){bk.classList.remove('open');el('breakdown-toggle-'+s).classList.remove('bt-open');}
+  // Reset size filter
+  bizSizeFilter[s]='all';
+  var bsf=el('bsf-'+s);
+  if(bsf){bsf.querySelectorAll('.bsf').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-size')==='all');});}
+  var bsr=el('biz-size-rows-'+s);if(bsr) bsr.innerHTML='';
+  el('sl-'+s).innerHTML='';
+  el('hwy-'+s).innerHTML='';
+  var airSec=el('air-sec-'+s);if(airSec)airSec.style.display='none';
+  var portSec=el('port-sec-'+s);if(portSec)portSec.style.display='none';
+  var hwyEl=el('rhwy-'+s);if(hwyEl){hwyEl.textContent='…';hwyEl.classList.add('pending');}
+}
+
+// ═══════════════ API: GEOCODE ═══════════════
+async function geocode(addr){
+  var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(addr)+'&countrycodes=us&limit=1&addressdetails=1');
+  if(!r.ok) throw new Error('Geocoding failed');
+  var d=await r.json();
+  if(!d||!d.length) throw new Error('Address not found — try adding city and state');
+  return{lat:parseFloat(d[0].lat),lon:parseFloat(d[0].lon),display:d[0].display_name,rawData:d};
+}
+
+// ═══════════════ API: BLOCK GROUPS ═══════════════
+async function fetchBGs(lat,lon,r){
+  var geom='{"x":'+lon+',"y":'+lat+'}';
+  var res=await fetch('https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer/11/query'
+    +'?geometry='+encodeURIComponent(geom)+'&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects'
+    +'&distance='+(r+0.5)+'&units=esriSRUnit_StatuteMile&inSR=4326'
+    +'&outFields=GEOID,CENTLAT,CENTLON,POP100,HU100&returnGeometry=false&f=json');
+  if(!res.ok) throw new Error('Census API error');
+  var d=await res.json();
+  if(d.error) throw new Error('Census: '+d.error.message);
+  if(!d.features||!d.features.length) throw new Error('No census data — US addresses only');
+  return d.features.map(function(f){return f.attributes;}).filter(function(bg){
+    return bg.CENTLAT&&bg.CENTLON&&hav(lat,lon,parseFloat(bg.CENTLAT),parseFloat(bg.CENTLON))<=r;
+  });
+}
+
+// ═══════════════ API: INCOME + LABOR POOL ═══════════════
+async function fetchIncomeLabor(bgs){
+  var counties={};
+  bgs.forEach(function(bg){
+    var st=bg.GEOID.slice(0,2),co=bg.GEOID.slice(2,5),k=st+'-'+co;
+    if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
+    counties[k].geoids[bg.GEOID]=true;
+  });
+  var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0;
+  for(var k in counties){
+    var c=counties[k];
+    try{
+      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var r=await fetch(url); if(!r.ok) continue;
+      var rows=await r.json();
+      for(var i=1;i<rows.length;i++){
+        var row=rows[i],geoid=row[11]+row[12]+row[13]+row[14];
+        if(c.geoids[geoid]){
+          var inc=parseInt(row[0])||0,pop=parseInt(row[1])||0;
+          if(inc>0&&pop>0){incWt+=inc*pop;incPop+=pop;}
+          var p16=parseInt(row[2])||0,lfv=parseInt(row[3])||0,un=parseInt(row[4])||0;
+          var p25=parseInt(row[5])||0,bv=(parseInt(row[7])||0)+(parseInt(row[8])||0)+(parseInt(row[9])||0);
+          var hmv=parseInt(row[10])||0;
+          lf+=lfv;pop16+=p16;unemp+=un;bach+=bv;pop25+=p25;
+          if(hmv>0&&pop>0){hmvWt+=hmv*pop;hmvPop+=pop;}
+        }
+      }
+    }catch(e){}
+  }
+  return{
+    income:incPop>0?Math.round(incWt/incPop):null,
+    lfpr:pop16>0?lf/pop16:null,
+    unempRate:lf>0?unemp/lf:null,
+    bachRate:pop25>0?bach/pop25:null,
+    homeValue:hmvPop>0?Math.round(hmvWt/hmvPop):null,
+    workingAgePop:pop16
+  };
+}
+
+// ═══════════════ API: 2010 POPULATION ═══════════════
+async function fetch2010(bgs){
+  var counties={};
+  bgs.forEach(function(bg){
+    var st=bg.GEOID.slice(0,2),co=bg.GEOID.slice(2,5),k=st+'-'+co;
+    if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
+    counties[k].geoids[bg.GEOID]=true;
+  });
+  var total=0,matched=0;
+  for(var k in counties){
+    var c=counties[k];
+    try{
+      var url='https://api.census.gov/data/2010/dec/sf1?get=P001001&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var r=await fetch(url); if(!r.ok) continue;
+      var rows=await r.json();
+      for(var i=1;i<rows.length;i++){
+        var row=rows[i],geoid=row[1]+row[2]+row[3]+row[4];
+        if(c.geoids[geoid]){total+=parseInt(row[0])||0;matched++;}
+      }
+    }catch(e){}
+  }
+  return{pop:total,matched:matched};
+}
+
+// ═══════════════ API: STATE DENSITY ═══════════════
+async function fetchState(fips){
+  var land=STATE_LAND[fips]; if(!land) return null;
+  try{
+    var [popResp,bizResp,hhiResp,laborResp]=await Promise.all([
+      fetch('https://api.census.gov/data/2022/acs/acs5?get=B01003_001E,NAME&for=state:'+fips),
+      fetch('https://api.census.gov/data/2021/cbp?get=ESTAB&for=state:'+fips+'&NAICS2017=00'),
+      fetch('https://api.census.gov/data/2022/acs/acs5?get=B19013_001E&for=state:'+fips),
+      fetch('https://api.census.gov/data/2022/acs/acs5?get=B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E&for=state:'+fips)
+    ]);
+    if(!popResp.ok) return null;
+    var popD=await popResp.json();
+    var pop=parseInt(popD[1][0]);
+    var stateBiz=null;
+    if(bizResp.ok){
+      var bizD=await bizResp.json();
+      var estab=parseInt(bizD[1][0]);
+      stateBiz={estab:estab,perSqMi:estab/land};
+    }
+    // Fetch EMPSZES size breakdown for state
+    var stateBizSizes=null;
+    try{
+      var szResp=await fetch('https://api.census.gov/data/2021/cbp?get=ESTAB,EMPSZES&for=state:'+fips+'&NAICS2017=00');
+      if(szResp.ok){
+        var szD=await szResp.json();
+        var szMap={};
+        szD.slice(1).forEach(function(r){szMap[r[1]]=parseInt(r[0])||0;});
+        var szLand=STATE_LAND[fips]||1;
+        stateBizSizes={
+          all:szMap['001']||0,
+          e10:(szMap['230']||0)+(szMap['241']||0)+(szMap['242']||0)+(szMap['251']||0)+(szMap['252']||0)+(szMap['254']||0),
+          e50:(szMap['242']||0)+(szMap['251']||0)+(szMap['252']||0)+(szMap['254']||0),
+          e100:(szMap['251']||0)+(szMap['252']||0)+(szMap['254']||0),
+          perSqMi:{
+            all:(szMap['001']||0)/szLand,
+            e10:((szMap['230']||0)+(szMap['241']||0)+(szMap['242']||0)+(szMap['251']||0)+(szMap['252']||0)+(szMap['254']||0))/szLand,
+            e50:((szMap['242']||0)+(szMap['251']||0)+(szMap['252']||0)+(szMap['254']||0))/szLand,
+            e100:((szMap['251']||0)+(szMap['252']||0)+(szMap['254']||0))/szLand
+          }
+        };
+      }
+    }catch(e){}
+    var stateHHI=null;
+    if(hhiResp.ok){
+      var hhiD=await hhiResp.json();
+      stateHHI=parseInt(hhiD[1][0]);
+    }
+    var stateLabor=null;
+    if(laborResp.ok){
+      var labD=await laborResp.json();
+      var r2=labD[1];
+      var sp16=parseInt(r2[0]),slf=parseInt(r2[1]),sun=parseInt(r2[2]);
+      var sp25=parseInt(r2[3]),sbch=parseInt(r2[4])+parseInt(r2[5])+parseInt(r2[6])+parseInt(r2[7]);
+      var stateLand=STATE_LAND[fips]||1;
+      stateLabor={lfpr:sp16>0?slf/sp16:null,unempRate:slf>0?sun/slf:null,bachRate:sp25>0?sbch/sp25:null,pop16PerSqMi:sp16/stateLand};
+    }
+    return{density:pop/land,name:popD[1][1],pop:pop,biz:stateBiz,bizSizes:stateBizSizes,hhi:stateHHI,labor:stateLabor};
+  }catch(e){return null;}
+}
+
+
+// ═══════════════ API: BUSINESSES ═══════════════
+async function fetchBiz(lat,lon,r){
+  var geom='{"x":'+lon+',"y":'+lat+'}';
+  var zr=await fetch('https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/4/query'
+    +'?geometry='+encodeURIComponent(geom)+'&geometryType=esriGeometryPoint&distance='+(r+0.5)+'&units=esriSRUnit_StatuteMile&inSR=4326'
+    +'&outFields=ZCTA5,CENTLAT,CENTLON&returnGeometry=false&f=json');
+  if(!zr.ok) return null;
+  var zd=await zr.json();
+  if(!zd.features||!zd.features.length) return null;
+  var zips=zd.features.map(function(f){return f.attributes;}).filter(function(z){
+    return z.CENTLAT&&z.CENTLON&&hav(lat,lon,parseFloat(z.CENTLAT),parseFloat(z.CENTLON))<=r;
+  });
+  if(!zips.length) return null;
+  var total=0,sectors={};
+  var szCodes={'210':0,'220':0,'230':0,'241':0,'242':0,'251':0,'252':0,'254':0};
+  await Promise.all(zips.map(async function(z){
+    try{
+      // Fetch both sector and size class data in parallel
+      var [br,sr]=await Promise.all([
+        fetch('https://api.census.gov/data/2018/zbp?get=ESTAB,NAICS2017&for=zipcode:'+z.ZCTA5),
+        fetch('https://api.census.gov/data/2018/zbp?get=ESTAB,EMPSZES&for=zipcode:'+z.ZCTA5+'&NAICS2017=00')
+      ]);
+      if(br.ok){
+        var rows=await br.json();
+        for(var m=1;m<rows.length;m++){
+          var code=rows[m][1],est=parseInt(rows[m][0])||0;
+          if(code==='00') total+=est;
+          else if(code.length===2) sectors[code]=(sectors[code]||0)+est;
+        }
+      }
+      if(sr.ok){
+        var srows=await sr.json();
+        for(var n=1;n<srows.length;n++){
+          var sc=srows[n][1],se=parseInt(srows[n][0])||0;
+          if(szCodes.hasOwnProperty(sc)) szCodes[sc]+=se;
+        }
+      }
+    }catch(e){}
+  }));
+  // Compute size tier totals
+  var e10=(szCodes['230'])+(szCodes['241'])+(szCodes['242'])+(szCodes['251'])+(szCodes['252'])+(szCodes['254']);
+  var e50=(szCodes['242'])+(szCodes['251'])+(szCodes['252'])+(szCodes['254']);
+  var e100=(szCodes['251'])+(szCodes['252'])+(szCodes['254']);
+  return{total:total,zips:zips.length,sectors:sectors,sizes:{all:total,e10:e10,e50:e50,e100:e100}};
+}
+
+// ═══════════════ API: INTERSTATES ═══════════════
+async function fetchHwy(lat,lon){
+  for(var ri=0;ri<2;ri++){
+    var m=ri===0?24140:48280;
+    var q='[out:json][timeout:15];way["highway"="motorway"](around:'+m+','+lat+','+lon+');out geom;';
+    try{
+      var _ctrl=new AbortController();
+      var _tid=setTimeout((function(c){return function(){c.abort();};}(_ctrl)),20000);
+      var r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:_ctrl.signal});
+      clearTimeout(_tid);
+      if(!r.ok) continue;
+      var d=await r.json();
+      if(!d.elements||!d.elements.length) continue;
+      var best={};
+      d.elements.forEach(function(el){
+        var g=el.geometry||[],tags=el.tags||{},ref=tags.ref||'',name=tags.name||'';
+        if(!ref&&!name) return;
+        var key=ref||name;
+        for(var j=0;j<g.length-1;j++){
+          var dist=ptSeg(lon,lat,g[j].lon,g[j].lat,g[j+1].lon,g[j+1].lat);
+          if(!best[key]||dist<best[key].dist) best[key]={dist:dist,ref:ref,name:name};
+        }
+      });
+      var ranked=Object.values(best).sort(function(a,b){return a.dist-b.dist;}).slice(0,4);
+      if(ranked.length) return {hwys:ranked, elements:d.elements};
+    }catch(e){continue;}
+  }
+  return null;
+}
+
+// ═══════════════ RENDER FUNCTIONS ═══════════════
+function renderPop(s,pop,hu,area){
+  // Animate main population number
+  animateNumber(el('rp-'+s), fmt(pop), 0);
+  el('rs-'+s).textContent='within '+radius+'-mile radius · '+fmt(hu)+' housing units';
+  // Animate stat grid values
+  setTimeout(function(){
+    var dEl=el('rd-'+s); if(dEl){dEl.textContent=fmt(Math.round(pop/area));dEl.classList.add('loaded');}
+    var hEl=el('rh-'+s); if(hEl){hEl.textContent=fmt(hu);hEl.classList.add('loaded');}
+    var aEl=el('rarea-'+s); if(aEl){aEl.textContent=area.toFixed(1);aEl.classList.add('loaded');}
+    var hhsz=hu>0?(pop/hu).toFixed(2):'—';
+    var hhEl=el('hhsz-'+s); if(hhEl){hhEl.textContent=hhsz;hhEl.classList.add('loaded');}
+  }, 100);
+  slotCache[s].pop=pop;
+  slotCache[s].density=Math.round(pop/area);
+  slotCache[s].hu=hu;
+  slotCache[s].hhsz=hu>0?pop/hu:0;
+  slotCache[s].area=area;
+  // Trigger card entrance animation
+  animateCards('col-'+s);
+}
+function renderComparisons(s,pop,area,stateData){
+  var natExp=Math.round(NAT_DENSITY*area);
+  var natM=pop/natExp;
+  var natC=natM>=10?'#3ecf8e':natM>=3?'#4b7cf3':natM>=1?'#f5c842':'#6a768f';
+  var natL=natM>=1?natM.toFixed(1)+'× national avg':(natM*100).toFixed(0)+'% of national avg';
+  el('nat-lbl-'+s).textContent=natL;
+  el('nat-ref-'+s).textContent='nat avg: '+fmt(natExp);
+  // Stagger bar animations
+  var natFill=el('nat-bar-'+s);
+  if(natFill){natFill.style.background=natC;setTimeout(function(){natFill.style.width=Math.min(natM/20*100,100)+'%';},100);}
+  var note='National avg: '+fmt(natExp)+' people';
+  if(stateData){
+    var stExp=Math.round(stateData.density*area),stM=pop/stExp;
+    var stC=stM>=3?'#3ecf8e':stM>=1.5?'#4b7cf3':stM>=0.75?'#f5c842':'#6a768f';
+    var stL=stM>=1?stM.toFixed(1)+'× '+stateData.name+' avg':(stM*100).toFixed(0)+'% of '+stateData.name+' avg';
+    el('st-lbl-'+s).textContent=stL;
+    el('st-ref-'+s).textContent='state avg: '+fmt(stExp);
+    var stFill=el('st-bar-'+s);
+    if(stFill){stFill.style.background=stC;setTimeout(function(){stFill.style.width=Math.min(stM/5*100,100)+'%';},250);}
+    el('st-row-'+s).style.display='block';
+    note+=' · '+stateData.name+' avg: '+fmt(stExp);
+  }
+  el('cbar-note-'+s).textContent=note;
+  el('cbar-'+s).style.display='block';
+}
+function renderGrowth(s,pop2020,data2010){
+  var p10=data2010&&data2010.pop||0;
+  var e10=el('pop10-'+s), e20=el('pop20-'+s);
+  if(e10){e10.textContent=p10?fmt(p10):'N/A';e10.classList.remove('pending');}
+  if(e20){e20.textContent=fmt(pop2020);e20.classList.remove('pending');}
+  var dEl=el('grow-delta-'+s);
+  if(!dEl) return;
+  if(p10>0){
+    var delta=pop2020-p10,pct2=delta/p10*100;
+    var up=delta>=0;
+    var color=up?'#3ecf8e':'#ef5858';
+    dEl.innerHTML=
+      '<span class="grow-delta-arrow" style="color:'+color+'">'+(up?'▲':'▼')+'</span>'
+      +'<span class="grow-delta-pct" style="color:'+color+'">'+Math.abs(pct2).toFixed(1)+'%</span>'
+      +'<span class="grow-delta-detail">'+(up?'+':'')+fmt(Math.abs(delta))+' residents since 2010</span>';
+    dEl.style.color='';
+  } else {
+    dEl.innerHTML='<span style="font-size:11px;color:var(--m1);font-weight:400">2010 data unavailable</span>';
+  }
+}
+function renderIncome(s,income,lfpr,unempRate,bachRate,homeValue,waPop,hu,stateDataArg){
+  if(income){
+    var c=incColor(income);
+    animateNumber(el('ri-'+s), '$'+fmt(income), 80);
+    var ibarEl=el('ibar-'+s);
+    if(ibarEl){
+      ibarEl.style.background=c;
+      ibarEl.style.width='0%';
+      setTimeout(function(){ibarEl.style.width=Math.min(Math.max((income-30000)/170000*100,2),100)+'%';},150);
+    }
+    var incCtx=incLabel(income);
+    // Add state HHI comparison if available
+    var stData=stateDataArg||slotCache[s].stateData;
+    if(stData&&stData.hhi&&income){
+      var hRatio=income/stData.hhi;
+      var hMult=hRatio>=1?hRatio.toFixed(1)+'×':((hRatio*100).toFixed(0)+'%');
+      var hColor=hRatio>=1.25?'var(--gn)':hRatio>=1.05?'var(--ac)':hRatio>=0.9?'var(--yw)':'var(--rd)';
+      el('ictx-'+s).innerHTML=incCtx+' · <span style="color:'+hColor+'">'+hMult+'</span><span style="color:var(--m1)"> '+stData.name+' avg ($'+Math.round(stData.hhi/1000)+'K)</span>';
+    } else {
+      el('ictx-'+s).textContent=incCtx;
+    }
+  } else {
+    el('ri-'+s).textContent='N/A'; el('ri-'+s).classList.remove('pending');
+  }
+  var stLab=stateDataArg&&stateDataArg.labor;
+  var stName=stateDataArg?stateDataArg.name:'state';
+
+  function mkComp(val,stateVal,higherIsBetter){
+    if(!stateVal||!val) return '';
+    var ratio=val/stateVal;
+    var mult=ratio>=1?ratio.toFixed(2)+'×':(ratio*100).toFixed(0)+'%';
+    // For unemployment, lower is better
+    var good=higherIsBetter?(ratio>=1.05):(ratio<=0.95);
+    var bad=higherIsBetter?(ratio<0.9):(ratio>1.1);
+    var color=good?'var(--gn)':bad?'var(--yw)':'var(--m2)';
+    return ' <span style="font-size:10px;color:'+color+'">'+mult+' '+stName+' avg</span>';
+  }
+
+  // ─ Labor values + inline bars ─
+  function setLabor(id, val, stateVal, higherGood, fmt2) {
+    var el2=el(id+'-'+s), barWrap=el(id+'-'+s+'-bar'), noteEl=el(id+'-'+s+'-note');
+    if(!el2) return;
+    if(val!=null){
+      el2.textContent=fmt2(val); el2.classList.remove('pending');
+      if(barWrap && stateVal){
+        var ratio=val/stateVal;
+        // Bar width: state avg = 50%, scale accordingly
+        var w=Math.min(Math.max((val/stateVal)*50,2),96);
+        var bar=barWrap.querySelector('.labor-bar');
+        if(bar){
+          bar.style.background=higherGood?(ratio>=1.05?'var(--gn)':ratio<0.9?'var(--yw)':'var(--ac)')
+                                         :(ratio<=0.95?'var(--gn)':ratio>1.1?'var(--yw)':'var(--ac)');
+          setTimeout(function(){bar.style.width=w+'%';},200);
+        }
+        if(noteEl){
+          var mult=ratio>=1?ratio.toFixed(2)+'×':((ratio*100).toFixed(0)+'%');
+          var col=higherGood?(ratio>=1.05?'var(--gn)':ratio<0.9?'var(--yw)':'var(--m1)')
+                            :(ratio<=0.95?'var(--gn)':ratio>1.1?'var(--yw)':'var(--m1)');
+          noteEl.innerHTML='<span style="color:'+col+'">'+mult+'</span>'
+            +' <span style="color:var(--m1)">'+stName+' avg '+(higherGood?fmt2(stateVal):fmt2(stateVal))+'</span>';
+        }
+      }
+    } else { el2.textContent='N/A'; el2.classList.remove('pending'); }
+  }
+
+  setLabor('lfpr', lfpr!=null?lfpr*100:null, stLab?stLab.lfpr*100:null, true, function(v){return v.toFixed(1)+'%';});
+  setLabor('unemp', unempRate!=null?unempRate*100:null, stLab?stLab.unempRate*100:null, false, function(v){return v.toFixed(1)+'%';});
+  setLabor('bach', bachRate!=null?bachRate*100:null, stLab?stLab.bachRate*100:null, true, function(v){return v.toFixed(1)+'%';});
+  // Working-age population (16+)
+  if(waPop>0){
+    var waEl=el('wapop-'+s);
+    if(waEl){waEl.textContent=fmt(waPop);waEl.classList.remove('pending');}
+    if(stLab&&stLab.pop16PerSqMi&&slotCache[s].area){
+      var area2=slotCache[s].area;
+      var stateWa=Math.round(stLab.pop16PerSqMi*area2);
+      if(stateWa>0){
+        var waBar=el('wapop-'+s+'-bar'), waNoteEl=el('wapop-'+s+'-note');
+        if(waBar){
+          var waRatio=waPop/stateWa;
+          var waBar2=waBar.querySelector('.labor-bar');
+          if(waBar2){
+            waBar2.style.background=waRatio>=1.05?'var(--gn)':waRatio<0.9?'var(--yw)':'var(--ac)';
+            setTimeout(function(){waBar2.style.width=Math.min((waRatio)*50,96)+'%';},200);
+          }
+        }
+        if(waNoteEl){
+          var waM=waRatio>=1?waRatio.toFixed(1)+'×':((waRatio*100).toFixed(0)+'%');
+          var waC=waRatio>=1.05?'var(--gn)':waRatio<0.9?'var(--yw)':'var(--m1)';
+          waNoteEl.innerHTML='<span style="color:'+waC+'">'+waM+'</span>'
+            +' <span style="color:var(--m1)">'+stName+' avg '+fmt(stateWa)+'</span>';
+        }
+      }
+    }
+  } else{var waN=el('wapop-'+s);if(waN){waN.textContent='N/A';waN.classList.remove('pending');}}
+  // Median home value
+  if(homeValue&&homeValue>0){el('hmv-'+s).textContent='$'+Math.round(homeValue/1000)+'K';slotCache[s].hmv=homeValue;}
+  else{el('hmv-'+s).textContent='N/A';}
+}
+// Active size filter per slot
+var bizSizeFilter=['all','all'];
+
+function setBizFilter(s,size){
+  bizSizeFilter[s]=size;
+  // Update pill UI
+  var filters=el('bsf-'+s);
+  if(filters) filters.querySelectorAll('.bsf').forEach(function(b){
+    b.classList.toggle('on',b.getAttribute('data-size')===size);
+  });
+  // Re-render with cached data
+  var biz=slotCache[s].biz;
+  var stateData=slotCache[s].stateData;
+  if(biz) renderBizSizes(s,biz,stateData);
+}
+
+function renderBizSizes(s,biz,stateData){
+  if(!biz||!biz.sizes) return;
+  var sz=biz.sizes;
+  var filter=bizSizeFilter[s]||'all';
+  var area=slotCache[s].area||Math.PI*radius*radius;
+
+  // Headline number = active filter count
+  var count=filter==='all'?sz.all:filter==='10'?sz.e10:filter==='50'?sz.e50:sz.e100;
+  animateNumber(el('rbiz-'+s), fmt(count), 120);
+
+  var tiers=[
+    {key:'all', keyState:'all',  label:'1+ employees',   val:sz.all},
+    {key:'10',  keyState:'e10',  label:'10+ employees',  val:sz.e10},
+    {key:'50',  keyState:'e50',  label:'50+ employees',  val:sz.e50},
+    {key:'100', keyState:'e100', label:'100+ employees', val:sz.e100},
+  ];
+
+  var szState=stateData&&stateData.bizSizes;
+  var stShort=stateData?(stateData.name||'state').replace('Commonwealth of ','').replace(' of America',''):'state';
+
+  var rows=tiers.map(function(t){
+    var isActive=filter===t.key;
+    var stateExp=szState?Math.round(szState.perSqMi[t.keyState]*area):null;
+    var ratio=(stateExp&&stateExp>0)?t.val/stateExp:null;
+
+    var multHtml='';
+    var avgHtml='';
+    if(ratio!==null){
+      var mult=ratio>=1?ratio.toFixed(1)+'×':((ratio*100).toFixed(0)+'%');
+      var cls=ratio>=1.5?'gn':ratio>=1.1?'ac':ratio>=0.75?'yw':'rd';
+      multHtml='<span class="biz-size-mult '+cls+'">'+mult+'</span>';
+      avgHtml='<span class="biz-size-avg">'+stShort+' avg '+fmt(stateExp)+'</span>';
+    }
+
+    return '<div class="biz-size-row '+(isActive?'active':'inactive')+'">'
+      +'<div class="biz-size-left">'
+      +'<span class="biz-size-label">'+t.label+'</span>'
+      +'</div>'
+      +'<div class="biz-size-right">'
+      +avgHtml
+      +multHtml
+      +'<span class="biz-size-val'+(isActive?' active-val':'')+'">'+fmt(t.val)+'</span>'
+      +'</div>'
+      +'</div>';
+  });
+
+  var rowsEl=el('biz-size-rows-'+s);
+  if(rowsEl) rowsEl.innerHTML=rows.join('');
+
+  // Subtitle + clear old ctx
+  el('biz-sub-'+s).textContent=biz.zips+' ZIP codes · ZBP 2018';
+  var bizCtxEl=el('biz-ctx-'+s);
+  if(bizCtxEl) bizCtxEl.innerHTML='';
+}
+
+function renderBiz(s,biz,stateData){
+  if(biz&&biz.total>0){
+    // Cache for filter switching
+    slotCache[s].biz=biz;
+    // Render size breakdown with active filter
+    renderBizSizes(s,biz,stateData);
+    // Show size filters
+    var bsf=el('bsf-'+s);
+    if(bsf) bsf.style.display='flex';
+    // Sector breakdown
+    if(biz.sectors){
+      var merged={};
+      for(var code in biz.sectors){var k=NAICS_MERGE[code]||code;merged[k]=(merged[k]||0)+biz.sectors[code];}
+      var sorted=Object.keys(merged).map(function(k){return{code:k,count:merged[k],label:NAICS_LABEL[k]||('NAICS '+k)};});
+      sorted.sort(function(a,b){return b.count-a.count;});
+      var top=sorted.slice(0,10),maxV=top[0]?top[0].count:1;
+      el('sl-'+s).innerHTML=top.map(function(row,idx){
+        return '<div class="s-row"><div class="s-name" title="'+row.label+'">'+row.label+'</div>'
+          +'<div class="s-bar-wrap"><div class="s-bar" id="sbar-'+s+'-'+idx+'" style="width:0%"></div></div>'
+          +'<div class="s-ct">'+row.count+'</div></div>';
+      }).join('');
+      // Animate bars in with stagger
+      top.forEach(function(row,idx){
+        var tgt=Math.round(row.count/maxV*100);
+        setTimeout(function(){
+          var b=document.getElementById('sbar-'+s+'-'+idx);
+          if(b) b.style.width=tgt+'%';
+        }, 80 + idx*40);
+      });
+      el('breakdown-toggle-'+s).style.display='flex';
+      el('bk-'+s).classList.add('open');
+      el('breakdown-toggle-'+s).classList.add('bt-open');
+    }
+  } else {
+    el('rbiz-'+s).textContent='N/A'; el('rbiz-'+s).classList.remove('pending');
+  }
+}
+
+
+
+// ── PROGRESS STEPS ──
+function setStep(step){
+  ['geo','census','income','transport'].forEach(function(s){
+    var el2=document.getElementById('ps-'+s);
+    if(!el2) return;
+    el2.classList.remove('active','done');
+  });
+  var steps=['geo','census','income','transport'];
+  var idx=steps.indexOf(step);
+  steps.forEach(function(s,i){
+    var el2=document.getElementById('ps-'+s);
+    if(!el2) return;
+    if(i<idx) el2.classList.add('done');
+    else if(i===idx) el2.classList.add('active');
+  });
+  document.getElementById('progress').classList.add('vis');
+}
+function clearSteps(){
+  document.getElementById('progress').classList.remove('vis');
+  ['geo','census','income','transport'].forEach(function(s){
+    var el2=document.getElementById('ps-'+s);
+    if(el2) el2.classList.remove('active','done');
+  });
+}
+
+
+// ── SAVE / NAME FUNCTION ──
+var SAVE_KEY='groundwork_saves';
+
+function getSaves(){
+  try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'[]');}catch(e){return[];}
+}
+function setSaves(saves){
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(saves));}catch(e){}
+}
+
+function showSaveForm(){
+  el('save-btn').classList.remove('vis');
+  el('save-form').classList.add('vis');
+  el('save-name').focus();
+  // Pre-fill with address
+  var addr=el('ra-0')?el('ra-0').textContent:'';
+  if(addr&&addr.length>2) el('save-name').value=addr.split(',')[0];
+}
+
+function confirmSave(){
+  var name=el('save-name').value.trim();
+  if(!name) name='Analysis '+(getSaves().length+1);
+  var cache=slotCache[0];
+  var save={
+    id:Date.now(),
+    name:name,
+    address:el('ra-0')?el('ra-0').textContent:'',
+    radius:radius,
+    savedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    lat:cache.lat||0,
+    lon:cache.lon||0,
+    pop:cache.pop||0,
+    income:cache.income||0,
+    hwy:el('rhwy-0')?el('rhwy-0').textContent:'',
+    airport:el('air-0')?el('air-0').querySelector('.hwy-badge')?el('air-0').querySelector('.hwy-badge').textContent+'':'' :'',
+    url:window.location.href
+  };
+  var saves=getSaves();
+  saves.unshift(save);
+  if(saves.length>20) saves=saves.slice(0,20);
+  setSaves(saves);
+  el('save-form').classList.remove('vis');
+  el('save-btn').classList.remove('vis');
+  el('save-name').value='';
+  renderSaves();
+  // Brief confirmation
+  setStatus('ok','Analysis saved: "'+name+'"');
+  setTimeout(function(){setStatus('ok',el('sm').textContent.includes('saved')?'Analysis complete':el('sm').textContent);},2500);
+}
+
+function renderSaves(filter){
+  var saves=getSaves();
+  var panel=el('saves-panel');
+  var list=el('saves-list');
+  if(!saves.length){panel.classList.remove('vis');return;}
+  panel.classList.add('vis');
+  var filtered=filter?saves.filter(function(s){
+    var q=filter.toLowerCase();
+    return s.name.toLowerCase().indexOf(q)>=0||(s.address&&s.address.toLowerCase().indexOf(q)>=0);
+  }):saves;
+  if(!filtered.length){
+    list.innerHTML='<div style="font-size:11px;color:var(--m1);padding:8px 4px">No matches</div>';
+    return;
+  }
+  list.innerHTML=filtered.map(function(s){
+    var initials=(function(name){
+      var words=name.split(' ').filter(function(w){return w&&isNaN(w[0]);});
+      if(!words.length) return name.slice(0,2).toUpperCase();
+      return words.slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();
+    })(s.name);
+    var pop=s.pop?Math.round(s.pop/1000)+'K':'';
+    var inc=s.income?'$'+Math.round(s.income/1000)+'K':'';
+    return '<div class="save-item" onclick="loadSave('+s.id+')">'
+      +'<div class="save-item-icon">'+initials+'</div>'
+      +'<div class="save-item-left">'
+      +'<div class="save-name-label">'+s.name+'</div>'
+      +'<div class="save-meta">'+s.radius+' mi · '+s.savedAt+'</div>'
+      +'</div>'
+      +'<div class="save-item-right">'
+      +(pop?'<span class="save-stat-pill">'+pop+'</span>':'')
+      +(inc?'<span class="save-stat-inc">'+inc+'</span>':'')
+      +'</div>'
+      +'<button class="save-del" onclick="event.stopPropagation();deleteSave('+s.id+')" title="Delete">×</button>'
+      +'</div>';
+  }).join('');
+}
+
+
+var savesCollapsed=false;
+function toggleSavesPanel(){
+  savesCollapsed=!savesCollapsed;
+  var body=el('saves-body');
+  var chev=el('saves-chevron');
+  if(body){
+    if(savesCollapsed){
+      body.style.maxHeight='0';body.style.overflow='hidden';
+      if(chev) chev.textContent='▸';
+    } else {
+      body.style.maxHeight='260px';body.style.overflow='auto';
+      if(chev) chev.textContent='▾';
+    }
+  }
+}
+
+function filterSaves(val){
+  renderSaves(val);
+}
+
+
+function loadSave(id){
+  var saves=getSaves();
+  var s=saves.find(function(x){return x.id===id;});
+  if(!s) return;
+  el('inp-a').value=s.address;
+  document.querySelectorAll('.rb').forEach(function(b){
+    b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===s.radius);
+  });
+  radius=s.radius;
+  if(s.lat&&s.lon){slotCache[0].lat=s.lat;slotCache[0].lon=s.lon;}
+  run();
+}
+
+function deleteSave(id){
+  var saves=getSaves().filter(function(s){return s.id!==id;});
+  setSaves(saves);
+  renderSaves();
+}
+
+function clearAllSaves(){
+  setSaves([]);
+  renderSaves();
+}
+
+// Show save button after analysis
+function showSaveBtn(){
+  var btn=el('save-btn');
+  if(btn){btn.classList.add('vis');el('save-form').classList.remove('vis');}
+}
+
+// Load saves on startup
+renderSaves();
+
+
+// ── MARKET RENTS via Anthropic API + web search ──
+
+
+// ── BROKER INTEL ──
+var brokerType = '';
+
+function brokerIntel(type){
+  brokerType=type;
+  document.querySelectorAll('.broker-btn').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-type')===type);
+  });
+
+  var d=buildDataPayload();
+  var addr=d.address||'this location';
+  var addrParts=addr.split(',');
+  var city=addrParts[0].trim();
+  var county=addrParts[1]?addrParts[1].trim():'';
+  var state=addrParts[2]?addrParts[2].trim():addrParts[1]?addrParts[1].trim():'';
+  var submarket=city+(county&&county!==city?' / '+county:'');
+  var typeLabel=type.charAt(0).toUpperCase()+type.slice(1);
+
+  summaryConversation=[];
+  el('summary-msgs').innerHTML='';
+  openSummary();
+  el('summary-subtitle').textContent=' · '+submarket+' · '+typeLabel;
+
+  var typeQ={
+    industrial:'Search for: industrial warehouse vacancy rate '+submarket+' '+state+' 2025 2026, industrial lease deals '+submarket+' 2025, industrial development pipeline '+state+' Route '+d.interstates+' corridor, industrial tenants expanding '+submarket+' area',
+    office:'Search for: office vacancy '+submarket+' '+state+' 2025 2026, office leases signed '+submarket+' 2025, office sublease market '+state+' suburban, employers hiring '+submarket+' area 2025',
+    retail:'Search for: retail openings closings '+submarket+' '+state+' 2025 2026, retail leases '+submarket+' 2025, new retail development '+submarket+' area, restaurant retail vacancy '+county+' county'
+  };
+
+  var typeAngle={
+    industrial:'Vacancy and absorption trajectory. Who is actually leasing - is this last-mile, cold storage, life sciences, reshoring, or something else specific to this corridor? What are landlords doing on TI and term to get deals done right now? Where is the spec pipeline and does it make sense? What submarkets are competing for the same tenants? Bull or bear case for a value-add buy here today?',
+    office:'The real functional vacancy story - strip out the zombie space. Who is growing vs. quietly shrinking footprint? Flight to quality or flight to affordability? Which buildings are repositionable and which are going to another use? What would a smart buyer pay per foot and why? What does the commute shed from this population center mean for tenant demand?',
+    retail:'What is actually winning vs. dying in this trade area. Which categories are oversaturated and which are underserved for this income profile? Who are the active tenants in the market - nationals looking, nationals pulling back? What is happening to rents and co-tenancy in the deals getting done? Where is the next development or redevelopment play?'
+  };
+
+  var promptLines=[
+    'You are a commercial real estate broker who has worked the '+submarket+' market for 20+ years. You live here. You know the roads, the buildings, the landlords, the tenants.',
+    '',
+    'A smart investor friend just texted you: "Give me your real take on the '+typeLabel.toLowerCase()+' market in '+submarket+' right now."',
+    '',
+    'Before responding, search the web for RECENT data (2025-2026 only): '+typeQ[type],
+    '',
+    'Use what you find to inform your answer. Lead with what is actually happening on the ground. React to the data - do not just repeat it. Tell them what it means, what the headline misses, where the real opportunity or risk is. Be willing to say something the market has not fully priced in.',
+    '',
+    'Specific angles to cover: '+typeAngle[type],
+    '',
+    'Trade area data for context:',
+    'Address: '+addr+' | '+d.radius+'-mile radius',
+    'Population: '+d.pop.toLocaleString()+' | Growth: '+d.growthNote+' | HHI: '+d.income+' | Home Value: '+d.homeValue,
+    'Labor pool: '+d.workingAgePop+' working-age | '+d.lfpr+' LFPR | '+d.unemployment+' unemployment',
+    'Businesses: '+d.employerBiz+' employers | Top sectors: '+d.topSectors,
+    'Infrastructure: '+d.interstates+' | '+d.nearestAirport+' | '+d.nearestPort,
+    '',
+    '400 words max. Conversational. No headers. No bullets. Talk like a human being.'
+  ];
+
+  summaryDataCtx='You are a 20+ year commercial real estate broker hyper-local to the '+submarket+' market in '+state+'. '
+    +'Today is April 2026. '
+    +'You speak like a smart friend - direct, opinionated, real. '
+    +'Always search the web before answering to ground your response in current facts. Only use data from 2024-2026. '
+    +'Do not fabricate deals or tenant names - if you cannot verify something through search, say so and give your opinion on the fundamentals instead. '
+    +'Synthesize what you find into genuine intelligence. React to facts, connect them, tell the investor what they actually mean. '
+    +'For follow-up questions, search first then answer directly.';
+
+  summaryConversation.push({role:'user',content:promptLines.join('\n')});
+  sendSummaryMsg(true);
+}
+
+
+// ── MARKET SUMMARY CHAT ──
+var summaryConversation=[];
+var summaryDataCtx='';
+var summaryGenerating=false;
+
+
+function copyLatestSummary(){
+  var msgs=el('summary-msgs');
+  if(!msgs) return;
+  var aiMsgs=Array.from(msgs.querySelectorAll('.sm-msg:not(.user) .sm-bubble'));
+  if(!aiMsgs.length) return;
+  var text=aiMsgs[aiMsgs.length-1].textContent.trim();
+  navigator.clipboard.writeText(text).then(function(){
+    var btn=el('summary-copy-hdr');
+    if(!btn) return;
+    btn.textContent='✓ Copied';btn.classList.add('copied');
+    setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied');},2000);
+  });
+}
+
+function openSummary(){el('summary-modal').classList.add('vis');}
+function closeSummary(){el('summary-modal').classList.remove('vis');}
+
+function smAppendMsg(role,text,isThinking){
+  var msgs=el('summary-msgs');
+  var isAI=role==='assistant';
+
+  var wrap=document.createElement('div');
+  wrap.className='sm-msg'+(isAI?' ai-msg':' user');
+
+  // avatar hidden via CSS but still appended for structure
+  var avatar=document.createElement('div');
+  avatar.className='sm-avatar '+(isAI?'ai':'usr');
+  avatar.textContent=isAI?'C':'You';
+  wrap.appendChild(avatar);
+
+  var bubble=document.createElement('div');
+  if(isThinking){
+    bubble.className='sm-bubble thinking';
+    bubble.innerHTML='<div class="sm-thinking-dots"><span></span><span></span><span></span></div><span>Generating…</span>';
+  } else if(isAI){
+    bubble.className='sm-bubble ai';
+    bubble.textContent=text;
+  } else {
+    bubble.className='sm-bubble';
+    bubble.textContent=text;
+  }
+  wrap.appendChild(bubble);
+
+  if(isAI&&!isThinking) smAddCopy(wrap,bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+  return bubble;
+}
+
+
+function smAddCopy(wrap,bubble){
+  var aw=document.createElement('div');aw.className='sm-actions';
+  var cb=document.createElement('button');cb.className='sm-act-btn';cb.textContent='Copy';
+  cb.onclick=function(){
+    navigator.clipboard.writeText(bubble.textContent).then(function(){
+      cb.textContent='✓ Copied';cb.classList.add('copied');
+      setTimeout(function(){cb.textContent='Copy';cb.classList.remove('copied');},2000);
+    });
+  };
+  aw.appendChild(cb);wrap.appendChild(aw);
+}
+
+function smUpdateLast(text){
+  var msgs=el('summary-msgs');
+  var last=Array.from(msgs.querySelectorAll('.sm-msg.ai-msg')).pop();
+  if(!last) return;
+  var bubble=last.querySelector('.sm-bubble');
+  if(!bubble) return;
+  bubble.className='sm-bubble ai';
+  bubble.innerHTML='';
+  bubble.textContent=text;
+  if(!last.querySelector('.sm-actions')) smAddCopy(last,bubble);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function addSuggestions(isFirst){
+  var msgs=el('summary-msgs');
+  // Remove any previous suggestions
+  var old=msgs.querySelector('.sm-suggestions');
+  if(old) old.remove();
+
+  var prompts=isFirst?[
+    'Focus this on industrial tenant demand',
+    'Rewrite for an LP who doesn\'t know this market',
+    'Shorten to 2 paragraphs for an executive summary',
+    'What are the key risks for this trade area?'
+  ]:[
+    'Make it more concise',
+    'Emphasize transportation access',
+    'Add a stronger investment thesis'
+  ];
+
+  var wrap=document.createElement('div');
+  wrap.className='sm-suggestions';
+  prompts.forEach(function(p){
+    var btn=document.createElement('button');
+    btn.className='sm-suggestion';
+    btn.textContent=p;
+    btn.onclick=function(){
+      el('summary-chat-input').value=p;
+      sendSummaryMsg();
+    };
+    wrap.appendChild(btn);
+  });
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+
+async function sendSummaryMsg(isInitial){
+  if(summaryGenerating) return;
+  var input=el('summary-chat-input');
+  var text=input?input.value.trim():'';
+  if(!text&&!isInitial) return;
+  summaryGenerating=true;
+  el('summary-send').disabled=true;
+
+  if(text){
+    smAppendMsg('user',text,false);
+    summaryConversation.push({role:'user',content:text});
+    input.value='';input.style.height='auto';
+  }
+
+  // Show thinking with appropriate label
+  var thinkLabel=brokerType?'Searching market data…':'Generating…';
+  var thinkBubble=smAppendMsg('assistant','',true);
+  if(thinkBubble) thinkBubble.innerHTML='<div class="sm-thinking-dots"><span></span><span></span><span></span></div><span>'+thinkLabel+'</span>';
+
+  var key=getApiKey();
+  if(!key){
+    smUpdateLast('No API key set. Click “Add API Key” in the sidebar to enable this feature.');
+    summaryGenerating=false;
+    el('summary-send').disabled=false;
+    return;
+  }
+
+  var msgs=summaryConversation.length>0?summaryConversation:[{role:'user',content:'Generate the initial market summary.'}];
+  var aiText='';
+  var errMsg='';
+
+  try{
+    var timeoutMs=brokerType?90000:35000;
+    var ctrl=new AbortController();
+    var tid=setTimeout(function(){ctrl.abort();},timeoutMs);
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',signal:ctrl.signal,
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:(function(){
+        var body={model:'claude-sonnet-4-20250514',max_tokens:1200,system:summaryDataCtx,messages:msgs};
+        if(brokerType) body.tools=[{type:'web_search_20250305',name:'web_search'}];
+        return JSON.stringify(body);
+      })()
+    });
+    clearTimeout(tid);
+    if(resp.ok){
+      var d2=await resp.json();
+      (d2.content||[]).forEach(function(b){if(b.type==='text')aiText+=b.text;});
+      if(!aiText&&d2.stop_reason==='tool_use'){
+        errMsg='Web search is running but response was not returned. Try again.';
+      }
+    } else {
+      var errBody=await resp.text();
+      errMsg='API error '+resp.status+(errBody?': '+errBody.slice(0,120):'');
+    }
+  }catch(e){
+    errMsg=e.name==='AbortError'?'Request timed out — try again (web searches take ~60s)':String(e).slice(0,100);
+  }
+
+  if(errMsg&&!aiText){
+    smUpdateLast('⚠️ '+errMsg);
+    summaryGenerating=false;
+    el('summary-send').disabled=false;
+    return;
+  }
+
+  if(!aiText||aiText.length<80){
+    // Only fall back to template for non-broker requests
+    if(!brokerType){
+      var d=buildDataPayload();
+      aiText=buildFallbackSummary(d,summaryConversation.filter(function(m){return m.role==='user';}).map(function(m){return m.content;}).join(' '));
+    } else {
+      aiText='Could not retrieve market data for this request. Check your API key and try again.';
+    }
+  }
+
+  aiText=aiText.trim();
+  smUpdateLast(aiText);
+  summaryConversation.push({role:'assistant',content:aiText});
+  addSuggestions(summaryConversation.filter(function(m){return m.role==='user';}).length<=1);
+  summaryGenerating=false;
+  el('summary-send').disabled=false;
+}
+
+async function generateSummary(){
+  brokerType='';
+  summaryConversation=[];
+  el('summary-msgs').innerHTML='';
+  var btn=el('gen-summary-btn');if(btn)btn.disabled=true;
+  openSummary();
+  var d=buildDataPayload();
+  var addr=d.address||'the subject location';
+  el('summary-subtitle').textContent=' · '+addr.split(',')[0]+' · '+d.radius+'-mi radius';
+  var lines=[
+    'You are a senior CRE analyst producing investment-grade market summaries.',
+    'When generating or updating a market summary write 250-400 words of professional investment banking prose — no bullet points, no headers, flowing paragraphs. Be specific with numbers.',
+    'When asked to refine, return the complete updated summary. Answer direct questions concisely.',
+    '',
+    'TRADE AREA DATA:',
+    'Location: '+addr,
+    'Radius: '+d.radius+' mi',
+    '2020 Pop: '+d.pop.toLocaleString()+' | 2010 Pop: '+d.pop10+' | Growth: '+d.growthNote,
+    'Density: '+d.density.toLocaleString()+' ppl/sq mi ('+d.natComparison+'; '+d.stateComparison+')',
+    'Median HHI: '+d.income+' | Home Value: '+d.homeValue,
+    'Housing: '+d.housingUnits.toLocaleString()+' units, avg '+d.avgHHSize+' per HH',
+    'LFPR: '+d.lfpr+' | Unemployment: '+d.unemployment+' | Bach+: '+d.bachelorsPlus,
+    'Working-age (16+): '+d.workingAgePop,
+    'Employer Biz: '+d.employerBiz+' ('+d.bizZips+') | Top Sectors: '+d.topSectors,
+    'Interstates: '+d.interstates+' | Airport: '+d.nearestAirport+' | Port: '+d.nearestPort
+  ];
+  summaryDataCtx=lines.join('\n');
+  summaryConversation.push({role:'user',content:'Generate the initial market summary.'});
+  await sendSummaryMsg(true);
+  if(btn)btn.disabled=false;
+}
+
+
+function buildDataPayload(){
+  var addr=el('ra-0')?el('ra-0').textContent:'';
+  var pop=slotCache[0].pop||0;
+  var income=slotCache[0].income||0;
+  var density=slotCache[0].density||0;
+  var hu=slotCache[0].hu||0;
+  var hhsz=slotCache[0].hhsz||0;
+  var hmv=slotCache[0].hmv||0;
+  var g=function(id){var e=el(id);return e?e.textContent.trim():'';};
+  var sectors=[];
+  if(el('sl-0')){el('sl-0').querySelectorAll('.s-row').forEach(function(row){
+    var n=row.querySelector('.s-name'),c=row.querySelector('.s-ct');
+    if(n&&c)sectors.push(n.textContent.trim()+' ('+c.textContent.trim()+')');
+  });}
+  var air=el('air-0')?el('air-0').innerHTML.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'';
+  var port=el('port-0')?el('port-0').innerHTML.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'';
+  return{
+    address:addr,radius:radius,
+    pop:pop,pop10:g('pop10-0'),pop20:g('pop20-0'),growthNote:g('grow-delta-0'),
+    density:density,natComparison:g('nat-lbl-0'),stateComparison:g('st-lbl-0'),
+    income:'$'+Math.round(income/1000)+'K',homeValue:hmv?'$'+Math.round(hmv/1000)+'K':'N/A',
+    housingUnits:hu,avgHHSize:hhsz.toFixed?hhsz.toFixed(2):hhsz,
+    lfpr:g('lfpr-0'),unemployment:g('unemp-0'),bachelorsPlus:g('bach-0'),workingAgePop:g('wapop-0'),
+    employerBiz:g('rbiz-0'),bizZips:g('biz-sub-0'),
+    topSectors:sectors.slice(0,6).join(', '),
+    interstates:el('hwy-0')?el('hwy-0').innerHTML.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'',
+    nearestAirport:air,nearestPort:port
+  };
+}
+
+function buildFallbackSummary(d,instructions){
+  instructions=instructions||'';
+  var city=d.address?d.address.split(',')[0]:'The subject market';
+  var income=slotCache[0].income||0;
+  var incTier=income>=120000?'exceptional':income>=90000?'strong':income>=65000?'solid':'moderate';
+  var growSign=d.growthNote&&d.growthNote.indexOf('▲')>=0?'growth':d.growthNote&&d.growthNote.indexOf('▼')>=0?'contraction':'stability';
+  var lfprNum=parseFloat(d.lfpr)||0;
+  var unempNum=parseFloat(d.unemployment)||0;
+  var bachNum=parseFloat(d.bachelorsPlus)||0;
+  var laborQual=lfprNum>=0.68?'deep and actively engaged':lfprNum>=0.62?'well-engaged':'moderately active';
+  var unempCtx=unempNum<=4?'unemployment well below the national average':unempNum<=6?'unemployment consistent with near-full employment':'an unemployment rate reflecting broader regional dynamics';
+  var educCtx=bachNum>=35?'a highly educated workforce with '+d.bachelorsPlus+' holding bachelor\'s degrees or higher, well-suited to professional, technology, and knowledge-economy tenants':bachNum>=25?'a skilled workforce with '+d.bachelorsPlus+' holding bachelor\'s degrees, supporting a diverse tenant mix':'a workforce with '+d.bachelorsPlus+' holding bachelor\'s degrees, with strong representation suited to industrial and trades-oriented occupiers';
+  var instrLower=instructions.toLowerCase();
+  var focusInd=instrLower.indexOf('industrial')>=0||instrLower.indexOf('logistic')>=0||instrLower.indexOf('warehouse')>=0||instrLower.indexOf('distribution')>=0;
+  var focusOfc=instrLower.indexOf('office')>=0||instrLower.indexOf('tech')>=0||instrLower.indexOf('professional')>=0;
+  var focusLP=instrLower.indexOf(' lp')>=0||instrLower.indexOf('investor')>=0||instrLower.indexOf('fund')>=0;
+  var p1=city+' represents a '+d.radius+'-mile trade area encompassing '+d.pop.toLocaleString()+' residents as of the 2020 Census — '+d.natComparison+' and '+d.stateComparison+'. The market has demonstrated demographic '+(growSign==='growth'?'momentum, recording '+d.growthNote.replace(/[▲▼]/g,'').trim()+' since the 2010 Census baseline, reflecting sustained demand for commercial occupancy.':growSign==='contraction'?'contraction of '+d.growthNote.replace(/[▲▼]/g,'').trim()+' since 2010, warranting careful underwriting of absorption assumptions.':'stability relative to the 2010 Census baseline, consistent with a mature, predictable commercial market.');
+  var p2='The income profile supports a '+incTier+' consumer and labor base. Median household income of '+d.income+' is anchored by median home values of '+d.homeValue+' and an average household size of '+d.avgHHSize+', reflecting genuine residential wealth accumulation and homeownership stability. These fundamentals underpin rent-paying capacity for retail, service, and professional commercial tenants.';
+  var p3='The labor pool is '+laborQual+', with '+unempCtx+'. A working-age population (16+) of '+d.workingAgePop+' and a labor force participation rate of '+d.lfpr+' provide '+(focusInd?'substantial workforce depth for distribution, manufacturing, and light industrial operations at scale. ':focusOfc?'a talent base well-positioned to support office, professional services, and technology users seeking suburban locations. ':'meaningful depth across industrial, office, and service sector tenants. ')+educCtx+'.';
+  var p4=d.employerBiz+' employer establishments across '+d.bizZips+' underscore a diversified local economy anchored by '+d.topSectors+'. This sector breadth limits single-industry concentration risk and sustains a resilient, multi-tenant commercial environment. '+(focusInd?'Interstate connectivity via '+d.interstates+', proximity to '+d.nearestAirport+', and access to '+d.nearestPort+' collectively position the market as a competitive node for last-mile distribution and logistics-oriented tenants.':'Multimodal transportation infrastructure — including interstate access via '+d.interstates+', proximity to '+d.nearestAirport+', and '+d.nearestPort+' — supports a broad occupier universe spanning logistics, professional services, and retail.');
+  var p5=(focusLP?'For institutional investors, t':'T')+'he subject trade area offers a compelling convergence of '+incTier+' household income, '+(growSign==='growth'?'positive demographic momentum,':growSign==='contraction'?'stable legacy commercial demand despite moderate population trends,':'demographic stability,')+' and multimodal transportation access, consistent with a '+(incTier==='exceptional'||incTier==='strong'?'core-adjacent, stabilized':'value-add')+' commercial real estate investment thesis.';
+  var result=[p1,p2,p3,p4,p5].join('\n\n');
+  if(instructions&&instructions.length>10) result+='\n\nAnalyst Context: '+instructions.charAt(0).toUpperCase()+instructions.slice(1)+(instructions.slice(-1)==='.'?'':'.');
+  return result;
+}
+
+// ═══════════════ RUN SLOT ═══════════════
+async function runSlot(s,addr,r){
+  resetSlot(s);
+  el('col-'+s).classList.add('vis');
+  var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
+  if(s===0){
+    if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}    driveCache[0]=null;analysisMode='circle';
+    if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;driveActive=false;}
+    driveMin=0;
+    document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
+    var ds=el('drive-status');if(ds)ds.textContent='';
+    var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
+    var mtc=el('mtab-circle');if(mtc)mtc.classList.add('active');
+    var mtd=el('mtab-drive');if(mtd)mtd.classList.remove('active');
+    var co=el('circle-options');if(co)co.style.display='flex';
+    var dro=el('drive-options');if(dro)dro.classList.remove('vis');
+    updateAnalyzeBtn();
+    var mt=el('mode-toggle');if(mt)mt.classList.remove('vis');
+    var mb=el('mb-circle');if(mb)mb.classList.add('on');
+    var mb2=el('mb-drive');if(mb2)mb2.classList.remove('on');
+    var apb=el('add-port-btn');if(apb)apb.style.display='none';
+    if(!portReturnMode){var bb=el('port-back-btn');if(bb)bb.classList.remove('vis');}
+    var bi=el('broker-intel');if(bi)bi.classList.remove('vis');
+    document.querySelectorAll('.broker-btn').forEach(function(b){b.classList.remove('active');});
+  }
+  if(s===0){clearDriveTime();}
+
+  setStep('geo');
+  var geo=await geocode(addr);
+  var lat=geo.lat,lon=geo.lon;
+  slotCache[s].lat=lat;slotCache[s].lon=lon;
+  var shortAddr=geo.display.split(',').slice(0,3).join(',');
+  el('ra-'+s).textContent=shortAddr;
+  if(compareMode){var cb=el('cb-'+(['a','b'][s]));if(cb)cb.textContent=shortAddr.split(',')[0];el('compare-banner').classList.add('vis');}
+  showPulse(lat,lon,r);
+  drawSlot(s,lat,lon,r,null,null);
+
+  var rawGeo=geo.rawData&&geo.rawData[0];
+  var addrObj=rawGeo&&rawGeo.address||{};
+  var city=addrObj.city||addrObj.town||addrObj.village||addrObj.county||'';
+  var state=addrObj.state||'';
+  setStep('census');
+  var bgs=await fetchBGs(lat,lon,r);
+  if(!bgs.length) throw new Error('No populated areas in radius');
+
+  var pop=0,hu=0;
+  bgs.forEach(function(bg){pop+=(bg.POP100||0);hu+=(bg.HU100||0);});
+  var area=parseFloat((Math.PI*r*r).toFixed(1));
+  var stateFips=bgs[0].GEOID.slice(0,2);
+
+  el('rbg-'+s).textContent=fmt(bgs.length);
+  renderPop(s,pop,hu,area);
+  el('pop20-'+s).textContent=fmt(pop);
+  el('pop20-'+s).classList.remove('pending');
+
+  // All async in parallel
+  setStep('income');
+  var results=await Promise.allSettled([
+    fetchIncomeLabor(bgs),
+    fetchBiz(lat,lon,r),
+    fetchState(stateFips),
+    fetchHwy(lat,lon),
+    fetch2010(bgs),
+  ]);
+  var airData=getNearestAirport(lat,lon);
+
+  var incData=results[0].status==='fulfilled'?results[0].value:null;
+  var bizData=results[1].status==='fulfilled'?results[1].value:null;
+  var stateData=results[2].status==='fulfilled'?results[2].value:null;
+  var hwyRaw=results[3].status==='fulfilled'?results[3].value:null;
+  var hwyData=hwyRaw&&hwyRaw.hwys?hwyRaw.hwys:(hwyRaw&&Array.isArray(hwyRaw)?hwyRaw:null);
+  var hwyElements=hwyRaw&&hwyRaw.elements?hwyRaw.elements:null;
+  var data2010=results[4].status==='fulfilled'?results[4].value:null;
+  setStep('transport');
+  var portData=getNearestPort(lat,lon);
+  setTimeout(initCollapsible, 100);
+
+  slotCache[s].stateData=stateData;
+  renderComparisons(s,pop,area,stateData);
+  renderGrowth(s,pop,data2010);
+  if(data2010) slotCache[s].pop10=data2010.pop;
+  if(incData) renderIncome(s,incData.income,incData.lfpr,incData.unempRate,incData.bachRate,incData.homeValue,incData.workingAgePop,hu,stateData);
+  else renderIncome(s,null,null,null,null,null,null,null,stateData);
+  renderBiz(s,bizData,stateData);
+  renderTransport(s,hwyData,airData,portData);
+  if(s===0&&hwyElements) drawHighways(hwyElements);
+  // Cache circle results for toggle
+  if(s===0&&incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,stateData:stateData,
+    income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
+    bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
+    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData};
+  // Fire EPA in background
+  if(s===0)
+  if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
+  if(bizData) slotCache[s].biz=bizData;
+  if(hwyData) slotCache[s].hwy=hwyData;
+  stopPulse();
+  clearSteps();
+  drawSlot(s,lat,lon,r,pop,incData?incData.income:null);
+  updateURL();
+}
+
+// ═══════════════ MAIN RUN ═══════════════
+async function run(){
+  var addrA=el('inp-a').value.trim();
+  if(!addrA){showErr('Please enter an address.');return;}
+  clearErr();
+  el('btn').disabled=true;
+  setStatus('run',compareMode?'Running both locations…':'Analyzing…');
+  try{
+    if(compareMode){
+      var addrB=el('inp-b').value.trim();
+      if(!addrB){await runSlot(0,addrA,radius);}
+      else{await Promise.all([runSlot(0,addrA,radius),runSlot(1,addrB,radius)]);}
+    } else {
+      el('col-1').classList.remove('vis');
+      if(driveMin&&analysisMode==='drive'){
+        await runDriveFirst(0,addrA,driveMin);
+      } else {
+        analysisMode='circle';
+        el('mb-circle').classList.add('on');
+        el('mb-drive').classList.remove('on');
+        await runSlot(0,addrA,radius);
+      }
+    }
+    setStatus('ok','Analysis complete');
+    showSaveBtn();
+    // Fade map hint after first successful analysis
+    var mh=document.getElementById('map-hint');
+    if(mh) setTimeout(function(){mh.classList.add('fade');},1200);
+    var gsb=el('gen-summary-btn');if(gsb)gsb.classList.add('vis');
+    var bi=el('broker-intel');if(bi)bi.classList.add('vis');
+    el('mode-toggle').classList.add('vis');
+    var apb=el('add-port-btn');if(apb)apb.style.display='block';
+    if(compareMode&&slotCache[0].pop&&slotCache[1].pop) renderDeltas(0,1);
+  }catch(e){
+    stopPulse();
+    clearSteps();
+    setStatus('err','Error');
+    showErr(e.message||String(e));
+  }finally{
+    el('btn').disabled=false;
+  }
+}
+
+async function runDriveFirst(s,addr,min){
+  resetSlot(s);
+  el('col-'+s).classList.add('vis');
+  setStep('geo');
+  var geo=await geocode(addr);
+  var lat=geo.lat,lon=geo.lon;
+  slotCache[s].lat=lat;slotCache[s].lon=lon;
+  var shortAddr=geo.display.split(',').slice(0,3).join(',');
+  el('ra-'+s).textContent=shortAddr;
+  showPulse(lat,lon,radius);
+  var airData=getNearestAirport(lat,lon);
+  var portData=getNearestPort(lat,lon);
+  setStep('transport');
+  var hwyResult=await fetchHwy(lat,lon);
+  var hwyData=hwyResult&&hwyResult.hwys?hwyResult.hwys:null;
+  var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
+  renderTransport(s,hwyData,airData,portData);
+  if(s===0&&hwyElements) drawHighways(hwyElements);
+  // Now run drive time analysis
+  analysisMode='drive';
+  el('mb-drive').classList.add('on');
+  el('mb-circle').classList.remove('on');
+  await runDriveAnalysis(s,lat,lon,min);
+}
+</script>
+<div id="summary-modal" onclick="if(event.target===this)closeSummary()">
+  <div id="summary-box">
+    <div id="summary-hdr">
+      <div id="summary-hdr-left">
+        <div id="summary-claude-icon">C</div>
+        <div id="summary-title">Market Summary<span id="summary-subtitle"></span></div>
+      </div>
+      <div id="summary-hdr-right">
+        <button id="summary-copy-hdr" onclick="copyLatestSummary()">Copy</button>
+        <button id="summary-close" onclick="closeSummary()">&#x2715;</button>
+      </div>
+    </div>
+    <div id="summary-msgs"></div>
+    <div id="summary-input-wrap">
+      <div id="summary-input-hint">
+        <span>Ask for changes, add context, or request a different focus</span>
+        <span style="opacity:.5">&#x2318;&#x23CE; to send</span>
+      </div>
+      <div id="summary-input-inner">
+        <textarea id="summary-chat-input" rows="1"
+          placeholder="e.g. Focus on industrial demand&#x2026; Shorten the first paragraph&#x2026; Emphasize Route 495 South positioning&#x2026;"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
+          onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey)){event.preventDefault();sendSummaryMsg();}"></textarea>
+        <button id="summary-send" onclick="sendSummaryMsg()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M10 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
