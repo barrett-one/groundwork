@@ -1798,8 +1798,8 @@ function applyDriveResults(s,cache){
   if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
   if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
   // Draw a simple center pin for drive mode
-  var pinCol=s===1?'#a78bfa':'#f59e42';
-  var pinGlow=s===1?'rgba(167,139,250,.4)':'rgba(245,158,66,.4)';
+  var pinCol=compareMode?(s===0?'#4b7cf3':'#f59e42'):'#f59e42';
+  var pinGlow=compareMode&&s===0?'rgba(75,124,243,.4)':'rgba(245,158,66,.4)';
   var dIcon=L.divIcon({html:'<div style="width:10px;height:10px;background:'+pinCol+';border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px '+pinGlow+'"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
   markers[s]=L.marker([cache.lat,cache.lon],{icon:dIcon}).addTo(MAP);
   // Fit map (final fit handled by run() post-analysis; this handles single-slot drive)
