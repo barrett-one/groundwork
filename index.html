@@ -3034,58 +3034,29 @@ async function fetchIncomeLabor(bgs){
   var counties={};
   bgs.forEach(function(bg){
     var st=bg.GEOID.slice(0,2),co=bg.GEOID.slice(2,5),k=st+'-'+co;
-    if(!counties[k]) counties[k]={state:st,county:co,geoids:{},pop:0};
+    if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
     counties[k].geoids[bg.GEOID]=true;
-    counties[k].pop+=(bg.POP100||0);
   });
   var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0;
-  var VARS='B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E';
   for(var k in counties){
     var c=counties[k];
-    var matched=0;
     try{
-      // Try block-group level first
-      var url='https://api.census.gov/data/2022/acs/acs5?get='+VARS+'&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
-      var r=await fetch(url);
-      if(r.ok){
-        var rows=await r.json();
-        for(var i=1;i<rows.length;i++){
-          var row=rows[i],geoid=row[11]+row[12]+row[13]+row[14];
-          if(c.geoids[geoid]){
-            matched++;
-            var inc=parseInt(row[0])||0,pop=parseInt(row[1])||0;
-            if(inc>0&&pop>0){incWt+=inc*pop;incPop+=pop;}
-            var p16=parseInt(row[2])||0,lfv=parseInt(row[3])||0,un=parseInt(row[4])||0;
-            var p25=parseInt(row[5])||0,bv=(parseInt(row[7])||0)+(parseInt(row[8])||0)+(parseInt(row[9])||0);
-            var hmv=parseInt(row[10])||0;
-            lf+=lfv;pop16+=p16;unemp+=un;bach+=bv;pop25+=p25;
-            if(hmv>0&&pop>0){hmvWt+=hmv*pop;hmvPop+=pop;}
-          }
+      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var r=await fetch(url); if(!r.ok) continue;
+      var rows=await r.json();
+      for(var i=1;i<rows.length;i++){
+        var row=rows[i],geoid=row[11]+row[12]+row[13]+row[14];
+        if(c.geoids[geoid]){
+          var inc=parseInt(row[0])||0,pop=parseInt(row[1])||0;
+          if(inc>0&&pop>0){incWt+=inc*pop;incPop+=pop;}
+          var p16=parseInt(row[2])||0,lfv=parseInt(row[3])||0,un=parseInt(row[4])||0;
+          var p25=parseInt(row[5])||0,bv=(parseInt(row[7])||0)+(parseInt(row[8])||0)+(parseInt(row[9])||0);
+          var hmv=parseInt(row[10])||0;
+          lf+=lfv;pop16+=p16;unemp+=un;bach+=bv;pop25+=p25;
+          if(hmv>0&&pop>0){hmvWt+=hmv*pop;hmvPop+=pop;}
         }
       }
     }catch(e){}
-    // Fallback: if BG query failed or returned no matching GEOIDs (e.g. CT Planning Region restructure),
-    // use county-level data weighted by estimated population
-    if(!matched){
-      try{
-        var fallUrl='https://api.census.gov/data/2022/acs/acs5?get='+VARS+'&for=county:'+c.county+'&in=state:'+c.state;
-        var fr=await fetch(fallUrl);
-        if(fr.ok){
-          var frows=await fr.json();
-          if(frows[1]){
-            var frow=frows[1];
-            var estPop=c.pop||1000; // use BG pop sum or estimate
-            var finc=parseInt(frow[0])||0;
-            if(finc>0&&estPop>0){incWt+=finc*estPop;incPop+=estPop;}
-            var fp16=parseInt(frow[2])||0,flfv=parseInt(frow[3])||0,fun=parseInt(frow[4])||0;
-            var fp25=parseInt(frow[5])||0,fbv=(parseInt(frow[7])||0)+(parseInt(frow[8])||0)+(parseInt(frow[9])||0);
-            var fhmv=parseInt(frow[10])||0;
-            lf+=flfv;pop16+=fp16;unemp+=fun;bach+=fbv;pop25+=fp25;
-            if(fhmv>0&&estPop>0){hmvWt+=fhmv*estPop;hmvPop+=estPop;}
-          }
-        }
-      }catch(e){}
-    }
   }
   return{
     income:incPop>0?Math.round(incWt/incPop):null,
@@ -3096,6 +3067,7 @@ async function fetchIncomeLabor(bgs){
     workingAgePop:pop16
   };
 }
+
 
 // Separate fetch for housing tenure (B25003) — isolated so failures don't affect income/labor
 async function fetchTenure(bgs){
