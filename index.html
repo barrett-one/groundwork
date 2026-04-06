@@ -1659,7 +1659,9 @@ function setAnalysisMode(mode){
       renderGrowth(0,c.pop,c.data2010);
       renderComparisons(0,c.pop,c.area,c.stateData);
       if(c.hwyData) slotCache[0].hwy=c.hwyData;
-      if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;driveActive=false;}
+      if(driveLayer[0]){MAP.removeLayer(driveLayer[0]);driveLayer[0]=null;}
+      if(driveLayer[1]){MAP.removeLayer(driveLayer[1]);driveLayer[1]=null;}
+      driveActive=false;
       var statusEl=el('drive-status');if(statusEl)statusEl.textContent='';
     } else if(slotCache[0].lat){
       // Run circle analysis
@@ -1719,9 +1721,9 @@ async function runDriveAnalysis(s,lat,lon,min){
     // Convert to ESRI ring format (already [lon,lat])
     var rings=simplified;
 
-    // Draw isochrone on map
-    if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;}
-    driveLayer=L.geoJSON(iso,{style:function(){return{color:'#f59e42',fillColor:'#f59e42',fillOpacity:0.07,weight:2,opacity:0.8,dashArray:'5 4'};}}).addTo(MAP);
+    // Draw isochrone on map (slot-specific)
+    if(driveLayer[s]){MAP.removeLayer(driveLayer[s]);driveLayer[s]=null;}
+    driveLayer[s]=L.geoJSON(iso,{style:function(){return{color:'#f59e42',fillColor:'#f59e42',fillOpacity:0.07,weight:2,opacity:0.8,dashArray:'5 4'};}}).addTo(MAP);
     driveActive=true;
     if(statusEl) statusEl.textContent=min+'-min drive radius';
     var dsn=el('drive-status-new');if(dsn)dsn.textContent=min+' min';
@@ -1765,7 +1767,9 @@ function applyDriveResults(s,cache){
   if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
   if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
   // Draw a simple center pin for drive mode
-  var dIcon=L.divIcon({html:'<div style="width:10px;height:10px;background:#f59e42;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px rgba(245,158,66,.4)"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
+  var pinCol=s===1?SLOT_COLOR[1]:'#f59e42';
+  var pinGlow=s===1?'rgba(245,158,66,.4)':'rgba(245,158,66,.4)';
+  var dIcon=L.divIcon({html:'<div style="width:10px;height:10px;background:'+pinCol+';border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px '+pinGlow+'"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
   markers[s]=L.marker([cache.lat,cache.lon],{icon:dIcon}).addTo(MAP);
   slotCache[s].area=cache.approxArea;
   // Re-run EPA with drive polygon
@@ -1787,7 +1791,7 @@ function applyCircleResults(s){
 }
 
 // ── DRIVE-TIME ISOCHRONE ──
-var driveLayer = null;
+var driveLayer = [null,null];
 var driveActive = false;
 var driveMin = 0;
 
@@ -1823,7 +1827,8 @@ function setDriveTime(min){
 
 function clearDriveTime(){
   driveMin=0; driveActive=false;
-  if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;}
+  if(driveLayer[0]){MAP.removeLayer(driveLayer[0]);driveLayer[0]=null;}
+  if(driveLayer[1]){MAP.removeLayer(driveLayer[1]);driveLayer[1]=null;}
   document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
   var ds=el('drive-status');if(ds)ds.textContent='';
   var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
@@ -1861,7 +1866,7 @@ async function fetchIsochrone(min){
     var data = await resp.json();
     if(!data.features || !data.features.length) throw new Error('No polygon');
 
-    driveLayer = L.geoJSON(data, {
+    driveLayer[0] = L.geoJSON(data, {
       style: function(){
         return {
           color: '#f59e42',
@@ -2748,6 +2753,7 @@ function toggleCompare(){
   el('side').classList.toggle('compare-mode',compareMode);
   if(!compareMode){
     el('col-1').classList.remove('vis');
+    if(driveLayer[1]){MAP.removeLayer(driveLayer[1]);driveLayer[1]=null;}
     if(circles[1]){MAP.removeLayer(circles[1]);circles[1]=null;}
     if(markers[1]){MAP.removeLayer(markers[1]);markers[1]=null;}
   }
@@ -2885,7 +2891,8 @@ function resetSlot(s){
   // Clear map layers for this slot
   if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
   if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
-  if(s===0&&driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;driveActive=false;}
+  if(driveLayer[s]){MAP.removeLayer(driveLayer[s]);driveLayer[s]=null;}
+  if(s===0) driveActive=false;
   el('ibar-'+s).style.width='0%';
   el('cbar-'+s).style.display='none';
   var bt=el('breakdown-toggle-'+s); if(bt) bt.style.display='none';
@@ -3949,7 +3956,9 @@ async function runSlot(s,addr,r){
   if(s===0){
     if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
     clearPortCircles();    driveCache[0]=null;analysisMode='circle';
-    if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;driveActive=false;}
+    if(driveLayer[0]){MAP.removeLayer(driveLayer[0]);driveLayer[0]=null;}
+      if(driveLayer[1]){MAP.removeLayer(driveLayer[1]);driveLayer[1]=null;}
+      driveActive=false;
     driveMin=0;
     document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
     var ds=el('drive-status');if(ds)ds.textContent='';
@@ -4054,8 +4063,16 @@ async function run(){
   try{
     if(compareMode){
       var addrB=el('inp-b').value.trim();
-      if(!addrB){await runSlot(0,addrA,radius);}
-      else{await Promise.all([runSlot(0,addrA,radius),runSlot(1,addrB,radius)]);}
+      if(!addrB){
+        if(driveMin&&analysisMode==='drive') await runDriveFirst(0,addrA,driveMin);
+        else await runSlot(0,addrA,radius);
+      } else {
+        if(driveMin&&analysisMode==='drive'){
+          await Promise.all([runDriveFirst(0,addrA,driveMin),runDriveFirst(1,addrB,driveMin)]);
+        } else {
+          await Promise.all([runSlot(0,addrA,radius),runSlot(1,addrB,radius)]);
+        }
+      }
     } else {
       el('col-1').classList.remove('vis');
       if(driveMin&&analysisMode==='drive'){
