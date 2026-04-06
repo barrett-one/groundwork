@@ -979,15 +979,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .hcard.anim:nth-child(5){animation-delay:.22s}
 .hcard.anim:nth-child(6){animation-delay:.27s}
 
-/* ── LABOR INLINE BARS ── */
-.labor-row{display:flex;flex-direction:column;gap:3px;padding:4px 0;border-bottom:1px solid rgba(30,36,53,.5)}
-.labor-row:last-child{border-bottom:none}
-.labor-top{display:flex;justify-content:space-between;align-items:center}
-.labor-lbl{font-size:11px;color:var(--m2)}
-.labor-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
-.labor-bar-wrap{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;margin-top:1px}
-.labor-bar{height:3px;border-radius:2px;transition:width .8s cubic-bezier(.22,.68,0,1.2);width:0%}
-.labor-state-note{font-size:9.5px;color:var(--m1);margin-top:1px}
+/* ── LABOR CARD: compare mode compact ── */
+.compare-mode .labor-val{font-size:12px}
+.compare-mode .labor-row{grid-template-columns:44px 1fr;gap:6px;padding:6px 0}
 
 /* ── GROWTH CARD UPGRADE ── */
 .grow-delta{font-size:13px;font-weight:700;margin-top:10px;display:flex;align-items:center;gap:7px;line-height:1}
