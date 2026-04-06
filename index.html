@@ -3979,19 +3979,23 @@ async function runSlot(s,addr,r){
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
   if(s===0){
     if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
-    clearPortCircles();    driveCache[0]=null;analysisMode='circle';
-    if(driveLayer[0]){MAP.removeLayer(driveLayer[0]);driveLayer[0]=null;}
+    clearPortCircles();
+    // Only clear drive layers/cache if we're actually running circle mode
+    // (don't reset drive state if compare+drive is running both slots)
+    if(analysisMode!=='drive'||!compareMode){
+      if(driveLayer[0]){MAP.removeLayer(driveLayer[0]);driveLayer[0]=null;}
       if(driveLayer[1]){MAP.removeLayer(driveLayer[1]);driveLayer[1]=null;}
-      driveActive=false;
-    driveMin=0;
-    document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
-    var ds=el('drive-status');if(ds)ds.textContent='';
-    var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
-    var mtc=el('mtab-circle');if(mtc)mtc.classList.add('active');
-    var mtd=el('mtab-drive');if(mtd)mtd.classList.remove('active');
-    var co=el('circle-options');if(co)co.style.display='flex';
-    var dro=el('drive-options');if(dro)dro.classList.remove('vis');
-    updateAnalyzeBtn();
+      driveCache[0]=null; driveActive=false;
+      driveMin=0;
+      document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
+      var ds=el('drive-status');if(ds)ds.textContent='';
+      var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
+      var mtc2=el('mtab-circle');if(mtc2)mtc2.classList.add('active');
+      var mtd2=el('mtab-drive');if(mtd2)mtd2.classList.remove('active');
+      var co2=el('circle-options');if(co2)co2.style.display='flex';
+      var dro2=el('drive-options');if(dro2)dro2.classList.remove('vis');
+      updateAnalyzeBtn();
+    }
     var mt=el('mode-toggle');if(mt)mt.classList.remove('vis');
     var mb=el('mb-circle');if(mb)mb.classList.add('on');
     var mb2=el('mb-drive');if(mb2)mb2.classList.remove('on');
@@ -4000,7 +4004,7 @@ async function runSlot(s,addr,r){
     var bi=el('broker-intel');if(bi)bi.classList.remove('vis');
     document.querySelectorAll('.broker-btn').forEach(function(b){b.classList.remove('active');});
   }
-  if(s===0){clearDriveTime();}
+  if(s===0&&analysisMode!=='drive'){clearDriveTime();}
 
   setStep('geo');
   var geo=await geocode(addr);
@@ -4083,6 +4087,8 @@ async function run(){
   if(!addrA){showErr('Please enter an address.');return;}
   clearErr();
   el('btn').disabled=true;
+  // Set mode state once here before any slot functions run
+  var usingDrive=!!(driveMin&&analysisMode==='drive');
   setStatus('run',compareMode?'Running both locations…':'Analyzing…');
   try{
     if(compareMode){
@@ -4110,6 +4116,22 @@ async function run(){
     }
     setStatus('ok','Analysis complete');
     showSaveBtn();
+    // Sync tab UI to what actually ran
+    var isDriveResult=usingDrive&&driveCache[0];
+    var mtcR=el('mtab-circle'),mtdR=el('mtab-drive');
+    var coR=el('circle-options'),droR=el('drive-options');
+    if(isDriveResult){
+      if(mtcR)mtcR.classList.remove('active');
+      if(mtdR)mtdR.classList.add('active');
+      if(coR)coR.style.display='none';
+      if(droR)droR.classList.add('vis');
+    } else {
+      if(mtcR)mtcR.classList.add('active');
+      if(mtdR)mtdR.classList.remove('active');
+      if(coR)coR.style.display='flex';
+      if(droR)droR.classList.remove('vis');
+    }
+    updateAnalyzeBtn();
     // Fade map hint after first successful analysis
     var mh=document.getElementById('map-hint');
     if(mh) setTimeout(function(){mh.classList.add('fade');},1200);
@@ -4146,10 +4168,7 @@ async function runDriveFirst(s,addr,min){
   var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
   renderTransport(s,hwyData,airData,portData);
   if(s===0&&hwyElements) drawHighways(hwyElements);
-  // Now run drive time analysis
-  analysisMode='drive';
-  el('mb-drive').classList.add('on');
-  el('mb-circle').classList.remove('on');
+  // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
 </script>
