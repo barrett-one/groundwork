@@ -1655,6 +1655,8 @@ function setAnalysisMode(mode){
     var statusEl=el('drive-status');if(statusEl)statusEl.textContent='';
 
     // Restore slot 0
+    hwyElementsAll=[];
+    if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
     if(slotCache[0].circleCache){
       var c=slotCache[0].circleCache;
       renderPop(0,c.pop,c.hu,c.area);
@@ -1664,7 +1666,8 @@ function setAnalysisMode(mode){
       renderBiz(0,c.bizData,c.stateData);
       renderGrowth(0,c.pop,c.data2010);
       renderComparisons(0,c.pop,c.area,c.stateData);
-      if(c.hwyData) slotCache[0].hwy=c.hwyData;
+      if(c.hwyElements){drawHighways(c.hwyElements);}
+      else if(c.hwyData){slotCache[0].hwy=c.hwyData;}
       drawSlot(0,c.lat||slotCache[0].lat,c.lon||slotCache[0].lon,c.r||radius,c.pop,c.income);
     } else if(slotCache[0].lat){
       var addr3=el('ra-0')?el('ra-0').textContent:el('inp-a').value.trim();
@@ -1681,6 +1684,7 @@ function setAnalysisMode(mode){
         renderBiz(1,c1.bizData,c1.stateData);
         renderGrowth(1,c1.pop,c1.data2010);
         renderComparisons(1,c1.pop,c1.area,c1.stateData);
+        if(c1.hwyElements) drawHighways(c1.hwyElements);
         drawSlot(1,c1.lat||slotCache[1].lat,c1.lon||slotCache[1].lon,c1.r||radius,c1.pop,c1.income);
       } else if(slotCache[1].lat){
         // Re-run slot 1 with its stored radius, not global default
@@ -2652,6 +2656,11 @@ function switchModeTab(mode){
       document.querySelectorAll('.drb[data-min]').forEach(function(b){
         b.classList.toggle('on',parseInt(b.getAttribute('data-min'))===15);
       });
+    }
+    // Auto-restore drive results from cache if available
+    if(driveCache[0]){
+      applyDriveResults(0,driveCache[0]);
+      if(compareMode&&driveCache[1]) applyDriveResults(1,driveCache[1]);
     }
   }
   updateAnalyzeBtn();
@@ -4118,7 +4127,7 @@ async function runSlot(s,addr,r){
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
-    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData};
+    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements};
   // Fire EPA in background
   if(s===0)
   if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
