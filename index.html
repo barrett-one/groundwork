@@ -1795,7 +1795,9 @@ async function runDriveAnalysis(s,lat,lon,min){
     // Store results
     driveCache[s]={pop:pop,hu:hu,approxArea:approxArea,bgs:bgs,
       incData:incData,bizData:bizData,stateData:stateData,data2010:data2010,
-      lat:lat,lon:lon,min:min,polyRing:rings};
+      lat:lat,lon:lon,min:min,polyRing:rings,tenureData:null};
+    // Fetch tenure separately so it can't break drive analysis
+    fetchTenure(bgs).then(function(t){if(driveCache[s])driveCache[s].tenureData=t;renderTenure(s,t,stateData);}).catch(function(){});
 
     applyDriveResults(s,driveCache[s]);
 
@@ -1835,7 +1837,7 @@ function applyDriveResults(s,cache){
   if(cache.incData) renderIncome(s,cache.incData.income,cache.incData.lfpr,cache.incData.unempRate,cache.incData.bachRate,cache.incData.homeValue,cache.incData.workingAgePop,cache.hu,cache.stateData);
   else renderIncome(s,null,null,null,null,null,null,null,cache.stateData);
   renderBiz(s,cache.bizData,cache.stateData);
-  renderTenure(s,cache.incData?cache.incData.ownerRate:null,cache.stateData);
+  renderTenure(s,cache.tenureData!==undefined?cache.tenureData:null,cache.stateData);
   renderGrowth(s,cache.pop,cache.data2010);
   renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
   el('rbg-'+s).textContent=fmt(cache.bgs.length);
@@ -3035,15 +3037,15 @@ async function fetchIncomeLabor(bgs){
     if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
     counties[k].geoids[bg.GEOID]=true;
   });
-  var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0,ownHH=0,totHH=0;
+  var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0;
   for(var k in counties){
     var c=counties[k];
     try{
-      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E,B25003_001E,B25003_002E,B25003_003E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
       var r=await fetch(url); if(!r.ok) continue;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
-        var row=rows[i],geoid=row[14]+row[15]+row[16]+row[17];
+        var row=rows[i],geoid=row[11]+row[12]+row[13]+row[14];
         if(c.geoids[geoid]){
           var inc=parseInt(row[0])||0,pop=parseInt(row[1])||0;
           if(inc>0&&pop>0){incWt+=inc*pop;incPop+=pop;}
@@ -3052,7 +3054,6 @@ async function fetchIncomeLabor(bgs){
           var hmv=parseInt(row[10])||0;
           lf+=lfv;pop16+=p16;unemp+=un;bach+=bv;pop25+=p25;
           if(hmv>0&&pop>0){hmvWt+=hmv*pop;hmvPop+=pop;}
-          var th=parseInt(row[11])||0,oh=parseInt(row[12])||0;totHH+=th;ownHH+=oh;
         }
       }
     }catch(e){}
@@ -3063,9 +3064,35 @@ async function fetchIncomeLabor(bgs){
     unempRate:lf>0?unemp/lf:null,
     bachRate:pop25>0?bach/pop25:null,
     homeValue:hmvPop>0?Math.round(hmvWt/hmvPop):null,
-    workingAgePop:pop16,
-    ownerRate:totHH>0?ownHH/totHH:null
+    workingAgePop:pop16
   };
+}
+
+// Separate fetch for housing tenure (B25003) — isolated so failures don't affect income/labor
+async function fetchTenure(bgs){
+  var counties={};
+  bgs.forEach(function(bg){
+    var st=bg.GEOID.slice(0,2),co=bg.GEOID.slice(2,5),k=st+'-'+co;
+    if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
+    counties[k].geoids[bg.GEOID]=true;
+  });
+  var ownHH=0,totHH=0;
+  for(var k in counties){
+    var c=counties[k];
+    try{
+      var url='https://api.census.gov/data/2022/acs/acs5?get=B25003_001E,B25003_002E,B25003_003E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var r=await fetch(url); if(!r.ok) continue;
+      var rows=await r.json();
+      for(var i=1;i<rows.length;i++){
+        var row=rows[i],geoid=row[3]+row[4]+row[5]+row[6];
+        if(c.geoids[geoid]){
+          var th=parseInt(row[0])||0,oh=parseInt(row[1])||0;
+          totHH+=th; ownHH+=oh;
+        }
+      }
+    }catch(e){}
+  }
+  return totHH>0?ownHH/totHH:null;
 }
 
 // ═══════════════ API: 2010 POPULATION ═══════════════
@@ -4160,12 +4187,14 @@ async function runSlot(s,addr,r){
     fetchState(stateFips),
     fetchHwy(lat,lon),
     fetch2010(bgs),
+    fetchTenure(bgs),
   ]);
   var airData=getNearestAirport(lat,lon);
 
   var incData=results[0].status==='fulfilled'?results[0].value:null;
   var bizData=results[1].status==='fulfilled'?results[1].value:null;
   var stateData=results[2].status==='fulfilled'?results[2].value:null;
+  var tenureData=results[5]&&results[5].status==='fulfilled'?results[5].value:null;
   var hwyRaw=results[3].status==='fulfilled'?results[3].value:null;
   var hwyData=hwyRaw&&hwyRaw.hwys?hwyRaw.hwys:(hwyRaw&&Array.isArray(hwyRaw)?hwyRaw:null);
   var hwyElements=hwyRaw&&hwyRaw.elements?hwyRaw.elements:null;
@@ -4193,14 +4222,14 @@ async function runSlot(s,addr,r){
   if(incData) renderIncome(s,incData.income,incData.lfpr,incData.unempRate,incData.bachRate,incData.homeValue,incData.workingAgePop,hu,stateData);
   else renderIncome(s,null,null,null,null,null,null,null,stateData);
   renderBiz(s,bizData,stateData);
-  renderTenure(s,incData?incData.ownerRate:null,stateData);
+  renderTenure(s,tenureData,stateData);
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
-    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:incData?incData.ownerRate:null};
+    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData};
   // Fire EPA in background
   if(s===0)
   if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
