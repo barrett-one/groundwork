@@ -1845,7 +1845,7 @@ async function fetchIsochrone(min){
   if(!center){ el('drive-status').textContent='Run analysis first'; return; }
 
   el('drive-status').textContent = 'Loading…';
-  if(driveLayer){ MAP.removeLayer(driveLayer); driveLayer=null; }
+  if(driveLayer[0]){ MAP.removeLayer(driveLayer[0]); driveLayer[0]=null; }
 
   try{
     var ctrl = new AbortController();
