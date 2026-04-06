@@ -1188,6 +1188,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
         <div class="labor-state-note" id="wapop-0-note"></div>
        </div>
       </div>
+      <div class="labor-row">
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="own-0">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Owner-occupied</span>
+        <div class="labor-bar-track" id="own-0-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="own-0-note"></div>
+       </div>
+      </div>
      </div>
     </div>
     <div class="gr">
@@ -1269,6 +1279,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
         <span class="labor-lbl">Working-age pop (16+)</span>
         <div class="labor-bar-track" id="wapop-1-bar"><div class="labor-bar"></div></div>
         <div class="labor-state-note" id="wapop-1-note"></div>
+       </div>
+      </div>
+      <div class="labor-row">
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="own-1">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Owner-occupied</span>
+        <div class="labor-bar-track" id="own-1-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="own-1-note"></div>
        </div>
       </div>
      </div>
@@ -1673,6 +1693,7 @@ function setAnalysisMode(mode){
       renderComparisons(0,c.pop,c.area,c.stateData);
       if(c.hwyElements){drawHighways(c.hwyElements);}
       else if(c.hwyData){slotCache[0].hwy=c.hwyData;}
+      renderTenure(0,c.ownerRate,slotCache[0].stateData);
       drawSlot(0,c.lat||slotCache[0].lat,c.lon||slotCache[0].lon,c.r||radius,c.pop,c.income);
     } else if(slotCache[0].lat){
       var addr3=el('ra-0')?el('ra-0').textContent:el('inp-a').value.trim();
@@ -1690,6 +1711,7 @@ function setAnalysisMode(mode){
         renderGrowth(1,c1.pop,c1.data2010);
         renderComparisons(1,c1.pop,c1.area,c1.stateData);
         if(c1.hwyElements) drawHighways(c1.hwyElements);
+        renderTenure(1,c1.ownerRate,slotCache[1].stateData);
         drawSlot(1,c1.lat||slotCache[1].lat,c1.lon||slotCache[1].lon,c1.r||radius,c1.pop,c1.income);
       } else if(slotCache[1].lat){
         // Re-run slot 1 with its stored radius, not global default
@@ -1819,6 +1841,7 @@ function applyDriveResults(s,cache){
   if(cache.incData) renderIncome(s,cache.incData.income,cache.incData.lfpr,cache.incData.unempRate,cache.incData.bachRate,cache.incData.homeValue,cache.incData.workingAgePop,cache.hu,cache.stateData);
   else renderIncome(s,null,null,null,null,null,null,null,cache.stateData);
   renderBiz(s,cache.bizData,cache.stateData);
+  renderTenure(s,cache.incData?cache.incData.ownerRate:null,cache.stateData);
   renderGrowth(s,cache.pop,cache.data2010);
   renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
   el('rbg-'+s).textContent=fmt(cache.bgs.length);
@@ -2948,7 +2971,7 @@ function closePdfTip(){
 
 // ═══════════════ RESET SLOT ═══════════════
 function resetSlot(s){
-  ['rp','rs','ri','rbiz','rhwy','pop10','pop20'].forEach(function(id){
+  ['rp','rs','ri','rbiz','rhwy','pop10','pop20','own'].forEach(function(id){
     var e=el(id+'-'+s); if(e){e.textContent='…';e.classList.add('pending');}
   });
   ['biz-ctx-0','biz-ctx-1'].forEach(function(id){var e=el(id);if(e){e.textContent='';e.style.color='';}});
@@ -3018,15 +3041,15 @@ async function fetchIncomeLabor(bgs){
     if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
     counties[k].geoids[bg.GEOID]=true;
   });
-  var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0;
+  var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0,ownHH=0,totHH=0;
   for(var k in counties){
     var c=counties[k];
     try{
-      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E,B25003_001E,B25003_002E,B25003_003E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
       var r=await fetch(url); if(!r.ok) continue;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
-        var row=rows[i],geoid=row[11]+row[12]+row[13]+row[14];
+        var row=rows[i],geoid=row[14]+row[15]+row[16]+row[17];
         if(c.geoids[geoid]){
           var inc=parseInt(row[0])||0,pop=parseInt(row[1])||0;
           if(inc>0&&pop>0){incWt+=inc*pop;incPop+=pop;}
@@ -3035,6 +3058,7 @@ async function fetchIncomeLabor(bgs){
           var hmv=parseInt(row[10])||0;
           lf+=lfv;pop16+=p16;unemp+=un;bach+=bv;pop25+=p25;
           if(hmv>0&&pop>0){hmvWt+=hmv*pop;hmvPop+=pop;}
+          var th=parseInt(row[11])||0,oh=parseInt(row[12])||0;totHH+=th;ownHH+=oh;
         }
       }
     }catch(e){}
@@ -3045,7 +3069,8 @@ async function fetchIncomeLabor(bgs){
     unempRate:lf>0?unemp/lf:null,
     bachRate:pop25>0?bach/pop25:null,
     homeValue:hmvPop>0?Math.round(hmvWt/hmvPop):null,
-    workingAgePop:pop16
+    workingAgePop:pop16,
+    ownerRate:totHH>0?ownHH/totHH:null
   };
 }
 
@@ -3081,7 +3106,7 @@ async function fetchState(fips){
       fetch('https://api.census.gov/data/2022/acs/acs5?get=B01003_001E,NAME&for=state:'+fips),
       fetch('https://api.census.gov/data/2021/cbp?get=ESTAB&for=state:'+fips+'&NAICS2017=00'),
       fetch('https://api.census.gov/data/2022/acs/acs5?get=B19013_001E&for=state:'+fips),
-      fetch('https://api.census.gov/data/2022/acs/acs5?get=B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E&for=state:'+fips)
+      fetch('https://api.census.gov/data/2022/acs/acs5?get=B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25003_001E,B25003_002E&for=state:'+fips)
     ]);
     if(!popResp.ok) return null;
     var popD=await popResp.json();
@@ -3126,8 +3151,9 @@ async function fetchState(fips){
       var r2=labD[1];
       var sp16=parseInt(r2[0]),slf=parseInt(r2[1]),sun=parseInt(r2[2]);
       var sp25=parseInt(r2[3]),sbch=parseInt(r2[4])+parseInt(r2[5])+parseInt(r2[6])+parseInt(r2[7]);
+      var stotHH=parseInt(r2[8])||0,sownHH=parseInt(r2[9])||0;
       var stateLand=STATE_LAND[fips]||1;
-      stateLabor={lfpr:sp16>0?slf/sp16:null,unempRate:slf>0?sun/slf:null,bachRate:sp25>0?sbch/sp25:null,pop16PerSqMi:sp16/stateLand};
+      stateLabor={lfpr:sp16>0?slf/sp16:null,unempRate:slf>0?sun/slf:null,bachRate:sp25>0?sbch/sp25:null,pop16PerSqMi:sp16/stateLand,ownerRate:stotHH>0?sownHH/stotHH:null};
     }
     return{density:pop/land,name:popD[1][1],pop:pop,biz:stateBiz,bizSizes:stateBizSizes,hhi:stateHHI,labor:stateLabor};
   }catch(e){return null;}
@@ -3387,6 +3413,41 @@ function renderIncome(s,income,lfpr,unempRate,bachRate,homeValue,waPop,hu,stateD
   if(homeValue&&homeValue>0){el('hmv-'+s).textContent='$'+Math.round(homeValue/1000)+'K';slotCache[s].hmv=homeValue;}
   else{el('hmv-'+s).textContent='N/A';}
 }
+
+// ── TENURE: Owner vs Renter ──
+function renderTenure(s, ownerRate, stateDataArg){
+  var stLab=stateDataArg&&stateDataArg.labor;
+  var stName=stateDataArg?stateDataArg.name:'MA';
+  var stOwner=stLab?stLab.ownerRate:null;
+  // Reuse setLabor pattern inline
+  var el2=el('own-'+s), barTrack=el('own-'+s+'-bar'), noteEl=el('own-'+s+'-note');
+  if(!el2) return;
+  if(ownerRate!=null){
+    var val=ownerRate*100;
+    el2.textContent=val.toFixed(1)+'%'; el2.classList.remove('pending');
+    if(stOwner){
+      var ratio=val/(stOwner*100);
+      var isGood=ratio>=1.05, isBad=ratio<0.9;
+      el2.className='labor-val'+(isGood?' positive':isBad?' caution':'');
+      if(barTrack){
+        var w=Math.min(Math.max(ratio*50,2),96);
+        var barColor=isGood?'var(--gn)':isBad?'var(--yw)':'var(--ac)';
+        var bar=barTrack.querySelector('.labor-bar');
+        if(bar){bar.style.background=barColor;setTimeout(function(){bar.style.width=w+'%';},200);}
+      }
+      if(noteEl){
+        var mult=ratio>=1?ratio.toFixed(1)+'×':((ratio*100).toFixed(0)+'%');
+        var mCol=isGood?'var(--gn)':isBad?'var(--yw)':'var(--m1)';
+        noteEl.innerHTML='<span style="color:'+mCol+';font-weight:600">'+mult+'</span>'+
+          ' <span style="color:var(--m1)">vs '+stName+' '+(stOwner*100).toFixed(1)+'%</span>';
+      }
+    }
+  } else {
+    el2.textContent='N/A'; el2.classList.remove('pending'); el2.className='labor-val';
+  }
+  slotCache[s].ownerRate=ownerRate;
+}
+
 // Active size filter per slot
 var bizSizeFilter=['all','all'];
 
@@ -4138,13 +4199,14 @@ async function runSlot(s,addr,r){
   if(incData) renderIncome(s,incData.income,incData.lfpr,incData.unempRate,incData.bachRate,incData.homeValue,incData.workingAgePop,hu,stateData);
   else renderIncome(s,null,null,null,null,null,null,null,stateData);
   renderBiz(s,bizData,stateData);
+  renderTenure(s,incData?incData.ownerRate:null,stateData);
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
-    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements};
+    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:incData?incData.ownerRate:null};
   // Fire EPA in background
   if(s===0)
   if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
