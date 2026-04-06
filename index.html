@@ -2520,7 +2520,7 @@ function animateNumber(el, targetText, delay) {
   var target = parseFloat(numMatch[0]);
   var prefix = stripped.slice(0, stripped.search(/[\d]/));
   var suffix = stripped.slice(stripped.search(/[\d]/)+numMatch[0].length);
-  var isInt = !targetText.includes('.');
+  var isInt = !stripped.includes('.');
   var duration = 600;
   var start = null;
   el.classList.remove('pending');
