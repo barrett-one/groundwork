@@ -1761,6 +1761,12 @@ async function runDriveAnalysis(s,lat,lon,min){
 
 function applyDriveResults(s,cache){
   if(!cache) return;
+  // Clear previous circle + marker so only drive polygon shows
+  if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
+  if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
+  // Draw a simple center pin for drive mode
+  var dIcon=L.divIcon({html:'<div style="width:10px;height:10px;background:#f59e42;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px rgba(245,158,66,.4)"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
+  markers[s]=L.marker([cache.lat,cache.lon],{icon:dIcon}).addTo(MAP);
   slotCache[s].area=cache.approxArea;
   // Re-run EPA with drive polygon
     renderPop(s,cache.pop,cache.hu,cache.approxArea);
@@ -2876,6 +2882,10 @@ function resetSlot(s){
   ['grow-delta','biz-sub','ictx','ra'].forEach(function(id){
     var e=el(id+'-'+s); if(e) e.textContent='';
   });
+  // Clear map layers for this slot
+  if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
+  if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
+  if(s===0&&driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;driveActive=false;}
   el('ibar-'+s).style.width='0%';
   el('cbar-'+s).style.display='none';
   var bt=el('breakdown-toggle-'+s); if(bt) bt.style.display='none';
