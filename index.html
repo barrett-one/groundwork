@@ -1797,12 +1797,9 @@ function applyDriveResults(s,cache){
   var pinGlow=s===1?'rgba(245,158,66,.4)':'rgba(245,158,66,.4)';
   var dIcon=L.divIcon({html:'<div style="width:10px;height:10px;background:'+pinCol+';border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px '+pinGlow+'"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
   markers[s]=L.marker([cache.lat,cache.lon],{icon:dIcon}).addTo(MAP);
-  // Fit map to drive polygon
-  if(driveLayer[s]) try{
-    var bounds=[driveLayer[0]&&driveLayer[0].getBounds(),driveLayer[1]&&driveLayer[1].getBounds()];
-    var validBounds=bounds.filter(Boolean);
-    if(validBounds.length===1) MAP.fitBounds(validBounds[0],{padding:[40,40]});
-    else if(validBounds.length===2) MAP.fitBounds(validBounds[0].extend(validBounds[1]),{padding:[40,40]});
+  // Fit map (final fit handled by run() post-analysis; this handles single-slot drive)
+  if(driveLayer[s]&&!compareMode) try{
+    MAP.fitBounds(driveLayer[s].getBounds(),{padding:[50,50]});
   }catch(e){}
   slotCache[s].area=cache.approxArea;
   // Re-run EPA with drive polygon
@@ -4101,6 +4098,8 @@ async function run(){
   el('btn').disabled=true;
   // Set mode state once here before any slot functions run
   var usingDrive=!!(driveMin&&analysisMode==='drive');
+  // Lock in mode state before any async operations
+  if(usingDrive) analysisMode='drive';
   setStatus('run',compareMode?'Running both locations…':'Analyzing…');
   try{
     if(compareMode){
@@ -4183,7 +4182,8 @@ async function runDriveFirst(s,addr,min){
   slotCache[s].lat=lat;slotCache[s].lon=lon;
   var shortAddr=geo.display.split(',').slice(0,3).join(',');
   el('ra-'+s).textContent=shortAddr;
-  showPulse(lat,lon,radius);
+  // No showPulse in drive mode - drive polygon is the visual feedback
+  if(!compareMode) showPulse(lat,lon,radius);
   var airData=getNearestAirport(lat,lon);
   var portData=getNearestPort(lat,lon);
   setStep('transport');
