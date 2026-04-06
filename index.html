@@ -2198,6 +2198,7 @@ function togglePortfolio(){
     clearPortCircles();
     clearPortDrive();
     if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
+    clearPortCircles();
   }
 }
 
@@ -2705,12 +2706,7 @@ setupAutocomplete('inp-a','ac-a');
 setupAutocomplete('inp-b','ac-b');
 
 // Map click to analyze (must be after MAP init)
-MAP.on('click',function(e){
-  var inp=document.getElementById('inp-a');
-  var lat=e.latlng.lat.toFixed(5),lon=e.latlng.lng.toFixed(5);
-  inp.value=lat+','+lon;
-  run();
-});
+// Map explores freely — no click-to-analyze
 var mh=document.getElementById('map-hint');
 if(mh) mh.style.opacity='0.8';
 
@@ -3941,7 +3937,8 @@ async function runSlot(s,addr,r){
   el('col-'+s).classList.add('vis');
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
   if(s===0){
-    if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}    driveCache[0]=null;analysisMode='circle';
+    if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
+    clearPortCircles();    driveCache[0]=null;analysisMode='circle';
     if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;driveActive=false;}
     driveMin=0;
     document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
