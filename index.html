@@ -790,7 +790,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #toast.show{opacity:1;transform:translateY(0)}
 
 /* map */
-#map{flex:1}
+#map{flex:1;height:100vh;min-height:0}
 .leaflet-tile-pane{/* CartoDB dark tiles - no filter needed */}
 .leaflet-marker-pane,.leaflet-shadow-pane,.leaflet-overlay-pane svg{filter:none!important}
 .leaflet-popup-content-wrapper{background:var(--card);border:1px solid var(--b2);border-radius:8px;
@@ -1343,9 +1343,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 </div><!-- /side -->
 <div id="map-hint">Drag to explore · type address to analyze</div>
 <div id="map"></div>
-<div id="toast">🔗 Link copied to clipboard</div>
-
-<script>
+<div id="toast">🔗 Link copied to
 // ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
 var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
@@ -2786,6 +2784,8 @@ function toggleCompare(){
     if(driveLayer[1]){MAP.removeLayer(driveLayer[1]);driveLayer[1]=null;}
     if(circles[1]){MAP.removeLayer(circles[1]);circles[1]=null;}
     if(markers[1]){MAP.removeLayer(markers[1]);markers[1]=null;}
+    el('compare-banner').classList.remove('vis');
+    el('cb-a').textContent='—'; el('cb-b').textContent='—';
   }
 }
 
@@ -4072,7 +4072,7 @@ async function runSlot(s,addr,r){
   else renderIncome(s,null,null,null,null,null,null,null,stateData);
   renderBiz(s,bizData,stateData);
   renderTransport(s,hwyData,airData,portData);
-  if(s===0&&hwyElements) drawHighways(hwyElements);
+  if(hwyElements) drawHighways(hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
@@ -4191,9 +4191,11 @@ async function runDriveFirst(s,addr,min){
   var hwyData=hwyResult&&hwyResult.hwys?hwyResult.hwys:null;
   var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
   renderTransport(s,hwyData,airData,portData);
-  if(s===0&&hwyElements) drawHighways(hwyElements);
+  if(hwyElements) drawHighways(hwyElements);
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
+}
+nalysis(s,lat,lon,min);
 }
 </script>
 <div id="summary-modal" onclick="if(event.target===this)closeSummary()">
