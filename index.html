@@ -1787,6 +1787,8 @@ async function runDriveAnalysis(s,lat,lon,min){
 
 function applyDriveResults(s,cache){
   if(!cache) return;
+  stopPulse(); // Remove green pulse circle from drive geocode
+  clearSteps();
   // Clear previous circle + marker so only drive polygon shows
   if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
   if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
@@ -3409,11 +3411,12 @@ function renderBiz(s,biz,stateData){
   if(biz&&biz.total>0){
     // Cache for filter switching
     slotCache[s].biz=biz;
-    // Render size breakdown with active filter
-    renderBizSizes(s,biz,stateData);
-    // Show size filters
+    // Show size filters immediately
     var bsf=el('bsf-'+s);
     if(bsf) bsf.style.display='flex';
+    // Render size breakdown - defer slightly to let DOM settle
+    renderBizSizes(s,biz,stateData);
+    setTimeout(function(){ renderBizSizes(s,slotCache[s].biz,slotCache[s].stateData); }, 50);
     // Sector breakdown
     if(biz.sectors){
       var merged={};
@@ -4149,6 +4152,18 @@ async function run(){
     el('mode-toggle').classList.add('vis');
     var apb=el('add-port-btn');if(apb)apb.style.display='block';
     if(compareMode&&slotCache[0].pop&&slotCache[1].pop) renderDeltas(0,1);
+    // Auto-fit map to all active layers
+    setTimeout(function(){
+      try{
+        var allBounds=[];
+        [0,1].forEach(function(s){
+          if(driveLayer[s]) allBounds.push(driveLayer[s].getBounds());
+          else if(circles[s]) allBounds.push(circles[s].getBounds());
+        });
+        if(allBounds.length===1) MAP.fitBounds(allBounds[0],{padding:[50,50]});
+        else if(allBounds.length===2) MAP.fitBounds(allBounds[0].extend(allBounds[1]),{padding:[50,50]});
+      }catch(e){}
+    }, 400);
   }catch(e){
     stopPulse();
     clearSteps();
