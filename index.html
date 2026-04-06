@@ -1748,7 +1748,8 @@ async function runDriveAnalysis(s,lat,lon,min){
 
     // Draw isochrone on map (slot-specific)
     if(driveLayer[s]){MAP.removeLayer(driveLayer[s]);driveLayer[s]=null;}
-    driveLayer[s]=L.geoJSON(iso,{style:function(){return{color:'#f59e42',fillColor:'#f59e42',fillOpacity:0.07,weight:2,opacity:0.8,dashArray:'5 4'};}}).addTo(MAP);
+    var dColor=s===1?'#a78bfa':'#f59e42';
+    driveLayer[s]=L.geoJSON(iso,{style:function(){return{color:dColor,fillColor:dColor,fillOpacity:0.07,weight:2,opacity:0.8,dashArray:'5 4'};}}).addTo(MAP);
     driveActive=true;
     if(statusEl) statusEl.textContent=min+'-min drive radius';
     var dsn=el('drive-status-new');if(dsn)dsn.textContent=min+' min';
@@ -1797,8 +1798,8 @@ function applyDriveResults(s,cache){
   if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
   if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
   // Draw a simple center pin for drive mode
-  var pinCol=s===1?SLOT_COLOR[1]:'#f59e42';
-  var pinGlow=s===1?'rgba(245,158,66,.4)':'rgba(245,158,66,.4)';
+  var pinCol=s===1?'#a78bfa':'#f59e42';
+  var pinGlow=s===1?'rgba(167,139,250,.4)':'rgba(245,158,66,.4)';
   var dIcon=L.divIcon({html:'<div style="width:10px;height:10px;background:'+pinCol+';border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px '+pinGlow+'"></div>',iconSize:[10,10],iconAnchor:[5,5],className:''});
   markers[s]=L.marker([cache.lat,cache.lon],{icon:dIcon}).addTo(MAP);
   // Fit map (final fit handled by run() post-analysis; this handles single-slot drive)
