@@ -1504,6 +1504,168 @@ function renderTransport(s,hwys,airports,ports){
     el('hwy-'+s).innerHTML=hwys.map(function(h){
       return '<div class="hwy-row"><span class="hwy-badge">'+(h.ref||'HWY')+'</span>'
         +'<span class="hwy-name">'+(h.name||'')+'</span>'
+        +'<span class="hwy-dist">'+h.dist.toFixed(1)+' mi</span></div>
+<script>
+// ═══════════════ CONSTANTS ═══════════════
+var NAT_DENSITY=87.3;
+var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
+var NAICS_LABEL={'11':'Agriculture','21':'Mining/Oil & Gas','22':'Utilities','23':'Construction','31':'Manufacturing','32':'Manufacturing','33':'Manufacturing','42':'Wholesale Trade','44':'Retail Trade','45':'Retail Trade','48':'Transportation','49':'Warehousing','51':'Information & Tech','52':'Finance & Insurance','53':'Real Estate','54':'Professional Services','55':'Management','56':'Admin & Support','61':'Education','62':'Healthcare','71':'Arts & Entertainment','72':'Food & Hospitality','81':'Other Services','92':'Government'};
+var NAICS_MERGE={'32':'31','33':'31','45':'44','49':'48'};
+var SLOT_COLOR=['#4b7cf3','#f59e42'];
+
+// ═══════════════ STATE ═══════════════
+var radius=5, compareMode=false;
+var circles=[null,null], markers=[null,null], pulseCircle=null;
+var slotCache=[{},{}];
+var MAP;
+
+
+// ── COLLAPSIBLE CARDS ──
+function initCollapsible() {
+  document.querySelectorAll('.hcard').forEach(function(card) {
+    // Skip if already initialized
+    if (card.querySelector('.card-hdr')) return;
+    var hl = card.querySelector(':scope > .hl');
+    if (!hl) return;
+
+    // Build header row: [hl label] [chevron]
+    var hdr = document.createElement('div');
+    hdr.className = 'card-hdr';
+    card.insertBefore(hdr, hl);
+    hdr.appendChild(hl);
+    var chev = document.createElement('span');
+    chev.className = 'card-chev';
+    chev.textContent = '▾';
+    hdr.appendChild(chev);
+
+    // Wrap all remaining children in .card-body
+    var body = document.createElement('div');
+    body.className = 'card-body';
+    while (card.children[1]) body.appendChild(card.children[1]);
+    card.appendChild(body);
+
+    hdr.addEventListener('click', function() {
+      card.classList.toggle('collapsed');
+    });
+  });
+}
+// Run on load; also re-run after each analysis to catch dynamically shown cards
+
+
+// ══ SIDEBAR TOGGLE ══
+function toggleSidebar(){
+  var side=document.getElementById('side');
+  var btn=document.getElementById('hd-toggle');
+  side.classList.toggle('collapsed');
+  var collapsed=side.classList.contains('collapsed');
+
+  btn.textContent=collapsed?'›':'‹';
+  btn.title=collapsed?'Show sidebar':'Hide sidebar';
+  setTimeout(function(){MAP.invalidateSize();},310);
+}
+
+// ══ MAJOR US SEAPORTS (hardcoded, instant haversine) ══
+var MAJOR_PORTS=[
+  ['Port of Boston',42.3555,-70.9890,'General Cargo'],
+  ['Port of New York/New Jersey',40.6895,-74.1745,'Container'],
+  ['Port of Philadelphia',39.9200,-75.1350,'Bulk'],
+  ['Port of Baltimore',39.2610,-76.5733,'Bulk/Container'],
+  ['Port of Norfolk (Hampton Roads)',36.9460,-76.3020,'Bulk/Container'],
+  ['Port of Charleston',32.7640,-79.9250,'Container'],
+  ['Port of Jacksonville',30.3322,-81.6557,'General'],
+  ['Port of Miami',25.7745,-80.1700,'Container'],
+  ['Port of Tampa',27.9354,-82.4488,'Bulk'],
+  ['Port of New Orleans',29.9511,-90.0623,'Bulk'],
+  ['Port of Mobile',30.6954,-88.0430,'Bulk'],
+  ['Port of Corpus Christi',27.8006,-97.3964,'Bulk'],
+  ['Port of Houston',29.7413,-95.0785,'Bulk/Container'],
+  ['Port of Baton Rouge',30.4515,-91.1871,'Bulk'],
+  ['Port of Oakland',37.7955,-122.2760,'Container'],
+  ['Port of Los Angeles',33.7395,-118.2614,'Container'],
+  ['Port of Long Beach',33.7566,-118.2220,'Container'],
+  ['Port of Richmond CA',37.9235,-122.3947,'Bulk'],
+  ['Port of Portland OR',45.5051,-122.6750,'Bulk'],
+  ['Port of Seattle',47.5996,-122.3370,'Container'],
+  ['Port of Tacoma',47.2529,-122.4194,'Container'],
+  ['Port of Chicago/Burns Harbor',41.6298,-87.1968,'General'],
+  ['Port of Cleveland',41.5097,-81.6984,'Bulk'],
+  ['Port of Detroit',42.3314,-83.0458,'Bulk'],
+  ['Port of Savannah',31.9970,-81.0500,'Container'],
+];
+
+function getNearestPort(lat,lon){
+  var res=MAJOR_PORTS.map(function(p){
+    return{name:p[0],dist:hav(lat,lon,p[1],p[2]),type:p[3]};
+  });
+  res.sort(function(a,b){return a.dist-b.dist;});
+  return res.slice(0,3);
+}
+
+
+// ══ MAJOR US AIRPORTS (hardcoded, instant haversine) ══
+var MAJOR_AIRPORTS=[
+  ['Boston Logan','BOS',42.3656,-71.0096],
+  ['New York JFK','JFK',40.6413,-73.7781],
+  ['New York Newark','EWR',40.6895,-74.1745],
+  ['New York LaGuardia','LGA',40.7769,-73.8740],
+  ['Philadelphia','PHL',39.8744,-75.2424],
+  ['Baltimore/Washington','BWI',39.1754,-76.6682],
+  ['Washington Dulles','IAD',38.9531,-77.4565],
+  ['Washington Reagan','DCA',38.8521,-77.0377],
+  ['Charlotte','CLT',35.2144,-80.9473],
+  ['Atlanta','ATL',33.6407,-84.4277],
+  ['Orlando','MCO',28.4312,-81.3081],
+  ['Miami','MIA',25.7959,-80.2870],
+  ['Fort Lauderdale','FLL',26.0742,-80.1506],
+  ['Tampa','TPA',27.9755,-82.5332],
+  ["Chicago O'Hare",'ORD',41.9742,-87.9073],
+  ['Chicago Midway','MDW',41.7868,-87.7522],
+  ['Detroit','DTW',42.2162,-83.3554],
+  ['Cleveland','CLE',41.4117,-81.8498],
+  ['Pittsburgh','PIT',40.4915,-80.2329],
+  ['Minneapolis','MSP',44.8820,-93.2218],
+  ['Dallas/Fort Worth','DFW',32.8998,-97.0403],
+  ['Houston Intercontinental','IAH',29.9902,-95.3368],
+  ['Denver','DEN',39.8561,-104.6737],
+  ['Salt Lake City','SLC',40.7884,-111.9778],
+  ['Phoenix','PHX',33.4373,-112.0078],
+  ['Las Vegas','LAS',36.0840,-115.1537],
+  ['Los Angeles','LAX',33.9425,-118.4081],
+  ['San Francisco','SFO',37.6213,-122.3790],
+  ['Seattle/Tacoma','SEA',47.4502,-122.3088],
+  ['Portland','PDX',45.5898,-122.5951],
+  ['Nashville','BNA',36.1245,-86.6782],
+  ['Austin','AUS',30.1975,-97.6664],
+  ['Raleigh-Durham','RDU',35.8801,-78.7880],
+  ['New Orleans','MSY',29.9934,-90.2580],
+  ['Indianapolis','IND',39.7173,-86.2944],
+  ['Kansas City','MCI',39.2976,-94.7139],
+  ['St. Louis','STL',38.7487,-90.3700],
+  ['San Diego','SAN',32.7338,-117.1933],
+  ['Sacramento','SMF',38.6954,-121.5908],
+  ['San Jose','SJC',37.3626,-121.9290],
+];
+
+function getNearestAirport(lat,lon){
+  var res=MAJOR_AIRPORTS.map(function(a){
+    return{name:a[0],iata:a[1],dist:hav(lat,lon,a[2],a[3])};
+  });
+  res.sort(function(a,b){return a.dist-b.dist;});
+  return res.slice(0,3);
+}
+
+// ══ RENDER TRANSPORT (interstate + airport + port) ══
+function renderTransport(s,hwys,airports,ports){
+  // Interstates
+  if(hwys&&hwys.length){
+    var hwyEl=el('rhwy-'+s);
+    if(hwyEl){
+      hwyEl.innerHTML=(hwys[0].ref?'<span style="font-size:18px;font-family:IBM Plex Mono,monospace;font-weight:700;color:var(--yw)">'+hwys[0].ref+'</span> <span style="font-size:14px;font-weight:400;color:var(--m2)">'+hwys[0].dist.toFixed(1)+' mi</span>':'<span>'+hwys[0].dist.toFixed(1)+' mi</span>');
+      hwyEl.classList.remove('pending');
+    }
+    el('hwy-'+s).innerHTML=hwys.map(function(h){
+      return '<div class="hwy-row"><span class="hwy-badge">'+(h.ref||'HWY')+'</span>'
+        +'<span class="hwy-name">'+(h.name||'')+'</span>'
         +'<span class="hwy-dist">'+h.dist.toFixed(1)+' mi</span></div>';
     }).join('');
   } else {
@@ -4195,6 +4357,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 </script>
 <div id="summary-modal" onclick="if(event.target===this)closeSummary()">
   <div id="summary-box">
