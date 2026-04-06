@@ -133,10 +133,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .grow-delta{font-size:12px;font-weight:600;margin-top:6px}
 
 /* labor */
-.labor-grid{display:flex;flex-direction:column;gap:7px;margin-top:8px}
-.labor-row{display:flex;justify-content:space-between;align-items:center}
-.labor-lbl{font-size:11px;color:var(--m2)}
-.labor-val{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.labor-grid{display:flex;flex-direction:column;gap:0;margin-top:6px}
+.labor-row{display:grid;grid-template-columns:52px 1fr;align-items:center;
+  gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:default}
+.labor-row:last-child{border-bottom:none}
+.labor-row:hover .labor-lbl{color:var(--m2)}
+.labor-val-col{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.labor-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;
+  line-height:1;letter-spacing:-0.5px;color:var(--tx);transition:color .2s}
+.labor-val.positive{color:#3ecf8e}
+.labor-val.caution{color:#f5c842}
+.labor-val.negative{color:#ef5858}
+.labor-meta-col{display:flex;flex-direction:column;gap:4px}
+.labor-lbl{font-size:11px;color:var(--m1);letter-spacing:.1px;line-height:1}
+.labor-bar-track{height:3px;background:var(--b1);border-radius:2px;overflow:hidden;position:relative}
+.labor-bar{height:3px;border-radius:2px;width:0%;transition:width .9s cubic-bezier(.22,.68,0,1.2)}
+.labor-state-note{font-size:9.5px;color:var(--m1);line-height:1;margin-top:1px}
+.labor-val.pending{font-size:14px;color:var(--m1)}
 
 
 
@@ -1131,24 +1144,44 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="hcard labor"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
      <div class="labor-grid" id="labor-0">
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="% of working-age population (16+) employed or actively seeking work">Labor force participation</span><span class="labor-val pending" id="lfpr-0">…</span></div>
-       <div class="labor-bar-wrap" id="lfpr-0-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="lfpr-0-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="lfpr-0">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Labor force participation</span>
+        <div class="labor-bar-track" id="lfpr-0-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="lfpr-0-note"></div>
+       </div>
       </div>
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="% of the civilian labor force currently unemployed and seeking work">Unemployment rate</span><span class="labor-val pending" id="unemp-0">…</span></div>
-       <div class="labor-bar-wrap" id="unemp-0-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="unemp-0-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="unemp-0">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Unemployment rate</span>
+        <div class="labor-bar-track" id="unemp-0-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="unemp-0-note"></div>
+       </div>
       </div>
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="% of population 25+ who have completed a bachelor's degree or higher">Bachelor's degree or higher</span><span class="labor-val pending" id="bach-0">…</span></div>
-       <div class="labor-bar-wrap" id="bach-0-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="bach-0-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="bach-0">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Bachelor's degree+</span>
+        <div class="labor-bar-track" id="bach-0-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="bach-0-note"></div>
+       </div>
       </div>
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="Total population aged 16+ within the radius (Census working-age definition)">Working-age pop (16+)</span><span class="labor-val pending" id="wapop-0">…</span></div>
-       <div class="labor-bar-wrap" id="wapop-0-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="wapop-0-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="wapop-0">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Working-age pop (16+)</span>
+        <div class="labor-bar-track" id="wapop-0-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="wapop-0-note"></div>
+       </div>
       </div>
      </div>
     </div>
@@ -1194,24 +1227,44 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="hcard labor"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
      <div class="labor-grid">
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="% of working-age population (16+) employed or actively seeking work">Labor force participation</span><span class="labor-val pending" id="lfpr-1">…</span></div>
-       <div class="labor-bar-wrap" id="lfpr-1-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="lfpr-1-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="lfpr-1">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Labor force participation</span>
+        <div class="labor-bar-track" id="lfpr-1-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="lfpr-1-note"></div>
+       </div>
       </div>
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="% of the civilian labor force currently unemployed and seeking work">Unemployment rate</span><span class="labor-val pending" id="unemp-1">…</span></div>
-       <div class="labor-bar-wrap" id="unemp-1-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="unemp-1-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="unemp-1">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Unemployment rate</span>
+        <div class="labor-bar-track" id="unemp-1-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="unemp-1-note"></div>
+       </div>
       </div>
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="% of population 25+ who have completed a bachelor's degree or higher">Bachelor's degree or higher</span><span class="labor-val pending" id="bach-1">…</span></div>
-       <div class="labor-bar-wrap" id="bach-1-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="bach-1-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="bach-1">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Bachelor's degree+</span>
+        <div class="labor-bar-track" id="bach-1-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="bach-1-note"></div>
+       </div>
       </div>
       <div class="labor-row">
-       <div class="labor-top"><span class="labor-lbl" title="Total population aged 16+ within the radius (Census working-age definition)">Working-age pop (16+)</span><span class="labor-val pending" id="wapop-1">…</span></div>
-       <div class="labor-bar-wrap" id="wapop-1-bar"><div class="labor-bar"></div></div>
-       <div class="labor-state-note" id="wapop-1-note"></div>
+       <div class="labor-val-col">
+        <span class="labor-val pending" id="wapop-1">…</span>
+       </div>
+       <div class="labor-meta-col">
+        <span class="labor-lbl">Working-age pop (16+)</span>
+        <div class="labor-bar-track" id="wapop-1-bar"><div class="labor-bar"></div></div>
+        <div class="labor-state-note" id="wapop-1-note"></div>
+       </div>
       </div>
      </div>
     </div>
@@ -2819,6 +2872,7 @@ function resetSlot(s){
     // Clear bars
     var bar=el(id+'-'+s+'-bar');
     if(bar){var b=bar.querySelector('.labor-bar');if(b)b.style.width='0%';}
+    var elv=el(id+'-'+s);if(elv)elv.className='labor-val pending';
     var note=el(id+'-'+s+'-note');
     if(note) note.innerHTML='';
   });
@@ -3172,29 +3226,32 @@ function renderIncome(s,income,lfpr,unempRate,bachRate,homeValue,waPop,hu,stateD
 
   // ─ Labor values + inline bars ─
   function setLabor(id, val, stateVal, higherGood, fmt2) {
-    var el2=el(id+'-'+s), barWrap=el(id+'-'+s+'-bar'), noteEl=el(id+'-'+s+'-note');
+    var el2=el(id+'-'+s), barTrack=el(id+'-'+s+'-bar'), noteEl=el(id+'-'+s+'-note');
     if(!el2) return;
     if(val!=null){
       el2.textContent=fmt2(val); el2.classList.remove('pending');
-      if(barWrap && stateVal){
+      if(stateVal){
         var ratio=val/stateVal;
-        // Bar width: state avg = 50%, scale accordingly
-        var w=Math.min(Math.max((val/stateVal)*50,2),96);
-        var bar=barWrap.querySelector('.labor-bar');
-        if(bar){
-          bar.style.background=higherGood?(ratio>=1.05?'var(--gn)':ratio<0.9?'var(--yw)':'var(--ac)')
-                                         :(ratio<=0.95?'var(--gn)':ratio>1.1?'var(--yw)':'var(--ac)');
-          setTimeout(function(){bar.style.width=w+'%';},200);
+        var isGood=higherGood?(ratio>=1.05):(ratio<=0.95);
+        var isBad=higherGood?(ratio<0.9):(ratio>1.1);
+        el2.className='labor-val'+(isGood?' positive':isBad?' caution':'');
+        if(barTrack){
+          var w=Math.min(Math.max(ratio*50,2),96);
+          var barColor=isGood?'var(--gn)':isBad?'var(--yw)':'var(--ac)';
+          var bar=barTrack.querySelector('.labor-bar');
+          if(bar){bar.style.background=barColor;setTimeout(function(){bar.style.width=w+'%';},200);}
         }
         if(noteEl){
-          var mult=ratio>=1?ratio.toFixed(2)+'×':((ratio*100).toFixed(0)+'%');
-          var col=higherGood?(ratio>=1.05?'var(--gn)':ratio<0.9?'var(--yw)':'var(--m1)')
-                            :(ratio<=0.95?'var(--gn)':ratio>1.1?'var(--yw)':'var(--m1)');
-          noteEl.innerHTML='<span style="color:'+col+'">'+mult+'</span>'
-            +' <span style="color:var(--m1)">'+stName+' avg '+(higherGood?fmt2(stateVal):fmt2(stateVal))+'</span>';
+          var mult=ratio>=1?ratio.toFixed(1)+'×':((ratio*100).toFixed(0)+'%');
+          var mCol=isGood?'var(--gn)':isBad?'var(--yw)':'var(--m1)';
+          noteEl.innerHTML='<span style="color:'+mCol+';font-weight:600">'+mult+'</span>'
+            +' <span style="color:var(--m1)">vs '+stName+' '+fmt2(stateVal)+'</span>';
         }
       }
-    } else { el2.textContent='N/A'; el2.classList.remove('pending'); }
+    } else {
+      el2.textContent='N/A'; el2.classList.remove('pending');
+      el2.className='labor-val';
+    }
   }
 
   setLabor('lfpr', lfpr!=null?lfpr*100:null, stLab?stLab.lfpr*100:null, true, function(v){return v.toFixed(1)+'%';});
@@ -3220,8 +3277,10 @@ function renderIncome(s,income,lfpr,unempRate,bachRate,homeValue,waPop,hu,stateD
         if(waNoteEl){
           var waM=waRatio>=1?waRatio.toFixed(1)+'×':((waRatio*100).toFixed(0)+'%');
           var waC=waRatio>=1.05?'var(--gn)':waRatio<0.9?'var(--yw)':'var(--m1)';
-          waNoteEl.innerHTML='<span style="color:'+waC+'">'+waM+'</span>'
-            +' <span style="color:var(--m1)">'+stName+' avg '+fmt(stateWa)+'</span>';
+          waNoteEl.innerHTML='<span style="color:'+waC+';font-weight:600">'+waM+'</span>'
+            +' <span style="color:var(--m1)">vs '+stName+' '+fmt(stateWa)+'</span>';
+          var waEl2=el('wapop-'+s);
+          if(waEl2){waEl2.className='labor-val'+(waRatio>=1.05?' positive':waRatio<0.9?' caution':'');}
         }
       }
     }
