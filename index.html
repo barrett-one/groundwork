@@ -2161,35 +2161,45 @@ function drawHighways(elements){
   if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
   if(!elements||!elements.length) return;
 
-  // Use a layerGroup to hold lines + labels together
   hwyMapLayer=L.layerGroup().addTo(MAP);
 
+  // Group segments by ref, tracking highway type
   var seen={};
   elements.forEach(function(el){
     var tags=el.tags||{};
     var ref=tags.ref||tags.name||'';
+    var hwType=tags.highway||'';
     if(!ref||!el.geometry||!el.geometry.length) return;
-    if(!seen[ref]) seen[ref]=[];
-    seen[ref].push(el.geometry.map(function(pt){return [pt.lat,pt.lon];}));
+    if(!seen[ref]) seen[ref]={coords:[],type:hwType};
+    // Prefer motorway type if already seen
+    if(hwType==='motorway') seen[ref].type='motorway';
+    seen[ref].coords.push(el.geometry.map(function(pt){return [pt.lat,pt.lon];}));
   });
 
   Object.keys(seen).forEach(function(ref){
+    var entry=seen[ref];
+    var isinterstate=entry.type==='motorway';
+    var lineColor=isinterstate?'#4b7cf3':'#60a5fa'; // blue for interstate, lighter blue for state
+    
+    
     var allCoords=[];
-    seen[ref].forEach(function(coords){
+
+    entry.coords.forEach(function(coords){
       if(coords.length<2) return;
-      // Draw polyline
       L.polyline(coords,{
-        color:'#4b7cf3',weight:3,opacity:0.55,
+        color:lineColor,weight:isinterstate?3:2.5,opacity:isinterstate?0.6:0.5,
         lineJoin:'round',lineCap:'round'
       }).addTo(hwyMapLayer);
       allCoords=allCoords.concat(coords);
     });
-    // Place one label at midpoint of all segments
+
+    // Label at midpoint
     if(allCoords.length){
       var mid=allCoords[Math.floor(allCoords.length/2)];
+      var labelClass=isinterstate?'hwy-label':'hwy-label hwy-label-state';
       L.marker([mid[0],mid[1]],{
         icon:L.divIcon({
-          className:'hwy-label',
+          className:labelClass,
           html:'<span>'+ref+'</span>',
           iconSize:[0,0],iconAnchor:[0,0]
         }),
@@ -3139,7 +3149,8 @@ async function fetchBiz(lat,lon,r){
 async function fetchHwy(lat,lon){
   for(var ri=0;ri<2;ri++){
     var m=ri===0?24140:48280;
-    var q='[out:json][timeout:15];way["highway"="motorway"](around:'+m+','+lat+','+lon+');out geom;';
+    // Fetch interstates + state highways (trunk/primary with ref tags)
+    var q='[out:json][timeout:15];(way["highway"="motorway"](around:'+m+','+lat+','+lon+');way["highway"="trunk"](around:'+m+','+lat+','+lon+');way["highway"="primary"]["ref"](around:'+(m*0.6)+','+lat+','+lon+'););out geom;';
     try{
       var _ctrl=new AbortController();
       var _tid=setTimeout((function(c){return function(){c.abort();};}(_ctrl)),20000);
