@@ -2513,12 +2513,13 @@ var epaMode=''; // 'circle' or 'drive'
 // ── COUNT-UP ANIMATION ──
 function animateNumber(el, targetText, delay) {
   if(!el) return;
-  // Extract numeric part
-  var numMatch = targetText.replace(/,/g,'').match(/[\d.]+/);
+  // Strip commas before parsing to avoid offset bugs
+  var stripped = targetText.replace(/,/g,'');
+  var numMatch = stripped.match(/[\d.]+/);
   if(!numMatch) { el.textContent=targetText; el.classList.add('loaded'); return; }
   var target = parseFloat(numMatch[0]);
-  var prefix = targetText.slice(0, targetText.search(/[\d]/));
-  var suffix = targetText.slice(targetText.search(/[\d]/)+numMatch[0].length);
+  var prefix = stripped.slice(0, stripped.search(/[\d]/));
+  var suffix = stripped.slice(stripped.search(/[\d]/)+numMatch[0].length);
   var isInt = !targetText.includes('.');
   var duration = 600;
   var start = null;
