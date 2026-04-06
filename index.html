@@ -1748,8 +1748,8 @@ async function runDriveAnalysis(s,lat,lon,min){
 
     // Draw isochrone on map (slot-specific)
     if(driveLayer[s]){MAP.removeLayer(driveLayer[s]);driveLayer[s]=null;}
-    var dColor=s===1?'#a78bfa':'#f59e42';
-    driveLayer[s]=L.geoJSON(iso,{style:function(){return{color:dColor,fillColor:dColor,fillOpacity:0.07,weight:2,opacity:0.8,dashArray:'5 4'};}}).addTo(MAP);
+    var dColor=compareMode?(s===0?'#4b7cf3':'#f59e42'):'#f59e42';
+    driveLayer[s]=L.geoJSON(iso,{style:function(){ var c=dColor; return{color:c,fillColor:c,fillOpacity:0.08,weight:2.5,opacity:0.85,dashArray:'5 4'};}}).addTo(MAP);
     driveActive=true;
     if(statusEl) statusEl.textContent=min+'-min drive radius';
     var dsn=el('drive-status-new');if(dsn)dsn.textContent=min+' min';
