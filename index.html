@@ -1683,8 +1683,10 @@ function setAnalysisMode(mode){
         renderComparisons(1,c1.pop,c1.area,c1.stateData);
         drawSlot(1,c1.lat||slotCache[1].lat,c1.lon||slotCache[1].lon,c1.r||radius,c1.pop,c1.income);
       } else if(slotCache[1].lat){
+        // Re-run slot 1 with its stored radius, not global default
         var addr4=el('ra-1')?el('ra-1').textContent:el('inp-b').value.trim();
-        if(addr4) runSlot(1,addr4,radius);
+        var r1=slotCache[1].r||radius;
+        if(addr4) runSlot(1,addr4,r1);
       }
     }
   }
@@ -1776,7 +1778,10 @@ async function runDriveAnalysis(s,lat,lon,min){
 
   }catch(e){
     if(statusEl) statusEl.textContent='Drive time analysis failed';
-    setAnalysisMode('circle');
+    // Don't call setAnalysisMode — that would reset the other slot too
+    // Just clear this slot's drive layer and show error
+    if(driveLayer[s]){MAP.removeLayer(driveLayer[s]);driveLayer[s]=null;}
+    console.warn('Drive time failed for slot',s,e);
   }
 }
 
@@ -4056,8 +4061,8 @@ async function runSlot(s,addr,r){
   renderBiz(s,bizData,stateData);
   renderTransport(s,hwyData,airData,portData);
   if(s===0&&hwyElements) drawHighways(hwyElements);
-  // Cache circle results for toggle
-  if(s===0&&incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
+  // Cache circle results for toggle (both slots)
+  if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
     bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData};
