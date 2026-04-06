@@ -1721,7 +1721,7 @@ async function runDriveAnalysis(s,lat,lon,min){
 
     // Draw isochrone on map
     if(driveLayer){MAP.removeLayer(driveLayer);driveLayer=null;}
-    driveLayer=L.geoJSON(iso,{style:function(){return{color:'#3ecf8e',fillColor:'#3ecf8e',fillOpacity:0.07,weight:2,opacity:0.7,dashArray:'6 4'};}}).addTo(MAP);
+    driveLayer=L.geoJSON(iso,{style:function(){return{color:'#f59e42',fillColor:'#f59e42',fillOpacity:0.07,weight:2,opacity:0.8,dashArray:'5 4'};}}).addTo(MAP);
     driveActive=true;
     if(statusEl) statusEl.textContent=min+'-min drive radius';
     var dsn=el('drive-status-new');if(dsn)dsn.textContent=min+' min';
