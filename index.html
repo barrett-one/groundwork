@@ -2743,33 +2743,40 @@ function showPulse(lat,lon,r){
   stopPulse();
   pulseCircle=L.circle([lat,lon],{
     radius:r*1609.34,color:'#3ecf8e',fillColor:'#3ecf8e',
-    fillOpacity:.03,weight:1.5,opacity:.5,dashArray:'4 4'
+    fillOpacity:.03,weight:1.5,opacity:.6,dashArray:'6 4'
   }).addTo(MAP);
   MAP.fitBounds(pulseCircle.getBounds(),{padding:[40,40]});
   startRipples(lat,lon,r);
 }
 function startRipples(lat,lon,r){
   stopRipples();
+  // Use Leaflet setStyle for reliable opacity control
   var maxR=r*1609.34;
-  var duration=1800;
-  var offsets=[0,600,1200];
-  offsets.forEach(function(offset){
-    var ring=L.circle([lat,lon],{radius:80,color:'#3ecf8e',fill:false,weight:2,opacity:0}).addTo(MAP);
+  var durations=[1800,1800,1800];
+  var delays=[0,600,1200];
+  durations.forEach(function(dur,i){
+    var ring=L.circle([lat,lon],{
+      radius:100,color:'#3ecf8e',fill:false,weight:2.5,opacity:0.01,
+      interactive:false
+    }).addTo(MAP);
     rippleLayers.push(ring);
-    setTimeout(function(){
-      var startTs=null;
-      function tick(ts){
-        if(!pulseCircle) return;
-        if(!startTs) startTs=ts;
-        var elapsed=(ts-startTs+offset)%duration;
-        var progress=elapsed/duration;
-        var curR=Math.max(maxR*Math.sin(progress*Math.PI),80);
-        var opacity=(1-progress)*0.65;
-        try{ring.setRadius(curR);var p=ring.getElement();if(p)p.style.opacity=opacity;}catch(e){}
-        requestAnimationFrame(tick);
-      }
+    var startTs=null;
+    function tick(ts){
+      if(!pulseCircle){ring.setStyle({opacity:0});return;}
+      if(!startTs) startTs=ts;
+      var elapsed=(ts-startTs)%dur;
+      var phase=(elapsed-delays[i]+dur)%dur;
+      var progress=phase/dur;
+      // Expand from small to full radius with ease
+      var eased=1-Math.pow(1-progress,2);
+      var curR=Math.max(maxR*eased,100);
+      var opacity=progress<0.8?0.7*(1-progress/0.8):0;
+      ring.setRadius(curR);
+      ring.setStyle({opacity:opacity});
       requestAnimationFrame(tick);
-    },60);
+    }
+    // Stagger start
+    setTimeout(function(){ startTs=null; requestAnimationFrame(tick); }, delays[i]);
   });
 }
 function stopRipples(){
