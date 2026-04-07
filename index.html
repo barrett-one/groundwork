@@ -2724,16 +2724,56 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_D
 
 
 // Pulsing circle during analysis
+var rippleLayers=[];
 function showPulse(lat,lon,r){
   stopPulse();
+  // Main boundary circle (subtle)
   pulseCircle=L.circle([lat,lon],{
     radius:r*1609.34,color:'#3ecf8e',fillColor:'#3ecf8e',
-    fillOpacity:.04,weight:3,opacity:.9,className:'pulse-active'
+    fillOpacity:.03,weight:1.5,opacity:.5,dashArray:'4 4'
   }).addTo(MAP);
   MAP.fitBounds(pulseCircle.getBounds(),{padding:[40,40]});
+  // Ripple rings: 3 expanding SVG circles with staggered delays
+  startRipples(lat,lon,r);
+}
+function startRipples(lat,lon,r){
+  stopRipples();
+  var delays=[0,650,1300];
+  delays.forEach(function(delay,i){
+    var ring=L.circle([lat,lon],{
+      radius:50,color:'#3ecf8e',fill:false,
+      weight:2,opacity:0,className:'ripple-ring-'+i
+    }).addTo(MAP);
+    rippleLayers.push(ring);
+    // Animate radius expanding from 0 to r*1609
+    var maxR=r*1609.34;
+    var startTime=null;
+    var duration=1800;
+    function animateRipple(ts){
+      if(!startTime) startTime=ts+delay;
+      var elapsed=ts-startTime;
+      if(elapsed<0){requestAnimationFrame(animateRipple);return;}
+      var progress=(elapsed%duration)/duration;
+      var eased=1-Math.pow(1-progress,2);
+      var curR=maxR*Math.min(eased,1);
+      var opacity=progress<0.7?0.7*(1-progress/0.7):0;
+      try{
+        ring.setRadius(Math.max(curR,50));
+        var el2=ring.getElement();
+        if(el2) el2.style.opacity=opacity;
+      }catch(e){}
+      if(pulseCircle) requestAnimationFrame(animateRipple);
+    }
+    requestAnimationFrame(animateRipple);
+  });
+}
+function stopRipples(){
+  rippleLayers.forEach(function(l){try{MAP.removeLayer(l);}catch(e){}});
+  rippleLayers=[];
 }
 function stopPulse(){
   if(pulseCircle){MAP.removeLayer(pulseCircle);pulseCircle=null;}
+  stopRipples();
 }
 
 
