@@ -1676,6 +1676,7 @@ function setAnalysisMode(mode){
     // Restore slot 0
     hwyElementsAll=[];
     if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
+    clearExits();
     if(slotCache[0].circleCache){
       var c=slotCache[0].circleCache;
       renderPop(0,c.pop,c.hu,c.area);
@@ -1687,6 +1688,7 @@ function setAnalysisMode(mode){
       renderComparisons(0,c.pop,c.area,c.stateData);
       if(c.hwyElements){drawHighways(c.hwyElements);}
       else if(c.hwyData){slotCache[0].hwy=c.hwyData;}
+      if(c.hwyElements&&c.exitElements) drawExits(c.exitElements,c.hwyElements,c.lat||slotCache[0].lat,c.lon||slotCache[0].lon);
       renderTenure(0,c.ownerRate,slotCache[0].stateData);
       drawSlot(0,c.lat||slotCache[0].lat,c.lon||slotCache[0].lon,c.r||radius,c.pop,c.income);
     } else if(slotCache[0].lat){
@@ -1705,6 +1707,7 @@ function setAnalysisMode(mode){
         renderGrowth(1,c1.pop,c1.data2010);
         renderComparisons(1,c1.pop,c1.area,c1.stateData);
         if(c1.hwyElements) drawHighways(c1.hwyElements);
+        if(c1.hwyElements&&c1.exitElements) drawExits(c1.exitElements,c1.hwyElements,c1.lat||slotCache[1].lat,c1.lon||slotCache[1].lon);
         renderTenure(1,c1.ownerRate,slotCache[1].stateData);
         drawSlot(1,c1.lat||slotCache[1].lat,c1.lon||slotCache[1].lon,c1.r||radius,c1.pop,c1.income);
       } else if(slotCache[1].lat){
@@ -2902,6 +2905,7 @@ function toggleCompare(){
     if(circles[1]){MAP.removeLayer(circles[1]);circles[1]=null;}
     if(markers[1]){MAP.removeLayer(markers[1]);markers[1]=null;}
     el('compare-banner').classList.remove('vis');
+    clearExits();
     el('cb-a').textContent='—'; el('cb-b').textContent='—';
   }
 }
@@ -3302,6 +3306,90 @@ async function fetchHwy(lat,lon){
     }catch(e){continue;}
   }
   return null;
+}
+
+// ═══════════════ EXITS ═══════════════
+var exitMapLayer=null;
+var exitElementsAll=[];
+
+async function fetchExits(lat,lon,radiusMiles){
+  var m=Math.round(radiusMiles*1609.34);
+  var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';
+  try{
+    var ctrl=new AbortController();
+    var tid=setTimeout(function(){ctrl.abort();},22000);
+    var r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});
+    clearTimeout(tid);
+    if(!r.ok) return null;
+    var d=await r.json();
+    return d.elements&&d.elements.length?d.elements:null;
+  }catch(e){return null;}
+}
+
+function drawExits(exitElements, hwyElements, centerLat, centerLon){
+  clearExits();
+  if(!exitElements||!exitElements.length||!hwyElements||!hwyElements.length) return;
+  exitMapLayer=L.layerGroup().addTo(MAP);
+
+  // Build a map of each exit's highway ref by matching exit node to nearest highway way
+  // Each exit node has lat/lon. Each highway way has geometry segments.
+  // For each highway ref, find the closest exit to the center.
+
+  var hwyRefs={}; // ref → [{exitRef, exitName, destName, lat, lon, distToCenter}]
+  exitElements.forEach(function(node){
+    if(!node.lat||!node.lon) return;
+    var tags=node.tags||{};
+    var exitRef=tags.ref||tags.name||'';
+    if(!exitRef) return;
+    var destName=tags.destination||tags['destination:ref']||'';
+    var distToCenter=hav(centerLat,centerLon,node.lat,node.lon);
+
+    // Find which highway this exit belongs to by finding closest highway way
+    var closestHwyRef='';
+    var closestDist=999;
+    hwyElements.forEach(function(way){
+      if(!way.geometry||!way.geometry.length) return;
+      var wayTags=way.tags||{};
+      var wayRef=wayTags.ref||wayTags.name||'';
+      if(!wayRef) return;
+      var hwType=wayTags.highway||'';
+      // Only attach exits to motorways/trunks
+      if(hwType!=='motorway'&&hwType!=='trunk') return;
+      for(var j=0;j<way.geometry.length-1;j++){
+        var d=ptSeg(node.lon,node.lat,way.geometry[j].lon,way.geometry[j].lat,way.geometry[j+1].lon,way.geometry[j+1].lat);
+        if(d<closestDist){closestDist=d;closestHwyRef=wayRef;}
+      }
+    });
+    if(!closestHwyRef||closestDist>2) return; // >2mi from any highway = skip
+
+    if(!hwyRefs[closestHwyRef]) hwyRefs[closestHwyRef]=[];
+    hwyRefs[closestHwyRef].push({exitRef:exitRef,destName:destName,lat:node.lat,lon:node.lon,distToCenter:distToCenter});
+  });
+
+  // For each highway, pick the exit closest to the center
+  Object.keys(hwyRefs).forEach(function(hwyRef){
+    var exits=hwyRefs[hwyRef].sort(function(a,b){return a.distToCenter-b.distToCenter;});
+    var best=exits[0];
+    // Build tooltip text
+    var label='Exit '+best.exitRef;
+    var tooltip=hwyRef+' · Exit '+best.exitRef+(best.destName?' · '+best.destName:'');
+
+    // Draw shield-style marker
+    var icon=L.divIcon({
+      className:'',
+      html:'<div class="exit-marker"><span class="exit-num">'+best.exitRef+'</span></div>',
+      iconSize:[28,20],
+      iconAnchor:[14,10]
+    });
+    L.marker([best.lat,best.lon],{icon:icon,interactive:true,zIndexOffset:200})
+      .bindTooltip(tooltip,{className:'exit-tooltip',permanent:false,direction:'top',offset:[0,-8]})
+      .addTo(exitMapLayer);
+  });
+}
+
+function clearExits(){
+  if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(e){}exitMapLayer=null;}
+  exitElementsAll=[];
 }
 
 // ═══════════════ RENDER FUNCTIONS ═══════════════
@@ -4162,6 +4250,7 @@ async function runSlot(s,addr,r){
   if(s===0){
     hwyElementsAll=[];
     if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
+    clearExits();
     clearPortCircles();
     // Only clear drive layers/cache if we're actually running circle mode
     // (don't reset drive state if compare+drive is running both slots)
@@ -4264,11 +4353,24 @@ async function runSlot(s,addr,r){
   renderTenure(s,tenureData,stateData);
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
+  // Fetch and draw highway exits
+  if(hwyElements){
+    fetchExits(lat,lon,r).then(function(exits){
+      if(exits) drawExits(exits,hwyElements,lat,lon);
+    }).catch(function(){});
+  }
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
-    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData};
+    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData,exitElements:null};
+  // Fetch exits async — store in cache when ready, draw if still in circle mode
+  if(hwyElements){
+    fetchExits(lat,lon,r).then(function(exits){
+      if(slotCache[s].circleCache) slotCache[s].circleCache.exitElements=exits;
+      if(exits&&analysisMode!=='drive') drawExits(exits,hwyElements,lat,lon);
+    }).catch(function(){});
+  }
   // Fire EPA in background
   if(s===0)
   if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
@@ -4383,6 +4485,12 @@ async function runDriveFirst(s,addr,min){
   var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
+  // Fetch and draw exits for drive mode
+  if(hwyElements){
+    fetchExits(lat,lon,15).then(function(exits){
+      if(exits) drawExits(exits,hwyElements,lat,lon);
+    }).catch(function(){});
+  }
   // Retry highways if failed
   if(!hwyElements){
     setTimeout(async function(){
