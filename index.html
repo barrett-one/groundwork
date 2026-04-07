@@ -745,6 +745,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 /* pulsing analysis circle */
 }
 .leaflet-overlay-pane .pulse-active{animation:circPulse 1.4s ease-in-out infinite}
+@keyframes rippleOut{0%{r:0;opacity:.75}70%{opacity:.2}100%{opacity:0}}
 
 /* PDF tip overlay */
 #pdf-tip{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;
@@ -1361,10 +1362,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 
 </div><!-- /side -->
 <div id="map-hint">Drag to explore · type address to analyze</div>
-<div id="map"></div>
-<div id="toast">🔗 Link copied to clipboard</div>
-<script>
-
+<div id
 // ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
 var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
@@ -4398,6 +4396,9 @@ async function runDriveFirst(s,addr,min){
     },3000);
   }
   // Run drive time analysis (mode state managed by run())
+  await runDriveAnalysis(s,lat,lon,min);
+}
+mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
 </script>
