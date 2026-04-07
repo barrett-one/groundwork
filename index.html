@@ -3368,7 +3368,7 @@ function drawExits(exitElements, hwyElements, centerLat, centerLon){
         if(d<closestDist){closestDist=d;closestHwyRef=wayRef;}
       }
     });
-    if(!closestHwyRef||closestDist>1.5) return; // >1.5mi from any highway = skip
+    if(!closestHwyRef||closestDist>2) return; // >2mi from any highway = skip
 
     if(!hwyRefs[closestHwyRef]) hwyRefs[closestHwyRef]=[];
     hwyRefs[closestHwyRef].push({exitRef:exitRef,destName:destName,lat:node.lat,lon:node.lon,distToCenter:distToCenter});
@@ -3377,14 +3377,12 @@ function drawExits(exitElements, hwyElements, centerLat, centerLon){
   // For each highway, show the 2 closest exits to center
   Object.keys(hwyRefs).forEach(function(hwyRef){
     var exits=hwyRefs[hwyRef].sort(function(a,b){return a.distToCenter-b.distToCenter;});
-    var toShow=exits.slice(0,2);
-    toShow.forEach(function(best){
+    exits.slice(0,2).forEach(function(best){
       var tooltip=hwyRef+' · Exit '+best.exitRef+(best.destName?' · '+best.destName:'');
       var icon=L.divIcon({
         className:'',
         html:'<div class="exit-marker">'+best.exitRef+'</div>',
-        iconSize:[32,22],
-        iconAnchor:[16,11]
+        iconSize:[32,22],iconAnchor:[16,11]
       });
       L.marker([best.lat,best.lon],{icon:icon,interactive:true,zIndexOffset:200})
         .bindTooltip(tooltip,{className:'exit-tooltip',permanent:false,direction:'top',offset:[0,-10]})
@@ -4366,12 +4364,10 @@ async function runSlot(s,addr,r){
     bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData,exitElements:null};
   // Fetch exits — draw immediately and cache for mode toggle
   if(hwyElements){
-    var _hwyEl=hwyElements, _lat=lat, _lon=lon, _r=r, _s=s;
+    var _hwyEl=hwyElements,_lat=lat,_lon=lon,_r=r,_s=s;
     fetchExits(_lat,_lon,_r).then(function(exits){
       if(exits){
-        // Store in cache
         if(slotCache[_s].circleCache) slotCache[_s].circleCache.exitElements=exits;
-        // Draw if still in circle mode
         if(analysisMode!=='drive') drawExits(exits,_hwyEl,_lat,_lon);
       }
     }).catch(function(){});
