@@ -483,11 +483,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .biz-size-rows{margin-top:0;padding:0 1px}
 
 .hwy-label{background:none!important;border:none!important;box-shadow:none!important}
-.exit-marker{background:#0d1117;border:1.5px solid #4b7cf3;border-radius:4px;
-  padding:2px 6px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;
-  font-weight:700;color:#4b7cf3;white-space:nowrap;cursor:pointer;
-  box-shadow:0 1px 6px rgba(0,0,0,.6);transition:all .15s}
-.exit-marker:hover{background:#111827;border-color:#93c5fd;color:#93c5fd}
+.exit-marker{background:#0d1117;border:2px solid #4b7cf3;border-radius:5px;
+  padding:3px 7px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  font-weight:700;color:#93c5fd;white-space:nowrap;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.8),0 0 0 1px rgba(75,124,243,.3);
+  transition:all .15s;line-height:1.4}
+.exit-marker:hover{background:#1a2744;border-color:#93c5fd;color:#fff;
+  box-shadow:0 2px 12px rgba(75,124,243,.5)}
 .exit-tooltip.leaflet-tooltip{background:#0d1117!important;border:1px solid #1e2435!important;
   color:#dde3f0!important;font-size:11px!important;font-family:'DM Sans',sans-serif!important;
   border-radius:5px!important;padding:5px 9px!important;
@@ -1370,11 +1372,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   <!-- END PORTFOLIO -->
 
 </div><!-- /side -->
-<div id="map-hint">Drag to explore · type address to analyze</div>
-<div id="map"></div>
-<div id="toast">🔗 Link copied to clipboard</div>
-<script>
-
+<div id="map-hint">Drag to explore · type address to analy
 // ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
 var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
@@ -3370,30 +3368,28 @@ function drawExits(exitElements, hwyElements, centerLat, centerLon){
         if(d<closestDist){closestDist=d;closestHwyRef=wayRef;}
       }
     });
-    if(!closestHwyRef||closestDist>2) return; // >2mi from any highway = skip
+    if(!closestHwyRef||closestDist>1.5) return; // >1.5mi from any highway = skip
 
     if(!hwyRefs[closestHwyRef]) hwyRefs[closestHwyRef]=[];
     hwyRefs[closestHwyRef].push({exitRef:exitRef,destName:destName,lat:node.lat,lon:node.lon,distToCenter:distToCenter});
   });
 
-  // For each highway, pick the exit closest to the center
+  // For each highway, show the 2 closest exits to center
   Object.keys(hwyRefs).forEach(function(hwyRef){
     var exits=hwyRefs[hwyRef].sort(function(a,b){return a.distToCenter-b.distToCenter;});
-    var best=exits[0];
-    // Build tooltip text
-    var label='Exit '+best.exitRef;
-    var tooltip=hwyRef+' · Exit '+best.exitRef+(best.destName?' · '+best.destName:'');
-
-    // Draw shield-style marker
-    var icon=L.divIcon({
-      className:'',
-      html:'<div class="exit-marker"><span class="exit-num">'+best.exitRef+'</span></div>',
-      iconSize:[28,20],
-      iconAnchor:[14,10]
+    var toShow=exits.slice(0,2);
+    toShow.forEach(function(best){
+      var tooltip=hwyRef+' · Exit '+best.exitRef+(best.destName?' · '+best.destName:'');
+      var icon=L.divIcon({
+        className:'',
+        html:'<div class="exit-marker">'+best.exitRef+'</div>',
+        iconSize:[32,22],
+        iconAnchor:[16,11]
+      });
+      L.marker([best.lat,best.lon],{icon:icon,interactive:true,zIndexOffset:200})
+        .bindTooltip(tooltip,{className:'exit-tooltip',permanent:false,direction:'top',offset:[0,-10]})
+        .addTo(exitMapLayer);
     });
-    L.marker([best.lat,best.lon],{icon:icon,interactive:true,zIndexOffset:200})
-      .bindTooltip(tooltip,{className:'exit-tooltip',permanent:false,direction:'top',offset:[0,-8]})
-      .addTo(exitMapLayer);
   });
 }
 
@@ -4363,22 +4359,21 @@ async function runSlot(s,addr,r){
   renderTenure(s,tenureData,stateData);
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
-  // Fetch and draw highway exits
-  if(hwyElements){
-    fetchExits(lat,lon,r).then(function(exits){
-      if(exits) drawExits(exits,hwyElements,lat,lon);
-    }).catch(function(){});
-  }
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
     bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData,exitElements:null};
-  // Fetch exits async — store in cache when ready, draw if still in circle mode
+  // Fetch exits — draw immediately and cache for mode toggle
   if(hwyElements){
-    fetchExits(lat,lon,r).then(function(exits){
-      if(slotCache[s].circleCache) slotCache[s].circleCache.exitElements=exits;
-      if(exits&&analysisMode!=='drive') drawExits(exits,hwyElements,lat,lon);
+    var _hwyEl=hwyElements, _lat=lat, _lon=lon, _r=r, _s=s;
+    fetchExits(_lat,_lon,_r).then(function(exits){
+      if(exits){
+        // Store in cache
+        if(slotCache[_s].circleCache) slotCache[_s].circleCache.exitElements=exits;
+        // Draw if still in circle mode
+        if(analysisMode!=='drive') drawExits(exits,_hwyEl,_lat,_lon);
+      }
     }).catch(function(){});
   }
   // Fire EPA in background
@@ -4514,6 +4509,9 @@ async function runDriveFirst(s,addr,min){
     },3000);
   }
   // Run drive time analysis (mode state managed by run())
+  await runDriveAnalysis(s,lat,lon,min);
+}
+ time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
 </script>
