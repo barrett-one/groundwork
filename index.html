@@ -483,15 +483,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .biz-size-rows{margin-top:0;padding:0 1px}
 
 .hwy-label{background:none!important;border:none!important;box-shadow:none!important}
-.exit-marker{display:inline-flex;align-items:center;gap:3px;background:#0d1117;border:1.5px solid #4b7cf3;border-radius:5px;padding:2px 5px;box-shadow:0 2px 8px rgba(0,0,0,.8);cursor:pointer;white-space:nowrap}
-.exit-marker:hover{background:#111c35;border-color:#93c5fd}
-.exit-hwy{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#4b7cf3}
-.exit-num-badge{background:#4b7cf3;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px}
-.exit-marker:hover .exit-hwy{color:#93c5fd}
-.exit-marker:hover .exit-num-badge{background:#60a5fa}
-.exit-popup .leaflet-popup-content-wrapper{background:#10131c!important;border:1px solid #1e2435!important;border-radius:7px!important;box-shadow:0 4px 16px rgba(0,0,0,.8)!important;padding:0!important}
-.exit-popup .leaflet-popup-content{margin:10px 12px!important}
-.exit-popup .leaflet-popup-tip{background:#10131c!important}
 .exit-marker{background:#0d1117;border:2px solid #4b7cf3;border-radius:5px;
   padding:3px 7px;font-family:'IBM Plex Mono',monospace;font-size:10px;
   font-weight:700;color:#93c5fd;white-space:nowrap;cursor:pointer;
@@ -1052,6 +1043,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #mode-toggle{display:none!important}
 #drive-status-new{font-size:10px;color:var(--m1);margin-left:4px}
 #drive-ctl{display:none!important}
+.exit-marker{display:inline-flex;align-items:center;gap:3px;background:#0d1117;border:1.5px solid #4b7cf3;border-radius:5px;padding:2px 5px;box-shadow:0 2px 8px rgba(0,0,0,.8);cursor:pointer;white-space:nowrap}
+.exit-marker:hover{background:#111c35;border-color:#93c5fd}
+.exit-hwy{font-size:9px;font-weight:700;color:#4b7cf3;font-family:monospace}
+.exit-num-badge{background:#4b7cf3;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px}
+.exit-marker:hover .exit-hwy{color:#93c5fd}
+.exit-marker:hover .exit-num-badge{background:#60a5fa}
+.exit-popup .leaflet-popup-content-wrapper{background:#10131c!important;border:1px solid #1e2435!important;border-radius:7px!important}
+.exit-popup .leaflet-popup-content{margin:10px 12px!important}
 </style>
 </head>
 <body>
@@ -1371,7 +1370,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div><div class="pf-label">Property Name</div><input class="pf-input" id="pf-name" placeholder="e.g. 47 October Hill Rd"/></div>
      <div><div class="pf-label">Address</div><input class="pf-input" id="pf-addr" placeholder="Full address"/></div>
      <div class="pf-row">
-       <div style="flex:1"><div class="pf-label">Asset Type</div><select class="pf-select" id="pf-type"><option value="industrial">Industrial</option><option value="off// ═══════════════ CONSTANTS ═══════════════
+       <div style="flex:1"><div class="pf-label">Asset Type</div><select class="pf-select" id="pf-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="mixed">Mixed Use</option></select></div>
+       <div style="flex:1"><div class="pf-label">Status</div><select class="pf-select" id="pf-status"><option value="target">Acquisition Target</option><option value="owned">Owned</option><option value="loi">Under LOI</option><option value="sold">Sold</option></select></div>
+     </div>
+     <div><div class="pf-label">Notes (optional)</div><input class="pf-input" id="pf-notes" placeholder="SF, price, cap rate, thesis…"/></div>
+     <div id="port-form-btns"><button id="port-form-save" onclick="savePortProp()">Save Property</button><button id="port-form-cancel" onclick="hidePortForm()">Cancel</button></div>
+   </div>
+  </div>
+  <!-- END PORTFOLIO -->
+
+</div><!-- /side -->
+<div id="map"></div>
+<div id="map-hint">Drag to explore · type address to analyze</div>
+<div id="toast">🔗 Link copied to clipboard</div>
+<script>
+// ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
 var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
 var NAICS_LABEL={'11':'Agriculture','21':'Mining/Oil & Gas','22':'Utilities','23':'Construction','31':'Manufacturing','32':'Manufacturing','33':'Manufacturing','42':'Wholesale Trade','44':'Retail Trade','45':'Retail Trade','48':'Transportation','49':'Warehousing','51':'Information & Tech','52':'Finance & Insurance','53':'Real Estate','54':'Professional Services','55':'Management','56':'Admin & Support','61':'Education','62':'Healthcare','71':'Arts & Entertainment','72':'Food & Hospitality','81':'Other Services','92':'Government'};
@@ -3397,7 +3410,6 @@ function clearExits(){
 
 // ══ HIGHWAY EXITS ══
 var exitMapLayer=null;
-
 async function fetchExits(lat,lon,radiusMi){
   var m=Math.round(radiusMi*1609.34);
   var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';
@@ -3410,7 +3422,6 @@ async function fetchExits(lat,lon,radiusMi){
     return d.elements&&d.elements.length?d.elements:null;
   }catch(e){return null;}
 }
-
 function drawExits(exitEls,hwyEls,cLat,cLon){
   clearExits();
   if(!exitEls||!exitEls.length) return;
@@ -3439,7 +3450,7 @@ function drawExits(exitEls,hwyEls,cLat,cLon){
     var hwy=bestRef||'HWY';
     var dest=tags.destination||tags['destination:street']||'';
     var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);
-    var dispHwy=hwy.replace(/Interstate /,'I-').replace(/Massachusetts Route /,'MA-').replace(/Route /,'Rte ');
+    var dispHwy=hwy.replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA-').replace(/Route /g,'Rte ');
     var popup='<div style="min-width:130px">'
       +'<div style="font-size:15px;font-weight:700;color:#4b7cf3">Exit '+exitNum+'</div>'
       +'<div style="font-size:12px;font-weight:600;color:#dde3f0">'+hwy+'</div>'
@@ -3453,11 +3464,9 @@ function drawExits(exitEls,hwyEls,cLat,cLon){
     }).bindPopup(popup,{maxWidth:200,className:'exit-popup'}).addTo(exitMapLayer);
   });
 }
-
 function clearExits(){
   if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(e){}exitMapLayer=null;}
 }
-
 // ═══════════════ RENDER FUNCTIONS ═══════════════
 function renderPop(s,pop,hu,area){
   // Animate main population number
@@ -4542,35 +4551,6 @@ async function runDriveFirst(s,addr,min){
   if(!compareMode) showPulse(lat,lon,radius);
   var airData=getNearestAirport(lat,lon);
   var portData=getNearestPort(lat,lon);
-  setStep('transport');
-  var hwyResult=await fetchHwy(lat,lon);
-  var hwyData=hwyResult&&hwyResult.hwys?hwyResult.hwys:null;
-  var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
-  renderTransport(s,hwyData,airData,portData);
-  if(hwyElements) drawHighways(hwyElements);
-  // Fetch and draw exits for drive mode
-  if(hwyElements){
-    fetchExits(lat,lon,15).then(function(exits){
-      if(exits) drawExits(exits,hwyElements,lat,lon);
-    }).catch(function(){});
-  }
-  // Retry highways if failed
-  if(!hwyElements){
-    setTimeout(async function(){
-      try{
-        var retry=await fetchHwy(lat,lon);
-        if(retry&&retry.hwys){
-          renderTransport(s,retry.hwys,airData,portData);
-          if(retry.elements) drawHighways(retry.elements);
-        }
-      }catch(e){}
-    },3000);
-  }
-  // Run drive time analysis (mode state managed by run())
-  await runDriveAnalysis(s,lat,lon,min);
-}
-
-arestPort(lat,lon);
   setStep('transport');
   var hwyResult=await fetchHwy(lat,lon);
   var hwyData=hwyResult&&hwyResult.hwys?hwyResult.hwys:null;
