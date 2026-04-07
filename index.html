@@ -3431,6 +3431,83 @@ function drawExits(exitEls,hwyEls,cLat,cLon){
     if(!node.lat||!node.lon) return;
     var tags=node.tags||{};
     var exitNum=tags.ref||tags.name||'';
+    if(!exitNum||exitNum.length>6) return; // skip unnamed or long refs
+    var key=Math.round(node.lat*1000)+'|'+Math.round(node.lon*1000);
+    if(seen[key]) return;
+    seen[key]=true;
+
+    // Get highway name from matched way OR from node tags
+    var hwyName='';
+    if(hwyEls&&hwyEls.length){
+      var bestDist=999;
+      hwyEls.forEach(function(way){
+        var wt=way.tags||{};
+        if(wt.highway!=='motorway'&&wt.highway!=='trunk') return;
+        var wRef=wt.ref||wt.name||''; if(!wRef||!way.geometry) return;
+        for(var j=0;j<way.geometry.length-1;j++){
+          var dd=ptSeg(node.lon,node.lat,way.geometry[j].lon,way.geometry[j].lat,way.geometry[j+1].lon,way.geometry[j+1].lat);
+          if(dd<bestDist){bestDist=dd;hwyName=wRef;}
+        }
+      });
+      if(bestDist>2) hwyName=''; // too far, ignore way match
+    }
+    // Fallback: use node's own tags for highway name
+    if(!hwyName) hwyName=tags['highway:ref']||tags['to']||tags['destination:ref']||'';
+
+    var dest=tags.destination||tags['destination:street']||tags['junction:name']||'';
+    var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);
+
+    // Shorten highway name for display
+    var dispHwy=(hwyName||'Exit').replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA ').replace(/US Route /g,'US ').replace(/Route /g,'');
+
+    var popup='<div style="min-width:120px">'
+      +'<div style="font-size:15px;font-weight:700;color:#4b7cf3;margin-bottom:2px">Exit '+exitNum+'</div>'
+      +(hwyName?'<div style="font-size:12px;font-weight:600;color:#dde3f0;margin-bottom:3px">'+hwyName+'</div>':'')
+      +(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:3px">'+dest+'</div>':'')
+      +'<div style="font-size:11px;color:#636d85;">'+distMi+' mi from center</div>'
+      +'</div>';
+
+    var mkrHtml='<div class="exit-marker">'
+      +(hwyName?'<span class="exit-hwy">'+dispHwy+'</span>':'')
+      +'<span class="exit-num-badge">'+exitNum+'</span>'
+      +'</div>';
+
+    L.marker([node.lat,node.lon],{
+      icon:L.divIcon({className:'',html:mkrHtml,iconSize:[64,24],iconAnchor:[32,12]}),
+      interactive:true,zIndexOffset:300
+    }).bindPopup(popup,{maxWidth:200,className:'exit-popup'}).addTo(exitMapLayer);
+  });
+}
+
+function clearExits(){
+  if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(e){}exitMapLayer=null;}
+  exitElementsAll=[];
+}
+
+
+// ══ HIGHWAY EXITS ══
+var exitMapLayer=null;
+async function fetchExits(lat,lon,radiusMi){
+  var m=Math.round(radiusMi*1609.34);
+  var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';
+  try{
+    var ctrl=new AbortController();
+    setTimeout(function(){ctrl.abort();},22000);
+    var r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});
+    if(!r.ok) return null;
+    var d=await r.json();
+    return d.elements&&d.elements.length?d.elements:null;
+  }catch(e){return null;}
+}
+function drawExits(exitEls,hwyEls,cLat,cLon){
+  clearExits();
+  if(!exitEls||!exitEls.length) return;
+  exitMapLayer=L.layerGroup().addTo(MAP);
+  var seen={};
+  exitEls.forEach(function(node){
+    if(!node.lat||!node.lon) return;
+    var tags=node.tags||{};
+    var exitNum=tags.ref||tags.name||'';
     if(!exitNum) return;
     var key=exitNum+'@'+Math.round(node.lat*100)+','+Math.round(node.lon*100);
     if(seen[key]) return;
@@ -4433,16 +4510,15 @@ async function runSlot(s,addr,r){
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
     bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData,exitElements:null};
-  // Fetch exits — draw immediately and cache for mode toggle
-  if(hwyElements){
-    var _hwyEl=hwyElements,_lat=lat,_lon=lon,_r=r,_s=s;
-    fetchExits(_lat,_lon,_r).then(function(exits){
+  // Fetch exits — always try, use hwyElements for name matching if available
+  (function(la,lo,r2,s2,he){
+    fetchExits(la,lo,r2).then(function(exits){
       if(exits){
-        if(slotCache[_s].circleCache) slotCache[_s].circleCache.exitElements=exits;
-        if(analysisMode!=='drive') drawExits(exits,_hwyEl,_lat,_lon);
+        if(slotCache[s2].circleCache) slotCache[s2].circleCache.exitElements=exits;
+        if(analysisMode!=='drive') drawExits(exits,he,la,lo);
       }
     }).catch(function(){});
-  }
+  })(lat,lon,r,s,hwyElements||null);
   // Fire EPA in background
   if(s===0)
   if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
