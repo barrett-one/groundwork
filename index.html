@@ -2699,28 +2699,42 @@ function updateAnalyzeBtn(){
 }
 
 // ═══════════════ MAP INIT ═══════════════
-MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
-initCollapsible();
-// Force map to recalculate at multiple intervals to catch any layout shifts
-function fixMapSize(){MAP.invalidateSize({pan:false});}
-window.addEventListener('load',function(){
-  fixMapSize();
+// ── MAP INIT (deferred to DOMContentLoaded so Leaflet is guaranteed ready) ──
+function fixMapSize(){if(MAP)MAP.invalidateSize({pan:false});}
+document.addEventListener('DOMContentLoaded',function(){
+  MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
+  initCollapsible();
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
+    maxZoom:16,attribution:'© <a href="https://www.esri.com">Esri</a> · US Census'
+  }).addTo(MAP);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{
+    maxZoom:16,attribution:''
+  }).addTo(MAP);
+  // Force map to recalculate size after layout settles
   setTimeout(fixMapSize,100);
   setTimeout(fixMapSize,300);
   setTimeout(fixMapSize,600);
   setTimeout(fixMapSize,1200);
+  // ResizeObserver
+  if(typeof ResizeObserver!=='undefined'){
+    new ResizeObserver(function(){fixMapSize();}).observe(document.getElementById('map'));
+  }
+  // Load from URL params
+  (function(){
+    var p=new URLSearchParams(window.location.search);
+    if(p.get('a')) el('inp-a').value=p.get('a');
+    if(p.get('r')){
+      var r=parseFloat(p.get('r'));
+      radius=r;
+      document.querySelectorAll('.rb').forEach(function(b){b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===r);});
+    }
+    if(p.get('b')){toggleCompare();el('inp-b').value=p.get('b');}
+    if(p.get('a')) setTimeout(run,400);
+  })();
+  renderSaves();
+  updatePortCount();
 });
 window.addEventListener('resize',fixMapSize);
-// ResizeObserver watches the map container for any size changes
-if(typeof ResizeObserver!=='undefined'){
-  new ResizeObserver(function(){fixMapSize();}).observe(document.getElementById('map'));
-}
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
-  maxZoom:16,attribution:'© <a href="https://www.esri.com">Esri</a> · US Census'
-}).addTo(MAP);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{
-  maxZoom:16,attribution:''
-}).addTo(MAP);
 
 
 // Pulsing circle during analysis
@@ -2980,21 +2994,7 @@ function closePdfTip(){
   // Restore collapsed state (user's collapsed cards stay open — feels right for PDF workflow)
 }
 
-// ═══════════════ LOAD FROM URL ═══════════════
-(function(){
-  var p=new URLSearchParams(window.location.search);
-  if(p.get('a')) el('inp-a').value=p.get('a');
-  if(p.get('r')){
-    var r=parseFloat(p.get('r'));
-    radius=r;
-    document.querySelectorAll('.rb').forEach(function(b){b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===r);});
-  }
-  if(p.get('b')){
-    toggleCompare();
-    el('inp-b').value=p.get('b');
-  }
-  if(p.get('a')) setTimeout(run,400);
-})();
+// URL loading moved to DOMContentLoaded
 
 // ═══════════════ RESET SLOT ═══════════════
 function resetSlot(s){
