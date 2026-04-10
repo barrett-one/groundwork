@@ -4455,7 +4455,7 @@ function renderCrime(s,data){
   if(!data){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='Crime data unavailable';return;}
   var total=data.violent+data.property;
   hn.textContent=fmt(total)+' / 100K';hn.classList.remove('pending');
-  if(sub) sub.textContent=data.stateName+' statewide annual rate · '+data.year;
+  if(sub) sub.textContent=data.stateName+' vs national · '+data.year+' annual rate per 100K';
   if(bars){
     var natV=data.natViolent||380,natP=data.natProperty||2000;
     var vRatio=data.violent/(natV||1),pRatio=data.property/(natP||1);
@@ -4464,7 +4464,7 @@ function renderCrime(s,data){
     bars.innerHTML=
       '<div class="cb-row"><div class="cb-label">Violent</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+vColor+'"></div></div><div class="cb-val">'+fmt(data.violent)+'</div></div>'+
       '<div class="cb-row"><div class="cb-label">Property</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+pColor+'"></div></div><div class="cb-val">'+fmt(data.property)+'</div></div>'+
-      '<div style="font-size:10px;color:var(--m1);margin-top:3px">vs US avg: '+fmt(natV)+' violent · '+fmt(natP)+' property / 100K</div>';
+      '<div style="font-size:10px;color:var(--m1);margin-top:3px">'+data.stateName+' vs US national: '+fmt(natV)+' violent · '+fmt(natP)+' property / 100K</div>';
     setTimeout(function(){
       var fills=bars.querySelectorAll('.cb-fill');
       if(fills[0]) fills[0].style.width=Math.min(vRatio*40,96)+'%';
