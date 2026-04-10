@@ -1035,13 +1035,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 
 /* ── Crime / Permits / Traffic cards ── */
 .hcard.crime::before{background:var(--rd)}
+.crime-grid{margin-top:4px}
 .hcard.permit::before{background:var(--yw)}
-.crime-bars,.permit-detail{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-.cb-row,.pb-row{display:flex;align-items:center;gap:8px;font-size:11.5px}
-.cb-label,.pb-label{color:var(--m2);width:90px;flex-shrink:0;font-size:11px}
-.cb-track,.pb-track{flex:1;height:6px;background:var(--b1);border-radius:3px;overflow:hidden}
-.cb-fill,.pb-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.cb-val,.pb-val{color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:52px;text-align:right}
+.permit-detail{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.pb-row{display:flex;align-items:center;gap:8px;font-size:11.5px}
+.pb-label{color:var(--m2);width:90px;flex-shrink:0;font-size:11px}
+.pb-track{flex:1;height:6px;background:var(--b1);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.pb-val{color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:52px;text-align:right}
 .permit-yoy{font-size:10.5px;color:var(--m1);margin-top:2px}
 .permit-yoy .up{color:var(--gn);font-weight:600}
 .permit-yoy .dn{color:var(--rd);font-weight:600}
@@ -1230,8 +1231,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
-<div class="hn pending" id="rcrime-0">…</div><div class="hs" id="crime-sub-0"></div>
-     <div class="crime-bars" id="crime-bars-0"></div>
+    <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+     <div class="crime-grid">
+      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-0-note"></div></div></div>
+      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-0-note"></div></div></div>
+     </div>
+     <div class="hs" id="crime-sub-0"></div>
     </div>
     <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
      <div class="permit-detail" id="permit-detail-0"></div>
@@ -1330,8 +1335,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
-<div class="hn pending" id="rcrime-1">…</div><div class="hs" id="crime-sub-1"></div>
-     <div class="crime-bars" id="crime-bars-1"></div>
+    <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+     <div class="crime-grid">
+      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-1-note"></div></div></div>
+      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-1-note"></div></div></div>
+     </div>
+     <div class="hs" id="crime-sub-1"></div>
     </div>
     <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
      <div class="permit-detail" id="permit-detail-1"></div>
@@ -4498,31 +4507,38 @@ async function fetchPermits(bgs){
 
 // ═══════════════ RENDER: CRIME ═══════════════
 function renderCrime(s,data){
-  var hn=el('rcrime-'+s),sub=el('crime-sub-'+s),bars=el('crime-bars-'+s);
-  if(!hn) return;
-  if(!data){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='No local agency data found';return;}
-  var total=data.violent+data.property;
-  hn.textContent=fmt(total)+' / 100K';hn.classList.remove('pending');
-  var agLabel=data.agencies?data.agencies.join(', '):'Local';
-  if(sub) sub.textContent=agLabel+' · '+data.year;
-  if(bars){
-    var stV=data.stViolent||1,stP=data.stProperty||1;
-    var vRatio=data.violent/(stV||1),pRatio=data.property/(stP||1);
-    var vColor=vRatio<=0.7?'var(--gn)':vRatio<=1.1?'var(--yw)':'var(--rd)';
-    var pColor=pRatio<=0.7?'var(--gn)':pRatio<=1.1?'var(--yw)':'var(--rd)';
-    var vMult=vRatio>=1?vRatio.toFixed(1)+'×':((vRatio*100).toFixed(0)+'%');
-    var pMult=pRatio>=1?pRatio.toFixed(1)+'×':((pRatio*100).toFixed(0)+'%');
-    var vNote=vRatio<1?'below':'above',pNote=pRatio<1?'below':'above';
-    bars.innerHTML=
-      '<div class="cb-row"><div class="cb-label">Violent</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+vColor+'"></div></div><div class="cb-val">'+fmt(data.violent)+'</div></div>'+
-      '<div class="cb-row"><div class="cb-label">Property</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+pColor+'"></div></div><div class="cb-val">'+fmt(data.property)+'</div></div>'+
-      '<div style="font-size:10px;color:var(--m1);margin-top:3px"><span style="color:'+vColor+';font-weight:600">'+vMult+'</span> violent, <span style="color:'+pColor+';font-weight:600">'+pMult+'</span> property vs '+data.stateName+' state avg ('+fmt(stV)+' / '+fmt(stP)+')</div>';
-    setTimeout(function(){
-      var fills=bars.querySelectorAll('.cb-fill');
-      if(fills[0]) fills[0].style.width=Math.min(vRatio*45,96)+'%';
-      if(fills[1]) fills[1].style.width=Math.min(pRatio*45,96)+'%';
-    },200);
+  var cvEl=el('cv-'+s),cpEl=el('cp-'+s),sub=el('crime-sub-'+s);
+  if(!cvEl) return;
+  if(!data){
+    cvEl.textContent='N/A';cvEl.classList.remove('pending');cvEl.className='labor-val';
+    cpEl.textContent='N/A';cpEl.classList.remove('pending');cpEl.className='labor-val';
+    if(sub) sub.textContent='No local agency data found';
+    return;
   }
+  var stV=data.stViolent||1,stP=data.stProperty||1;
+  var vRatio=data.violent/(stV||1),pRatio=data.property/(stP||1);
+  cvEl.textContent=fmt(data.violent);cvEl.classList.remove('pending');
+  var vGood=vRatio<0.85,vBad=vRatio>1.15;
+  cvEl.className='labor-val'+(vGood?' positive':vBad?' negative':'');
+  var vBarT=el('cv-'+s+'-bar');
+  if(vBarT){var vb=vBarT.querySelector('.labor-bar');var vColor=vGood?'var(--gn)':vBad?'var(--rd)':'var(--yw)';
+    if(vb){vb.style.background=vColor;setTimeout(function(){vb.style.width=Math.min(Math.max(vRatio*50,2),96)+'%';},200);}}
+  var vNote=el('cv-'+s+'-note');
+  if(vNote){var vMult=vRatio>=1?vRatio.toFixed(1)+'\u00d7':((vRatio*100).toFixed(0)+'%');
+    var vMCol=vGood?'var(--gn)':vBad?'var(--rd)':'var(--m1)';
+    vNote.innerHTML='<span style="color:'+vMCol+';font-weight:600">'+vMult+'</span> <span style="color:var(--m1)">vs '+data.stateName+' '+fmt(stV)+'/100K</span>';}
+  cpEl.textContent=fmt(data.property);cpEl.classList.remove('pending');
+  var pGood=pRatio<0.85,pBad=pRatio>1.15;
+  cpEl.className='labor-val'+(pGood?' positive':pBad?' negative':'');
+  var pBarT=el('cp-'+s+'-bar');
+  if(pBarT){var pb=pBarT.querySelector('.labor-bar');var pColor=pGood?'var(--gn)':pBad?'var(--rd)':'var(--yw)';
+    if(pb){pb.style.background=pColor;setTimeout(function(){pb.style.width=Math.min(Math.max(pRatio*50,2),96)+'%';},200);}}
+  var pNote=el('cp-'+s+'-note');
+  if(pNote){var pMult=pRatio>=1?pRatio.toFixed(1)+'\u00d7':((pRatio*100).toFixed(0)+'%');
+    var pMCol=pGood?'var(--gn)':pBad?'var(--rd)':'var(--m1)';
+    pNote.innerHTML='<span style="color:'+pMCol+';font-weight:600">'+pMult+'</span> <span style="color:var(--m1)">vs '+data.stateName+' '+fmt(stP)+'/100K</span>';}
+  if(sub){var agLabel=data.agencies?data.agencies.join(', '):'Local agencies';
+    sub.textContent=agLabel+' \u00b7 '+data.year+' \u00b7 pop '+fmt(data.localPop);}
 }
 
 // ═══════════════ RENDER: CONSTRUCTION ACTIVITY ═══════════════
