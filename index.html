@@ -1235,7 +1235,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: violent and property crime rates per 100K residents at the county level. Lower is better. National avg ~380 violent, ~2,000 property per 100K.">Crime Rate</div><div class="hn pending" id="rcrime-0">…</div><div class="hs" id="crime-sub-0"></div>
      <div class="crime-bars" id="crime-bars-0"></div>
     </div>
-    <div class="hcard permit sec"><div class="hl" data-tip="Census Building Permits Survey: new residential building permits issued in the county. Rising permits signal developer confidence and future demand. Source: Census BPS.">Building Permits</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
+    <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
      <div class="permit-detail" id="permit-detail-0"></div>
     </div>
     <div class="hcard traffic sec"><div class="hl" data-tip="Estimated traffic exposure from road classifications within the trade area. Uses OpenStreetMap road data: motorways (~50K+ AADT), trunks (~20K), primaries (~10K), secondaries (~5K).">Traffic Exposure</div><div class="hn pending" id="rtraffic-0">…</div><div class="hs" id="traffic-sub-0"></div>
@@ -1338,7 +1338,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: violent and property crime rates per 100K residents at the county level. Lower is better. National avg ~380 violent, ~2,000 property per 100K.">Crime Rate</div><div class="hn pending" id="rcrime-1">…</div><div class="hs" id="crime-sub-1"></div>
      <div class="crime-bars" id="crime-bars-1"></div>
     </div>
-    <div class="hcard permit sec"><div class="hl" data-tip="Census Building Permits Survey: new residential building permits issued in the county. Rising permits signal developer confidence and future demand. Source: Census BPS.">Building Permits</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
+    <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
      <div class="permit-detail" id="permit-detail-1"></div>
     </div>
     <div class="hcard traffic sec"><div class="hl" data-tip="Estimated traffic exposure from road classifications within the trade area. Uses OpenStreetMap road data: motorways (~50K+ AADT), trunks (~20K), primaries (~10K), secondaries (~5K).">Traffic Exposure</div><div class="hn pending" id="rtraffic-1">…</div><div class="hs" id="traffic-sub-1"></div>
@@ -1821,14 +1821,13 @@ async function runDriveAnalysis(s,lat,lon,min){
     var approxArea=polygonAreaSqMi(rawCoords); // shoelace formula
 
     var stateFips=bgs[0].GEOID.slice(0,2);
-    var countyFips3d=bgs[0].GEOID.slice(2,5);
     var [incData,bizData,stateData,data2010,crimeData,permitData,trafficData]=await Promise.all([
       fetchIncomeLabor(bgs),
       fetchBiz(lat,lon,Math.sqrt(approxArea/Math.PI)||5),
       fetchState(stateFips),
       fetch2010(bgs),
-      fetchCrime(stateFips,countyFips3d),
-      fetchPermits(stateFips,countyFips3d),
+      fetchCrime(stateFips),
+      fetchPermits(bgs),
       fetchTraffic(lat,lon,Math.sqrt(approxArea/Math.PI)||5)
     ]);
 
@@ -4271,7 +4270,6 @@ async function runSlot(s,addr,r){
 
   // All async in parallel
   setStep('income');
-  var countyFips3=bgs[0].GEOID.slice(2,5);
   var results=await Promise.allSettled([
     fetchIncomeLabor(bgs),
     fetchBiz(lat,lon,r),
@@ -4279,8 +4277,8 @@ async function runSlot(s,addr,r){
     fetchHwy(lat,lon),
     fetch2010(bgs),
     fetchTenure(bgs),
-    fetchCrime(stateFips,countyFips3),
-    fetchPermits(stateFips,countyFips3),
+    fetchCrime(stateFips),
+    fetchPermits(bgs),
     fetchTraffic(lat,lon,r),
   ]);
   var airData=getNearestAirport(lat,lon);
@@ -4347,63 +4345,73 @@ async function runSlot(s,addr,r){
 
 // ═══════════════ API: CRIME (FBI CDE) ═══════════════
 var FBI_KEY='iiHnOKfno2Mgkt5AynpvPpUQTEyxE77jo1RU8PIv';
-async function fetchCrime(stateFips,countyFips){
+async function fetchCrime(stateFips){
   try{
-    // Map FIPS to state abbreviation
     var fipsMap={'01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT','10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL','18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD','25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE','32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND','39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD','47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV','55':'WI','56':'WY'};
     var stAbbr=fipsMap[stateFips];
     if(!stAbbr) return null;
     var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},12000);
-    var url='https://api.usa.gov/crime/fbi/sapi/api/estimates/states/'+stAbbr+'/2020/2022?API_KEY='+FBI_KEY;
-    var r=await fetch(url,{signal:ctrl.signal});
-    if(!r.ok) return null;
-    var d=await r.json();
-    if(!d.results||!d.results.length) return null;
-    // Get most recent year
-    var sorted=d.results.sort(function(a,b){return b.year-a.year;});
-    var latest=sorted[0];
-    var pop=latest.population||1;
+    var [vResp,pResp]=await Promise.all([
+      fetch('https://api.usa.gov/crime/fbi/cde/summarized/state/'+stAbbr+'/violent-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal}),
+      fetch('https://api.usa.gov/crime/fbi/cde/summarized/state/'+stAbbr+'/property-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal})
+    ]);
+    if(!vResp.ok||!pResp.ok) return null;
+    var vData=await vResp.json(), pData=await pResp.json();
+    // Sum monthly rates for annual rate
+    var stViolent=0,natViolent=0,stProperty=0,natProperty=0,mCount=0;
+    var vRates=vData.offenses&&vData.offenses.rates||{};
+    var stKey=Object.keys(vRates).find(function(k){return k!=='United States Offenses';});
+    var natKey='United States Offenses';
+    if(stKey&&vRates[stKey]){
+      var vals=Object.values(vRates[stKey]);
+      vals.forEach(function(v){stViolent+=v;});
+      mCount=vals.length;
+    }
+    if(vRates[natKey]){Object.values(vRates[natKey]).forEach(function(v){natViolent+=v;});}
+    var pRates=pData.offenses&&pData.offenses.rates||{};
+    var stKeyP=Object.keys(pRates).find(function(k){return k!=='United States Offenses';});
+    if(stKeyP&&pRates[stKeyP]){Object.values(pRates[stKeyP]).forEach(function(v){stProperty+=v;});}
+    if(pRates[natKey]){Object.values(pRates[natKey]).forEach(function(v){natProperty+=v;});}
     return{
-      year:latest.year,
-      violent:Math.round((latest.violent_crime||0)/pop*100000),
-      property:Math.round((latest.property_crime||0)/pop*100000),
-      stateName:stAbbr,
-      pop:pop
+      violent:Math.round(stViolent),property:Math.round(stProperty),
+      natViolent:Math.round(natViolent),natProperty:Math.round(natProperty),
+      stateName:stAbbr,year:2022
     };
   }catch(e){return null;}
 }
 
-// ═══════════════ API: BUILDING PERMITS (Census BPS) ═══════════════
-async function fetchPermits(stateFips,countyFips){
+// ═══════════════ API: CONSTRUCTION ACTIVITY (ACS B25034) ═══════════════
+async function fetchPermits(bgs){
+  // Uses same block-group set as other census queries — works with polygons
   try{
-    var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},12000);
-    // Try 2023 first, fall back to 2022
-    var years=['2023','2022'];
-    var results=[];
-    for(var yi=0;yi<years.length;yi++){
+    var counties={};
+    bgs.forEach(function(bg){
+      var st=bg.GEOID.slice(0,2),co=bg.GEOID.slice(2,5),k=st+'-'+co;
+      if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
+      counties[k].geoids[bg.GEOID]=true;
+    });
+    var total=0,b2020=0,b2010=0,b2000=0,b1990=0,bOlder=0;
+    for(var k in counties){
+      var c=counties[k];
       try{
-        var url='https://api.census.gov/data/'+years[yi]+'/bps/county?get=BLDGS,UNITS,VALPRM&for=county:'+countyFips+'&in=state:'+stateFips;
-        var r=await fetch(url,{signal:ctrl.signal});
-        if(r.ok){
-          var d=await r.json();
-          if(d&&d.length>1){
-            results.push({year:parseInt(years[yi]),bldgs:parseInt(d[1][0])||0,units:parseInt(d[1][1])||0,val:parseInt(d[1][2])||0});
+        var url='https://api.census.gov/data/2022/acs/acs5?get=B25034_001E,B25034_002E,B25034_003E,B25034_004E,B25034_005E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+        var r=await fetch(url);if(!r.ok) continue;
+        var rows=await r.json();
+        for(var i=1;i<rows.length;i++){
+          var row=rows[i],geoid=row[5]+row[6]+row[7]+row[8];
+          if(c.geoids[geoid]){
+            var t=parseInt(row[0])||0;
+            total+=t;
+            b2020+=parseInt(row[1])||0;
+            b2010+=parseInt(row[2])||0;
+            b2000+=parseInt(row[3])||0;
+            b1990+=parseInt(row[4])||0;
           }
         }
       }catch(e){}
     }
-    if(!results.length) return null;
-    // Try to get prior year for YoY
-    var mainYear=results[0];
-    var priorYear=results[1]||null;
-    // Also try year before that
-    try{
-      var py=mainYear.year-1;
-      var url2='https://api.census.gov/data/'+py+'/bps/county?get=BLDGS,UNITS,VALPRM&for=county:'+countyFips+'&in=state:'+stateFips;
-      var r2=await fetch(url2,{signal:ctrl.signal});
-      if(r2.ok){var d2=await r2.json();if(d2&&d2.length>1) priorYear={year:py,bldgs:parseInt(d2[1][0])||0,units:parseInt(d2[1][1])||0,val:parseInt(d2[1][2])||0};}
-    }catch(e){}
-    return{current:mainYear,prior:priorYear};
+    bOlder=total-b2020-b2010-b2000-b1990;
+    return{total:total,b2020:b2020,b2010:b2010,b2000:b2000,b1990:b1990,bOlder:bOlder};
   }catch(e){return null;}
 }
 
@@ -4444,20 +4452,19 @@ async function fetchTraffic(lat,lon,radiusMi){
 function renderCrime(s,data){
   var hn=el('rcrime-'+s),sub=el('crime-sub-'+s),bars=el('crime-bars-'+s);
   if(!hn) return;
-  if(!data){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='County-level data unavailable';return;}
+  if(!data){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='Crime data unavailable';return;}
   var total=data.violent+data.property;
   hn.textContent=fmt(total)+' / 100K';hn.classList.remove('pending');
-  if(sub) sub.textContent=data.stateName+' statewide · '+data.year;
+  if(sub) sub.textContent=data.stateName+' statewide annual rate · '+data.year;
   if(bars){
-    // National averages for context
-    var natViolent=380,natProperty=2000;
-    var vRatio=Math.min(data.violent/natViolent,2.5),pRatio=Math.min(data.property/natProperty,2.5);
+    var natV=data.natViolent||380,natP=data.natProperty||2000;
+    var vRatio=data.violent/(natV||1),pRatio=data.property/(natP||1);
     var vColor=vRatio<=0.8?'var(--gn)':vRatio<=1.2?'var(--yw)':'var(--rd)';
     var pColor=pRatio<=0.8?'var(--gn)':pRatio<=1.2?'var(--yw)':'var(--rd)';
     bars.innerHTML=
       '<div class="cb-row"><div class="cb-label">Violent</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+vColor+'"></div></div><div class="cb-val">'+fmt(data.violent)+'</div></div>'+
       '<div class="cb-row"><div class="cb-label">Property</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+pColor+'"></div></div><div class="cb-val">'+fmt(data.property)+'</div></div>'+
-      '<div style="font-size:10px;color:var(--m1);margin-top:3px">vs national avg: '+fmt(natViolent)+' violent · '+fmt(natProperty)+' property per 100K</div>';
+      '<div style="font-size:10px;color:var(--m1);margin-top:3px">vs US avg: '+fmt(natV)+' violent · '+fmt(natP)+' property / 100K</div>';
     setTimeout(function(){
       var fills=bars.querySelectorAll('.cb-fill');
       if(fills[0]) fills[0].style.width=Math.min(vRatio*40,96)+'%';
@@ -4466,31 +4473,31 @@ function renderCrime(s,data){
   }
 }
 
-// ═══════════════ RENDER: PERMITS ═══════════════
+// ═══════════════ RENDER: CONSTRUCTION ACTIVITY ═══════════════
 function renderPermits(s,data){
   var hn=el('rpermit-'+s),sub=el('permit-sub-'+s),detail=el('permit-detail-'+s);
   if(!hn) return;
-  if(!data||!data.current){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='County permit data unavailable';return;}
-  var c=data.current;
-  hn.textContent=fmt(c.units)+' units';hn.classList.remove('pending');
-  if(sub) sub.textContent=c.year+' · '+fmt(c.bldgs)+' buildings · $'+fmt(Math.round(c.val/1000))+'K avg value';
+  if(!data||!data.total){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='Construction data unavailable';return;}
+  var newShare=((data.b2020+data.b2010)/data.total*100).toFixed(1);
+  hn.textContent=newShare+'% built since 2010';hn.classList.remove('pending');
+  if(sub) sub.textContent=fmt(data.total)+' total housing units in trade area';
   if(detail){
-    var yoyHtml='';
-    if(data.prior&&data.prior.units>0){
-      var chg=((c.units-data.prior.units)/data.prior.units*100);
-      var cls=chg>=0?'up':'dn';
-      var arrow=chg>=0?'▲':'▼';
-      yoyHtml='<div class="permit-yoy"><span class="'+cls+'">'+arrow+' '+Math.abs(chg).toFixed(1)+'%</span> vs '+data.prior.year+' ('+fmt(data.prior.units)+' units)</div>';
-    }
-    var maxUnits=Math.max(c.units,data.prior?data.prior.units:0,1);
-    detail.innerHTML=
-      '<div class="pb-row"><div class="pb-label">'+c.year+' Units</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:var(--ac)"></div></div><div class="pb-val">'+fmt(c.units)+'</div></div>'+
-      (data.prior?'<div class="pb-row"><div class="pb-label">'+data.prior.year+' Units</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:var(--m1)"></div></div><div class="pb-val">'+fmt(data.prior.units)+'</div></div>':'')+
-      yoyHtml;
+    var maxVal=Math.max(data.b2020,data.b2010,data.b2000,data.b1990,data.bOlder,1);
+    var decades=[
+      {label:'2020+',val:data.b2020,color:'var(--gn)'},
+      {label:'2010s',val:data.b2010,color:'var(--ac)'},
+      {label:'2000s',val:data.b2000,color:'var(--pu)'},
+      {label:'1990s',val:data.b1990,color:'var(--yw)'},
+      {label:'Pre-1990',val:data.bOlder,color:'var(--m1)'}
+    ];
+    detail.innerHTML=decades.map(function(d){
+      var pct=(d.val/data.total*100).toFixed(1);
+      return '<div class="pb-row"><div class="pb-label">'+d.label+'</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:'+d.color+'"></div></div><div class="pb-val">'+fmt(d.val)+' ('+pct+'%)</div></div>';
+    }).join('')+'<div style="font-size:10px;color:var(--m1);margin-top:3px">Source: ACS 2022 B25034 · Year Structure Built</div>';
     setTimeout(function(){
-      var fills=detail.querySelectorAll('.pb-fill');
-      if(fills[0]) fills[0].style.width=Math.min(c.units/maxUnits*90,96)+'%';
-      if(fills[1]&&data.prior) fills[1].style.width=Math.min(data.prior.units/maxUnits*90,96)+'%';
+      detail.querySelectorAll('.pb-fill').forEach(function(f,i){
+        f.style.width=Math.min(decades[i].val/maxVal*90,96)+'%';
+      });
     },200);
   }
 }
