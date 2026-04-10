@@ -1033,20 +1033,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #drive-ctl{display:none!important}
 .exit-marker{display:inline-flex;align-items:center;gap:3px;background:#0d1117;border:1.5px solid #4b7cf3;border-radius:5px;padding:2px 6px;box-shadow:0 2px 10px rgba(0,0,0,.9);cursor:pointer;white-space:nowrap}.exit-hwy{font-size:9px;font-weight:700;color:#93c5fd;font-family:monospace}.exit-num-badge{background:#4b7cf3;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;font-family:monospace}.exit-popup .leaflet-popup-content-wrapper{background:#10131c!important;border:1px solid #1e2435!important;border-radius:7px!important;padding:0!important}.exit-popup .leaflet-popup-content{margin:10px 12px!important}.exit-popup .leaflet-popup-tip{background:#10131c!important}
 
-/* ── Crime / Permits / Traffic cards ── */
-.hcard.crime::before{background:var(--rd)}
-.crime-grid{margin-top:4px}
-.hcard.permit::before{background:var(--yw)}
-.permit-detail{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-.pb-row{display:flex;align-items:center;gap:8px;font-size:11.5px}
-.pb-label{color:var(--m2);width:90px;flex-shrink:0;font-size:11px}
-.pb-track{flex:1;height:6px;background:var(--b1);border-radius:3px;overflow:hidden}
-.pb-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.pb-val{color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:52px;text-align:right}
-.permit-yoy{font-size:10.5px;color:var(--m1);margin-top:2px}
-.permit-yoy .up{color:var(--gn);font-weight:600}
-.permit-yoy .dn{color:var(--rd);font-weight:600}
+/* ── ZONING & LAND USE ── */
+.zone-table{width:100%;border-collapse:collapse;margin-top:4px;font-size:11px}
+.zone-table th{font-size:9px;color:var(--m1);text-transform:uppercase;letter-spacing:.4px;
+  text-align:right;padding:0 4px 5px;font-weight:500;border-bottom:1px solid var(--b1)}
+.zone-table th:first-child{text-align:left;padding-left:0}
+.zone-table td{padding:5px 4px;text-align:right;color:var(--tx);border-bottom:1px solid rgba(255,255,255,.03)}
+.zone-table td:first-child{text-align:left;padding-left:0}
+.zone-table tr:last-child td{border-bottom:none}
+.zone-table tfoot td{border-top:1px solid var(--b1);padding-top:6px;font-weight:600;color:var(--tx)}
+.zone-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;flex-shrink:0}
+.zone-label{display:flex;align-items:center}
+.zone-val{font-family:'IBM Plex Mono',monospace;font-size:10.5px}
+.zone-note{font-size:9px;color:var(--m1);margin-top:5px}
+.zone-vacant{color:var(--yw);font-size:10px}
 
+/* ── CRIME ── */
+.crime-row{display:grid;grid-template-columns:1fr 70px;align-items:center;
+  gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.crime-row:last-child{border-bottom:none}
+.crime-label{font-size:11px;color:var(--m1)}
+.crime-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;
+  color:var(--tx);text-align:right}
+.crime-val.low{color:#3ecf8e}.crime-val.mid{color:#f5c842}.crime-val.high{color:#ef5858}
+.crime-bar-wrap{grid-column:1/-1;height:3px;background:var(--b1);border-radius:2px;overflow:hidden;margin-top:-4px}
+.crime-bar{height:3px;border-radius:2px;width:0%;transition:width .9s cubic-bezier(.22,.68,0,1.2)}
+.crime-note{font-size:9.5px;color:var(--m1);margin-top:1px}
+.crime-source{font-size:9px;color:var(--m1);margin-top:4px;padding-top:4px;
+  border-top:1px solid var(--b1)}
 </style>
 </head>
 <body>
@@ -1231,17 +1245,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
-    <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
-     <div class="crime-grid">
-      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-0-note"></div></div></div>
-      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-0-note"></div></div></div>
-     </div>
-     <div class="hs" id="crime-sub-0"></div>
-    </div>
-    <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
-     <div class="permit-detail" id="permit-detail-0"></div>
-    </div>
-    </div>
    </div>
 
    <!-- Slot B -->
@@ -1335,17 +1338,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
-    <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
-     <div class="crime-grid">
-      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-1-note"></div></div></div>
-      <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-1-note"></div></div></div>
-     </div>
-     <div class="hs" id="crime-sub-1"></div>
-    </div>
-    <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
-     <div class="permit-detail" id="permit-detail-1"></div>
-    </div>
-    </div>
    </div>
   </div><!-- /res-wrap -->
   <div id="action-panel">
@@ -1381,28 +1373,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
    <div id="port-filters"><button class="pf-btn on" data-filter="all" onclick="setPortFilter(this,'all')">All</button><button class="pf-btn" data-filter="owned" onclick="setPortFilter(this,'owned')">Owned</button><button class="pf-btn" data-filter="target" onclick="setPortFilter(this,'target')">Target</button><button class="pf-btn" data-filter="loi" onclick="setPortFilter(this,'loi')">Under LOI</button></div>
    <div id="port-controls">
      <div id="port-radius-row"><span style="font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);flex-shrink:0">Radius</span><div style="display:flex;gap:4px;flex:1"><button class="rb" data-r="1" onclick="setPortRadius(this,1)">1 mi</button><button class="rb" data-r="3" onclick="setPortRadius(this,3)">3 mi</button><button class="rb on" data-r="5" onclick="setPortRadius(this,5)">5 mi</button><button class="rb" data-r="10" onclick="setPortRadius(this,10)">10 mi</button><button class="rb" data-r="15" onclick="setPortRadius(this,15)">15 mi</button></div></div>
-     <div id="port-drive-row"><span style="font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);flex-shrink:0">Drive Time</span><div style="display:flex;gap:4px;flex:1"><button class="drb" data-min="10" onclick="setPortDrive(this,10)">10 min</button><button class="drb" data-min="15" onclick="setPortDrive(this,15)">15 min</button><button class="drb" data-min="20" onclick="setPortDrive(this,20)">20 min</button><button class="drb" data-min="30" onclick="setPortDrive(this,30)">30 min</button><button class="drb" onclick="clearPortDrive()" style="margin-left:auto;font-size:10px;color:var(--m1)">✕</button></div></div>
-   </div>
-   <div id="port-list"><div id="port-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div>No properties yet</div><div style="font-size:11px;color:var(--m1)">Add properties to track your portfolio</div></div></div>
-   <div id="port-form">
-     <div><div class="pf-label">Property Name</div><input class="pf-input" id="pf-name" placeholder="e.g. 47 October Hill Rd"/></div>
-     <div><div class="pf-label">Address</div><input class="pf-input" id="pf-addr" placeholder="Full address"/></div>
-     <div class="pf-row">
-       <div style="flex:1"><div class="pf-label">Asset Type</div><select class="pf-select" id="pf-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="mixed">Mixed Use</option></select></div>
-       <div style="flex:1"><div class="pf-label">Status</div><select class="pf-select" id="pf-status"><option value="target">Acquisition Target</option><option value="owned">Owned</option><option value="loi">Under LOI</option><option value="sold">Sold</option></select></div>
-     </div>
-     <div><div class="pf-label">Notes (optional)</div><input class="pf-input" id="pf-notes" placeholder="SF, price, cap rate, thesis…"/></div>
-     <div id="port-form-btns"><button id="port-form-save" onclick="savePortProp()">Save Property</button><button id="port-form-cancel" onclick="hidePortForm()">Cancel</button></div>
-   </div>
-  </div>
-  <!-- END PORTFOLIO -->
-
-</div><!-- /side -->
-<div id="map-hint">Drag to explore · type address to analyze</div>
-<div id="map"></div>
-<div id="toast">🔗 Link copied to clipboard</div>
-<script>
-
+     <div id="port-drive-row"><span style="font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);flex-shrink:0">Drive Time</span><div style="display:flex;gap:4px;flex:1"><button class="drb" data-min="10" onclick="setPortDrive(this,10)">10 min</button><button class="drb" data-min="15" onclick="setPortDrive(this,15)">15 min</button><button class="drb" data-min="20" onclick="setPortDrive(this,20)">20 min</button><button class="drb" data-min="30" onclick="setPortDrive(this,30)">30 min</button><button class="drb" onclick="clearPortDrive()" style="margin-left:auto;fon
 // ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
 var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
@@ -1823,19 +1794,16 @@ async function runDriveAnalysis(s,lat,lon,min){
     var approxArea=polygonAreaSqMi(rawCoords); // shoelace formula
 
     var stateFips=bgs[0].GEOID.slice(0,2);
-    var [incData,bizData,stateData,data2010,crimeData,permitData]=await Promise.all([
+    var [incData,bizData,stateData,data2010]=await Promise.all([
       fetchIncomeLabor(bgs),
       fetchBiz(lat,lon,Math.sqrt(approxArea/Math.PI)||5),
       fetchState(stateFips),
-      fetch2010(bgs),
-      fetchCrime(stateFips,lat,lon,Math.sqrt(approxArea/Math.PI)||5),
-      fetchPermits(bgs),
+      fetch2010(bgs)
     ]);
 
     // Store results
     driveCache[s]={pop:pop,hu:hu,approxArea:approxArea,bgs:bgs,
       incData:incData,bizData:bizData,stateData:stateData,data2010:data2010,
-      crimeData:crimeData,permitData:permitData,
       lat:lat,lon:lon,min:min,polyRing:rings,tenureData:null};
     // Fetch tenure separately so it can't break drive analysis
     fetchTenure(bgs).then(function(t){if(driveCache[s])driveCache[s].tenureData=t;renderTenure(s,t,stateData);}).catch(function(){});
@@ -1879,9 +1847,13 @@ function applyDriveResults(s,cache){
   else renderIncome(s,null,null,null,null,null,null,null,cache.stateData);
   renderBiz(s,cache.bizData,cache.stateData);
   renderTenure(s,cache.tenureData!==undefined?cache.tenureData:null,cache.stateData);
-  renderCrime(s,cache.crimeData||null);
-  renderPermits(s,cache.permitData||null);
-
+  // Zoning polygon fetch (drive mode)
+  var sfips2=cache.stateData&&cache.stateData.fips?cache.stateData.fips:'';
+  if(sfips2==='25'&&cache.polyRing){
+    fetchZoningPolygon(cache.polyRing).then(function(z){renderZoning(s,z);}).catch(function(){});
+  } else {
+    var zc2=el('hcard-zoning-'+s);if(zc2)zc2.style.display='none';
+  }
   renderGrowth(s,cache.pop,cache.data2010);
   renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
   el('rbg-'+s).textContent=fmt(cache.bgs.length);
@@ -3049,6 +3021,9 @@ function closePdfTip(){
 
 // ═══════════════ RESET SLOT ═══════════════
 function resetSlot(s){
+  ['hcard-zoning','hcard-crime'].forEach(function(id){
+    var e=el(id+'-'+s); if(e)e.style.display='none';
+  });
   ['rp','rs','ri','rbiz','rhwy','pop10','pop20','own'].forEach(function(id){
     var e=el(id+'-'+s); if(e){e.textContent='…';e.classList.add('pending');}
   });
@@ -3354,6 +3329,169 @@ var exitMapLayer=null;
 async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
 function drawExits(exitEls,hwyEls,cLat,cLon){clearExits();if(!exitEls||!exitEls.length)return;exitMapLayer=L.layerGroup().addTo(MAP);var seen={};exitEls.forEach(function(node){if(!node.lat||!node.lon)return;var tags=node.tags||{};var exitNum=tags.ref||tags.name||'';if(!exitNum||exitNum.length>6)return;var key=Math.round(node.lat*1000)+'|'+Math.round(node.lon*1000);if(seen[key])return;seen[key]=true;var hwyName='',bd=999;if(hwyEls&&hwyEls.length){hwyEls.forEach(function(way){var wt=way.tags||{};if(wt.highway!=='motorway'&&wt.highway!=='trunk')return;var wRef=wt.ref||wt.name||'';if(!wRef||!way.geometry)return;for(var j=0;j<way.geometry.length-1;j++){var dd=ptSeg(node.lon,node.lat,way.geometry[j].lon,way.geometry[j].lat,way.geometry[j+1].lon,way.geometry[j+1].lat);if(dd<bd){bd=dd;hwyName=wRef;}}});}var dest=tags.destination||tags['destination:street']||'';var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);var dh=hwyName?hwyName.replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA ').replace(/US Route /g,'US '):'';var popup='<div style="min-width:120px"><div style="font-size:15px;font-weight:700;color:#4b7cf3;margin-bottom:2px">Exit '+exitNum+'</div>'+(hwyName?'<div style="font-size:12px;font-weight:600;color:#dde3f0;margin-bottom:2px">'+hwyName+'</div>':'')+(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:3px">'+dest+'</div>':'')+'<div style="font-size:11px;color:#636d85">'+distMi+' mi from center</div></div>';var badge='<div class="exit-marker">'+(dh?'<span class="exit-hwy">'+dh+'</span>':'')+'<span class="exit-num-badge">'+exitNum+'</span></div>';L.marker([node.lat,node.lon],{icon:L.divIcon({className:'',html:badge,iconSize:[64,24],iconAnchor:[32,12]}),interactive:true,zIndexOffset:300}).bindPopup(popup,{maxWidth:200,className:'exit-popup'}).addTo(exitMapLayer);});}
 function clearExits(){if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(e){}exitMapLayer=null;}}
+
+// ══ ZONING & LAND USE (MassGIS) ══
+var MASSGIS_PARCEL = 'https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/L3_Parcels_FeatureService_4326/MapServer/1/query';
+
+async function fetchZoning(lat,lon,r){
+  var geom=encodeURIComponent(JSON.stringify({x:lon,y:lat}));
+  var all=[],offset=0,pages=0,maxPages=4;
+  while(pages<maxPages){
+    try{
+      var url=MASSGIS_PARCEL+'?geometry='+geom+'&geometryType=esriGeometryPoint'
+        +'&spatialRel=esriSpatialRelIntersects&distance='+r+'&units=esriSRUnit_StatuteMile'
+        +'&inSR=4326&outFields=USE_CODE,LOT_SIZE,BLD_AREA'
+        +'&returnGeometry=false&resultRecordCount=2000&resultOffset='+offset+'&f=json';
+      var rr=await fetch(url);
+      if(!rr.ok) break;
+      var d=await rr.json();
+      var feats=d.features||[];
+      all=all.concat(feats.map(function(f){return f.attributes;}));
+      if(!d.exceededTransferLimit||feats.length===0) break;
+      offset+=2000; pages++;
+    }catch(e){break;}
+  }
+  return all.length>0?all:null;
+}
+
+async function fetchZoningPolygon(rings){
+  var geomObj=JSON.stringify({rings:[rings],spatialReference:{wkid:4326}});
+  var all=[],offset=0,pages=0,maxPages=4;
+  while(pages<maxPages){
+    try{
+      var url=MASSGIS_PARCEL+'?geometry='+encodeURIComponent(geomObj)
+        +'&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects'
+        +'&outFields=USE_CODE,LOT_SIZE,BLD_AREA'
+        +'&returnGeometry=false&resultRecordCount=2000&resultOffset='+offset+'&f=json';
+      var rr=await fetch(url);
+      if(!rr.ok) break;
+      var d=await rr.json();
+      var feats=d.features||[];
+      all=all.concat(feats.map(function(f){return f.attributes;}));
+      if(!d.exceededTransferLimit||feats.length===0) break;
+      offset+=2000; pages++;
+    }catch(e){break;}
+  }
+  return all.length>0?all:null;
+}
+
+function renderZoning(s,parcels){
+  var card=el('hcard-zoning-'+s),cont=el('zoning-'+s);
+  if(!card||!cont){return;}
+  if(!parcels||!parcels.length){card.style.display='none';return;}
+  card.style.display='block';
+
+  var grp={
+    industrial:{label:'Industrial',color:'#f59e42',parcels:0,lotSF:0,bldgSF:0,vacant:0},
+    commercial:{label:'Commercial',color:'#4b7cf3',parcels:0,lotSF:0,bldgSF:0,vacant:0},
+    residential:{label:'Residential',color:'#3ecf8e',parcels:0,lotSF:0,bldgSF:0,vacant:0},
+    other:{label:'Other/Exempt',color:'#6a768f',parcels:0,lotSF:0,bldgSF:0,vacant:0}
+  };
+
+  parcels.forEach(function(p){
+    var code=String(p.USE_CODE||'0'),first=code.charAt(0);
+    var lot=Math.round((parseFloat(p.LOT_SIZE)||0)*43560);
+    var bld=parseInt(p.BLD_AREA)||0;
+    var g=first==='4'?grp.industrial:first==='3'?grp.commercial:first==='1'?grp.residential:grp.other;
+    g.parcels++;g.lotSF+=lot;g.bldgSF+=bld;
+    if(lot>0&&bld===0)g.vacant++;
+  });
+
+  function fmtSF(n){
+    if(n>=1000000)return (n/1000000).toFixed(1)+'M SF';
+    if(n>=1000)return Math.round(n/1000)+'K SF';
+    return n+' SF';
+  }
+
+  var totP=0,totL=0,totB=0,totV=0;
+  var rows='';
+  ['industrial','commercial','residential','other'].forEach(function(k){
+    var g=grp[k];
+    if(!g.parcels)return;
+    totP+=g.parcels;totL+=g.lotSF;totB+=g.bldgSF;totV+=g.vacant;
+    rows+='<tr>'
+      +'<td class="zone-label"><span class="zone-dot" style="background:'+g.color+'"></span>'+g.label+'</td>'
+      +'<td class="zone-val">'+g.parcels.toLocaleString()+'</td>'
+      +'<td class="zone-val">'+fmtSF(g.lotSF)+'</td>'
+      +'<td class="zone-val">'+fmtSF(g.bldgSF)+'</td>'
+      +'<td class="zone-vacant">'+(g.vacant?g.vacant+' vacant':'—')+'</td>'
+      +'</tr>';
+  });
+
+  cont.innerHTML='<table class="zone-table">'
+    +'<thead><tr><th></th><th>Parcels</th><th>Lot Area</th><th>Bldg SF</th><th>Vacant</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'<tfoot><tr>'
+    +'<td>Total</td>'
+    +'<td class="zone-val">'+totP.toLocaleString()+'</td>'
+    +'<td class="zone-val">'+fmtSF(totL)+'</td>'
+    +'<td class="zone-val">'+fmtSF(totB)+'</td>'
+    +'<td class="zone-vacant">'+totV+' vacant</td>'
+    +'</tr></tfoot>'
+    +'</table>'
+    +'<div class="zone-note">MassGIS standardized assessors data · '+parcels.length.toLocaleString()+' parcels analyzed</div>';
+}
+
+// ══ CRIME INDEX (via Anthropic web search) ══
+// National benchmarks (FBI UCR 2022)
+var CRIME_NAT_VIOLENT=380, CRIME_NAT_PROP=1954;
+
+async function fetchCrime(city,stateAbbr,s){
+  var key=localStorage.getItem('gw_anthropic_key');
+  if(!key||!city){renderCrime(s,null);return;}
+  try{
+    var prompt='What is the most recent violent crime rate and property crime rate per 100,000 people for '+city+', '+stateAbbr+'? '
+      +'Return ONLY a valid JSON object, no other text, with these exact numeric fields: '
+      +'{"violent_rate":number,"property_rate":number,"year":number,"source":"string"}. '
+      +'Use FBI UCR or local police department data.';
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-beta':'interleaved-thinking-2025-05-14'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:500,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    if(!resp.ok){renderCrime(s,null);return;}
+    var data=await resp.json();
+    var text=(data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+    var m=text.match(/\{[\s\S]*?\}/);
+    if(m){
+      var parsed=JSON.parse(m[0]);
+      if(parsed.violent_rate&&parsed.property_rate){renderCrime(s,parsed);return;}
+    }
+    renderCrime(s,null);
+  }catch(e){renderCrime(s,null);}
+}
+
+function renderCrime(s,data){
+  var card=el('hcard-crime-'+s);
+  if(!card)return;
+  if(!data){card.style.display='none';return;}
+  card.style.display='block';
+
+  function setRow(type,rate,natAvg,color){
+    var vEl=el('crime-'+type+'-'+s);
+    var bEl=el('crime-'+type+'-bar-'+s);
+    var nEl=el('crime-'+type+'-note-'+s);
+    if(!vEl)return;
+    vEl.textContent=rate.toLocaleString();
+    var pct=Math.min((rate/natAvg)*100,200);
+    var ratio=(rate/natAvg).toFixed(1);
+    var cls=ratio<0.8?'low':ratio>1.2?'high':'mid';
+    vEl.className='crime-val '+cls;
+    if(bEl){bEl.style.background=cls==='low'?'#3ecf8e':cls==='high'?'#ef5858':'#f5c842';
+      setTimeout(function(){bEl.style.width=Math.min(pct,100)+'%';},200);}
+    if(nEl)nEl.textContent=ratio+'× vs national '+natAvg.toLocaleString();
+  }
+
+  setRow('violent',Math.round(data.violent_rate),CRIME_NAT_VIOLENT,'#ef5858');
+  setRow('prop',Math.round(data.property_rate),CRIME_NAT_PROP,'#f5c842');
+  var src=el('crime-source-'+s);
+  if(src)src.textContent=(data.source||'')+(data.year?' · '+data.year:'');
+}
+
 // ═══════════════ RENDER FUNCTIONS ═══════════════
 function renderPop(s,pop,hu,area){
   // Animate main population number
@@ -4278,8 +4416,6 @@ async function runSlot(s,addr,r){
     fetchHwy(lat,lon),
     fetch2010(bgs),
     fetchTenure(bgs),
-    fetchCrime(stateFips,lat,lon,r),
-    fetchPermits(bgs),
   ]);
   var airData=getNearestAirport(lat,lon);
 
@@ -4317,17 +4453,12 @@ async function runSlot(s,addr,r){
   renderTenure(s,tenureData,stateData);
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
-  var crimeData=results[6]&&results[6].status==='fulfilled'?results[6].value:null;
-  var permitData=results[7]&&results[7].status==='fulfilled'?results[7].value:null;
-  renderCrime(s,crimeData);
-  renderPermits(s,permitData);
-  slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;
   (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive')drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
-    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData,crimeData:crimeData,permitData:permitData};
+    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData};
   // Fire EPA in background
   if(s===0)
   if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
@@ -4338,236 +4469,6 @@ async function runSlot(s,addr,r){
   // Only draw circle if in circle mode; drive mode draws via applyDriveResults
   if(analysisMode!=='drive') drawSlot(s,lat,lon,r,pop,incData?incData.income:null);
   updateURL();
-}
-
-
-// ═══════════════ API: CRIME (FBI CDE — local agency level) ═══════════════
-var FBI_KEY='iiHnOKfno2Mgkt5AynpvPpUQTEyxE77jo1RU8PIv';
-var agencyCache={};
-async function fetchAgencies(stAbbr){
-  if(agencyCache[stAbbr]) return agencyCache[stAbbr];
-  var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},15000);
-  var r=await fetch('https://api.usa.gov/crime/fbi/cde/agency/byStateAbbr/'+stAbbr+'?API_KEY='+FBI_KEY,{signal:ctrl.signal});
-  if(!r.ok) return null;
-  var d=await r.json();
-  // Flatten to array with lat/lon
-  var all=[];
-  for(var county in d){
-    if(!Array.isArray(d[county])) continue;
-    d[county].forEach(function(a){
-      if(a.latitude&&a.longitude&&a.ori) all.push(a);
-    });
-  }
-  agencyCache[stAbbr]=all;
-  return all;
-}
-
-async function fetchCrime(stateFips,lat,lon,radiusMi){
-  try{
-    var fipsMap={'01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT','10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL','18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD','25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE','32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND','39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD','47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV','55':'WI','56':'WY'};
-    var stAbbr=fipsMap[stateFips];
-    if(!stAbbr) return null;
-    // Get agencies and find nearest within trade area
-    var agencies=await fetchAgencies(stAbbr);
-    if(!agencies||!agencies.length) return null;
-    var searchR=Math.max(radiusMi||5,5);
-    var nearby=[];
-    agencies.forEach(function(a){
-      var d=hav(lat,lon,a.latitude,a.longitude);
-      if(d<=searchR) nearby.push({ori:a.ori,name:a.agency_name,dist:d,county:a.counties||''});
-    });
-    nearby.sort(function(a,b){return a.dist-b.dist;});
-    var pick=nearby.slice(0,3); // up to 3 nearest
-    if(!pick.length) return null;
-    // Query crime for picked agencies in parallel
-    var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},15000);
-    var fetches=[];
-    pick.forEach(function(p){
-      fetches.push(fetch('https://api.usa.gov/crime/fbi/cde/summarized/agency/'+p.ori+'/violent-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}));
-      fetches.push(fetch('https://api.usa.gov/crime/fbi/cde/summarized/agency/'+p.ori+'/property-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}));
-    });
-    var results=await Promise.all(fetches);
-    // Aggregate local actuals and populations
-    var localViolentAct=0,localPropertyAct=0,localPop=0;
-    var stViolentRate=0,stPropertyRate=0;
-    var agencyNames=[];
-    for(var i=0;i<pick.length;i++){
-      var vd=results[i*2], pd=results[i*2+1];
-      if(vd&&vd.offenses){
-        // Find agency-specific key
-        var aRates=vd.offenses.actuals||{};
-        for(var k in aRates){
-          if(k.indexOf('Offenses')>-1&&k.indexOf('Massachusetts')===-1&&k.indexOf('United States')===-1){
-            var vals=Object.values(aRates[k]);
-            vals.forEach(function(v){localViolentAct+=v;});
-          }
-        }
-        // Get agency pop
-        if(vd.populations&&vd.populations.population){
-          for(var pk in vd.populations.population){
-            if(pk.indexOf('Massachusetts')===-1&&pk.indexOf('United States')===-1){
-              var pv=Object.values(vd.populations.population[pk]);
-              if(pv.length) localPop+=pv[0]; // pop is constant across months
-              break;
-            }
-          }
-        }
-        // Get state rate (same in all responses)
-        if(!stViolentRate&&vd.offenses.rates){
-          var stKey=Object.keys(vd.offenses.rates).find(function(k){return k.indexOf('Massachusetts')>-1&&k.indexOf('Clearances')===-1;});
-          if(!stKey) stKey=Object.keys(vd.offenses.rates).find(function(k){return k!=='United States Offenses'&&k.indexOf('Clearances')===-1&&k.indexOf('Offenses')>-1&&!vd.populations.population[k.replace(' Offenses','')];});
-          // Get state key dynamically
-          for(var sk in vd.offenses.rates){
-            if(sk.indexOf('Clearances')===-1&&sk.indexOf('United States')===-1){
-              var isAgency=false;
-              if(vd.populations&&vd.populations.population){
-                var popKey=sk.replace(' Offenses','');
-                if(vd.populations.population[popKey]&&Object.values(vd.populations.population[popKey])[0]<1000000) isAgency=true;
-              }
-              if(!isAgency){
-                stViolentRate=0;
-                Object.values(vd.offenses.rates[sk]).forEach(function(v){stViolentRate+=v;});
-                break;
-              }
-            }
-          }
-        }
-        agencyNames.push(pick[i].name.replace(' Police Department','').replace(' Sheriff Office',''));
-      }
-      if(pd&&pd.offenses){
-        var pActs=pd.offenses.actuals||{};
-        for(var k2 in pActs){
-          if(k2.indexOf('Offenses')>-1&&k2.indexOf('Massachusetts')===-1&&k2.indexOf('United States')===-1){
-            Object.values(pActs[k2]).forEach(function(v){localPropertyAct+=v;});
-          }
-        }
-        if(!stPropertyRate&&pd.offenses.rates){
-          for(var sk2 in pd.offenses.rates){
-            if(sk2.indexOf('Clearances')===-1&&sk2.indexOf('United States')===-1){
-              var isAg2=false;
-              if(pd.populations&&pd.populations.population){
-                var pk2=sk2.replace(' Offenses','');
-                if(pd.populations.population[pk2]&&Object.values(pd.populations.population[pk2])[0]<1000000) isAg2=true;
-              }
-              if(!isAg2){
-                Object.values(pd.offenses.rates[sk2]).forEach(function(v){stPropertyRate+=v;});
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-    if(!localPop) return null;
-    var localViolentRate=Math.round(localViolentAct/localPop*100000);
-    var localPropertyRate=Math.round(localPropertyAct/localPop*100000);
-    return{
-      violent:localViolentRate,property:localPropertyRate,
-      stViolent:Math.round(stViolentRate),stProperty:Math.round(stPropertyRate),
-      stateName:stAbbr,year:2022,
-      agencies:agencyNames,localPop:localPop
-    };
-  }catch(e){return null;}
-}
-
-// ═══════════════ API: CONSTRUCTION ACTIVITY (ACS B25034) ═══════════════
-async function fetchPermits(bgs){
-  // Uses same block-group set as other census queries — works with polygons
-  try{
-    var counties={};
-    bgs.forEach(function(bg){
-      var st=bg.GEOID.slice(0,2),co=bg.GEOID.slice(2,5),k=st+'-'+co;
-      if(!counties[k]) counties[k]={state:st,county:co,geoids:{}};
-      counties[k].geoids[bg.GEOID]=true;
-    });
-    var total=0,b2020=0,b2010=0,b2000=0,b1990=0,bOlder=0;
-    for(var k in counties){
-      var c=counties[k];
-      try{
-        var url='https://api.census.gov/data/2022/acs/acs5?get=B25034_001E,B25034_002E,B25034_003E,B25034_004E,B25034_005E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
-        var r=await fetch(url);if(!r.ok) continue;
-        var rows=await r.json();
-        for(var i=1;i<rows.length;i++){
-          var row=rows[i],geoid=row[5]+row[6]+row[7]+row[8];
-          if(c.geoids[geoid]){
-            var t=parseInt(row[0])||0;
-            total+=t;
-            b2020+=parseInt(row[1])||0;
-            b2010+=parseInt(row[2])||0;
-            b2000+=parseInt(row[3])||0;
-            b1990+=parseInt(row[4])||0;
-          }
-        }
-      }catch(e){}
-    }
-    bOlder=total-b2020-b2010-b2000-b1990;
-    return{total:total,b2020:b2020,b2010:b2010,b2000:b2000,b1990:b1990,bOlder:bOlder};
-  }catch(e){return null;}
-}
-
-// ═══════════════ RENDER: CRIME ═══════════════
-function renderCrime(s,data){
-  var cvEl=el('cv-'+s),cpEl=el('cp-'+s),sub=el('crime-sub-'+s);
-  if(!cvEl) return;
-  if(!data){
-    cvEl.textContent='N/A';cvEl.classList.remove('pending');cvEl.className='labor-val';
-    cpEl.textContent='N/A';cpEl.classList.remove('pending');cpEl.className='labor-val';
-    if(sub) sub.textContent='No local agency data found';
-    return;
-  }
-  var stV=data.stViolent||1,stP=data.stProperty||1;
-  var vRatio=data.violent/(stV||1),pRatio=data.property/(stP||1);
-  cvEl.textContent=fmt(data.violent);cvEl.classList.remove('pending');
-  var vGood=vRatio<0.85,vBad=vRatio>1.15;
-  cvEl.className='labor-val'+(vGood?' positive':vBad?' negative':'');
-  var vBarT=el('cv-'+s+'-bar');
-  if(vBarT){var vb=vBarT.querySelector('.labor-bar');var vColor=vGood?'var(--gn)':vBad?'var(--rd)':'var(--yw)';
-    if(vb){vb.style.background=vColor;setTimeout(function(){vb.style.width=Math.min(Math.max(vRatio*50,2),96)+'%';},200);}}
-  var vNote=el('cv-'+s+'-note');
-  if(vNote){var vMult=vRatio>=1?vRatio.toFixed(1)+'\u00d7':((vRatio*100).toFixed(0)+'%');
-    var vMCol=vGood?'var(--gn)':vBad?'var(--rd)':'var(--m1)';
-    vNote.innerHTML='<span style="color:'+vMCol+';font-weight:600">'+vMult+'</span> <span style="color:var(--m1)">vs '+data.stateName+' '+fmt(stV)+'/100K</span>';}
-  cpEl.textContent=fmt(data.property);cpEl.classList.remove('pending');
-  var pGood=pRatio<0.85,pBad=pRatio>1.15;
-  cpEl.className='labor-val'+(pGood?' positive':pBad?' negative':'');
-  var pBarT=el('cp-'+s+'-bar');
-  if(pBarT){var pb=pBarT.querySelector('.labor-bar');var pColor=pGood?'var(--gn)':pBad?'var(--rd)':'var(--yw)';
-    if(pb){pb.style.background=pColor;setTimeout(function(){pb.style.width=Math.min(Math.max(pRatio*50,2),96)+'%';},200);}}
-  var pNote=el('cp-'+s+'-note');
-  if(pNote){var pMult=pRatio>=1?pRatio.toFixed(1)+'\u00d7':((pRatio*100).toFixed(0)+'%');
-    var pMCol=pGood?'var(--gn)':pBad?'var(--rd)':'var(--m1)';
-    pNote.innerHTML='<span style="color:'+pMCol+';font-weight:600">'+pMult+'</span> <span style="color:var(--m1)">vs '+data.stateName+' '+fmt(stP)+'/100K</span>';}
-  if(sub){var agLabel=data.agencies?data.agencies.join(', '):'Local agencies';
-    sub.textContent=agLabel+' \u00b7 '+data.year+' \u00b7 pop '+fmt(data.localPop);}
-}
-
-// ═══════════════ RENDER: CONSTRUCTION ACTIVITY ═══════════════
-function renderPermits(s,data){
-  var hn=el('rpermit-'+s),sub=el('permit-sub-'+s),detail=el('permit-detail-'+s);
-  if(!hn) return;
-  if(!data||!data.total){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='Construction data unavailable';return;}
-  var newShare=((data.b2020+data.b2010)/data.total*100).toFixed(1);
-  hn.textContent=newShare+'% built since 2010';hn.classList.remove('pending');
-  if(sub) sub.textContent=fmt(data.total)+' total housing units in trade area';
-  if(detail){
-    var maxVal=Math.max(data.b2020,data.b2010,data.b2000,data.b1990,data.bOlder,1);
-    var decades=[
-      {label:'2020+',val:data.b2020,color:'var(--gn)'},
-      {label:'2010s',val:data.b2010,color:'var(--ac)'},
-      {label:'2000s',val:data.b2000,color:'var(--pu)'},
-      {label:'1990s',val:data.b1990,color:'var(--yw)'},
-      {label:'Pre-1990',val:data.bOlder,color:'var(--m1)'}
-    ];
-    detail.innerHTML=decades.map(function(d){
-      var pct=(d.val/data.total*100).toFixed(1);
-      return '<div class="pb-row"><div class="pb-label">'+d.label+'</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:'+d.color+'"></div></div><div class="pb-val">'+fmt(d.val)+' ('+pct+'%)</div></div>';
-    }).join('')+'<div style="font-size:10px;color:var(--m1);margin-top:3px">Source: ACS 2022 B25034 · Year Structure Built</div>';
-    setTimeout(function(){
-      detail.querySelectorAll('.pb-fill').forEach(function(f,i){
-        f.style.width=Math.min(decades[i].val/maxVal*90,96)+'%';
-      });
-    },200);
-  }
 }
 
 // ═══════════════ MAIN RUN ═══════════════
@@ -4637,6 +4538,58 @@ async function run(){
         var allBounds=[];
         [0,1].forEach(function(s){
           if(driveLayer[s]) allBounds.push(driveLayer[s].getBounds());
+          else if(circles[s]) allBounds.push(circles[s].getBounds());
+        });
+        if(allBounds.length===1) MAP.fitBounds(allBounds[0],{padding:[50,50]});
+        else if(allBounds.length===2) MAP.fitBounds(allBounds[0].extend(allBounds[1]),{padding:[50,50]});
+      }catch(e){}
+    }, 400);
+  }catch(e){
+    stopPulse();
+    clearSteps();
+    setStatus('err','Error');
+    showErr(e.message||String(e));
+  }finally{
+    el('btn').disabled=false;
+  }
+}
+
+async function runDriveFirst(s,addr,min){
+  resetSlot(s);
+  el('col-'+s).classList.add('vis');
+  setStep('geo');
+  var geo=await geocode(addr);
+  var lat=geo.lat,lon=geo.lon;
+  slotCache[s].lat=lat;slotCache[s].lon=lon;
+  var shortAddr=geo.display.split(',').slice(0,3).join(',');
+  el('ra-'+s).textContent=shortAddr;
+  // No showPulse in drive mode - drive polygon is the visual feedback
+  if(!compareMode) showPulse(lat,lon,radius);
+  var airData=getNearestAirport(lat,lon);
+  var portData=getNearestPort(lat,lon);
+  setStep('transport');
+  var hwyResult=await fetchHwy(lat,lon);
+  var hwyData=hwyResult&&hwyResult.hwys?hwyResult.hwys:null;
+  var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
+  renderTransport(s,hwyData,airData,portData);
+  if(hwyElements) drawHighways(hwyElements);
+  (function(la,lo,he){fetchExits(la,lo,15).then(function(ex){if(ex)drawExits(ex,he,la,lo);}).catch(function(){});})(lat,lon,hwyElements);
+  // Retry highways if failed
+  if(!hwyElements){
+    setTimeout(async function(){
+      try{
+        var retry=await fetchHwy(lat,lon);
+        if(retry&&retry.hwys){
+          renderTransport(s,retry.hwys,airData,portData);
+          if(retry.elements) drawHighways(retry.elements);
+        }
+      }catch(e){}
+    },3000);
+  }
+  // Run drive time analysis (mode state managed by run())
+  await runDriveAnalysis(s,lat,lon,min);
+}
+unds());
           else if(circles[s]) allBounds.push(circles[s].getBounds());
         });
         if(allBounds.length===1) MAP.fitBounds(allBounds[0],{padding:[50,50]});
