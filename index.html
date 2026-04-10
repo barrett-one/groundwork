@@ -1036,13 +1036,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 /* ── Crime / Permits / Traffic cards ── */
 .hcard.crime::before{background:var(--rd)}
 .hcard.permit::before{background:var(--yw)}
-.hcard.traffic::before{background:var(--or)}
-.crime-bars,.permit-detail,.traffic-detail{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-.cb-row,.pb-row,.tb-row{display:flex;align-items:center;gap:8px;font-size:11.5px}
-.cb-label,.pb-label,.tb-label{color:var(--m2);width:90px;flex-shrink:0;font-size:11px}
-.cb-track,.pb-track,.tb-track{flex:1;height:6px;background:var(--b1);border-radius:3px;overflow:hidden}
-.cb-fill,.pb-fill,.tb-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.cb-val,.pb-val,.tb-val{color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:52px;text-align:right}
+.crime-bars,.permit-detail{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.cb-row,.pb-row{display:flex;align-items:center;gap:8px;font-size:11.5px}
+.cb-label,.pb-label{color:var(--m2);width:90px;flex-shrink:0;font-size:11px}
+.cb-track,.pb-track{flex:1;height:6px;background:var(--b1);border-radius:3px;overflow:hidden}
+.cb-fill,.pb-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.cb-val,.pb-val{color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:52px;text-align:right}
 .permit-yoy{font-size:10.5px;color:var(--m1);margin-top:2px}
 .permit-yoy .up{color:var(--gn);font-weight:600}
 .permit-yoy .dn{color:var(--rd);font-weight:600}
@@ -1231,10 +1230,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
-
-    <div class="hcard traffic sec"><div class="hl" data-tip="Estimated traffic exposure from road classifications within the trade area. Uses OpenStreetMap road data: motorways (~50K+ AADT), trunks (~20K), primaries (~10K), secondaries (~5K).">Traffic Exposure</div><div class="hn pending" id="rtraffic-0">…</div><div class="hs" id="traffic-sub-0"></div>
-     <div class="traffic-detail" id="traffic-detail-0"></div>
-    <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: violent and property crime rates per 100K residents at the county level. Lower is better. National avg ~380 violent, ~2,000 property per 100K.">Crime Rate</div><div class="hn pending" id="rcrime-0">…</div><div class="hs" id="crime-sub-0"></div>
+<div class="hn pending" id="rcrime-0">…</div><div class="hs" id="crime-sub-0"></div>
      <div class="crime-bars" id="crime-bars-0"></div>
     </div>
     <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
@@ -1334,10 +1330,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
-
-    <div class="hcard traffic sec"><div class="hl" data-tip="Estimated traffic exposure from road classifications within the trade area. Uses OpenStreetMap road data: motorways (~50K+ AADT), trunks (~20K), primaries (~10K), secondaries (~5K).">Traffic Exposure</div><div class="hn pending" id="rtraffic-1">…</div><div class="hs" id="traffic-sub-1"></div>
-     <div class="traffic-detail" id="traffic-detail-1"></div>
-    <div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: violent and property crime rates per 100K residents at the county level. Lower is better. National avg ~380 violent, ~2,000 property per 100K.">Crime Rate</div><div class="hn pending" id="rcrime-1">…</div><div class="hs" id="crime-sub-1"></div>
+<div class="hn pending" id="rcrime-1">…</div><div class="hs" id="crime-sub-1"></div>
      <div class="crime-bars" id="crime-bars-1"></div>
     </div>
     <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
@@ -1821,20 +1814,19 @@ async function runDriveAnalysis(s,lat,lon,min){
     var approxArea=polygonAreaSqMi(rawCoords); // shoelace formula
 
     var stateFips=bgs[0].GEOID.slice(0,2);
-    var [incData,bizData,stateData,data2010,crimeData,permitData,trafficData]=await Promise.all([
+    var [incData,bizData,stateData,data2010,crimeData,permitData]=await Promise.all([
       fetchIncomeLabor(bgs),
       fetchBiz(lat,lon,Math.sqrt(approxArea/Math.PI)||5),
       fetchState(stateFips),
       fetch2010(bgs),
-      fetchCrime(stateFips),
+      fetchCrime(stateFips,lat,lon,Math.sqrt(approxArea/Math.PI)||5),
       fetchPermits(bgs),
-      fetchTraffic(lat,lon,Math.sqrt(approxArea/Math.PI)||5)
     ]);
 
     // Store results
     driveCache[s]={pop:pop,hu:hu,approxArea:approxArea,bgs:bgs,
       incData:incData,bizData:bizData,stateData:stateData,data2010:data2010,
-      crimeData:crimeData,permitData:permitData,trafficData:trafficData,
+      crimeData:crimeData,permitData:permitData,
       lat:lat,lon:lon,min:min,polyRing:rings,tenureData:null};
     // Fetch tenure separately so it can't break drive analysis
     fetchTenure(bgs).then(function(t){if(driveCache[s])driveCache[s].tenureData=t;renderTenure(s,t,stateData);}).catch(function(){});
@@ -1880,7 +1872,7 @@ function applyDriveResults(s,cache){
   renderTenure(s,cache.tenureData!==undefined?cache.tenureData:null,cache.stateData);
   renderCrime(s,cache.crimeData||null);
   renderPermits(s,cache.permitData||null);
-  renderTraffic(s,cache.trafficData||null);
+
   renderGrowth(s,cache.pop,cache.data2010);
   renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
   el('rbg-'+s).textContent=fmt(cache.bgs.length);
@@ -4277,9 +4269,8 @@ async function runSlot(s,addr,r){
     fetchHwy(lat,lon),
     fetch2010(bgs),
     fetchTenure(bgs),
-    fetchCrime(stateFips),
+    fetchCrime(stateFips,lat,lon,r),
     fetchPermits(bgs),
-    fetchTraffic(lat,lon,r),
   ]);
   var airData=getNearestAirport(lat,lon);
 
@@ -4319,17 +4310,15 @@ async function runSlot(s,addr,r){
   if(hwyElements) drawHighways(hwyElements);
   var crimeData=results[6]&&results[6].status==='fulfilled'?results[6].value:null;
   var permitData=results[7]&&results[7].status==='fulfilled'?results[7].value:null;
-  var trafficData=results[8]&&results[8].status==='fulfilled'?results[8].value:null;
   renderCrime(s,crimeData);
   renderPermits(s,permitData);
-  renderTraffic(s,trafficData);
-  slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;slotCache[s].trafficData=trafficData;
+  slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;
   (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive')drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
     bachRate:incData.bachRate,homeValue:incData.homeValue,workingAgePop:incData.workingAgePop,
-    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData,crimeData:crimeData,permitData:permitData,trafficData:trafficData};
+    bizData:bizData,data2010:data2010&&data2010,hwyData:hwyData,hwyElements:hwyElements,ownerRate:tenureData,crimeData:crimeData,permitData:permitData};
   // Fire EPA in background
   if(s===0)
   if(incData){slotCache[s].income=incData.income;slotCache[s].inc=incData.income;if(incData.homeValue)slotCache[s].hmv=incData.homeValue;}
@@ -4343,39 +4332,131 @@ async function runSlot(s,addr,r){
 }
 
 
-// ═══════════════ API: CRIME (FBI CDE) ═══════════════
+// ═══════════════ API: CRIME (FBI CDE — local agency level) ═══════════════
 var FBI_KEY='iiHnOKfno2Mgkt5AynpvPpUQTEyxE77jo1RU8PIv';
-async function fetchCrime(stateFips){
+var agencyCache={};
+async function fetchAgencies(stAbbr){
+  if(agencyCache[stAbbr]) return agencyCache[stAbbr];
+  var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},15000);
+  var r=await fetch('https://api.usa.gov/crime/fbi/cde/agency/byStateAbbr/'+stAbbr+'?API_KEY='+FBI_KEY,{signal:ctrl.signal});
+  if(!r.ok) return null;
+  var d=await r.json();
+  // Flatten to array with lat/lon
+  var all=[];
+  for(var county in d){
+    if(!Array.isArray(d[county])) continue;
+    d[county].forEach(function(a){
+      if(a.latitude&&a.longitude&&a.ori) all.push(a);
+    });
+  }
+  agencyCache[stAbbr]=all;
+  return all;
+}
+
+async function fetchCrime(stateFips,lat,lon,radiusMi){
   try{
     var fipsMap={'01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT','10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL','18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD','25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE','32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND','39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD','47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV','55':'WI','56':'WY'};
     var stAbbr=fipsMap[stateFips];
     if(!stAbbr) return null;
-    var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},12000);
-    var [vResp,pResp]=await Promise.all([
-      fetch('https://api.usa.gov/crime/fbi/cde/summarized/state/'+stAbbr+'/violent-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal}),
-      fetch('https://api.usa.gov/crime/fbi/cde/summarized/state/'+stAbbr+'/property-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal})
-    ]);
-    if(!vResp.ok||!pResp.ok) return null;
-    var vData=await vResp.json(), pData=await pResp.json();
-    // Sum monthly rates for annual rate
-    var stViolent=0,natViolent=0,stProperty=0,natProperty=0,mCount=0;
-    var vRates=vData.offenses&&vData.offenses.rates||{};
-    var stKey=Object.keys(vRates).find(function(k){return k!=='United States Offenses';});
-    var natKey='United States Offenses';
-    if(stKey&&vRates[stKey]){
-      var vals=Object.values(vRates[stKey]);
-      vals.forEach(function(v){stViolent+=v;});
-      mCount=vals.length;
+    // Get agencies and find nearest within trade area
+    var agencies=await fetchAgencies(stAbbr);
+    if(!agencies||!agencies.length) return null;
+    var searchR=Math.max(radiusMi||5,5);
+    var nearby=[];
+    agencies.forEach(function(a){
+      var d=hav(lat,lon,a.latitude,a.longitude);
+      if(d<=searchR) nearby.push({ori:a.ori,name:a.agency_name,dist:d,county:a.counties||''});
+    });
+    nearby.sort(function(a,b){return a.dist-b.dist;});
+    var pick=nearby.slice(0,3); // up to 3 nearest
+    if(!pick.length) return null;
+    // Query crime for picked agencies in parallel
+    var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},15000);
+    var fetches=[];
+    pick.forEach(function(p){
+      fetches.push(fetch('https://api.usa.gov/crime/fbi/cde/summarized/agency/'+p.ori+'/violent-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}));
+      fetches.push(fetch('https://api.usa.gov/crime/fbi/cde/summarized/agency/'+p.ori+'/property-crime?from=01-2022&to=12-2022&API_KEY='+FBI_KEY,{signal:ctrl.signal}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}));
+    });
+    var results=await Promise.all(fetches);
+    // Aggregate local actuals and populations
+    var localViolentAct=0,localPropertyAct=0,localPop=0;
+    var stViolentRate=0,stPropertyRate=0;
+    var agencyNames=[];
+    for(var i=0;i<pick.length;i++){
+      var vd=results[i*2], pd=results[i*2+1];
+      if(vd&&vd.offenses){
+        // Find agency-specific key
+        var aRates=vd.offenses.actuals||{};
+        for(var k in aRates){
+          if(k.indexOf('Offenses')>-1&&k.indexOf('Massachusetts')===-1&&k.indexOf('United States')===-1){
+            var vals=Object.values(aRates[k]);
+            vals.forEach(function(v){localViolentAct+=v;});
+          }
+        }
+        // Get agency pop
+        if(vd.populations&&vd.populations.population){
+          for(var pk in vd.populations.population){
+            if(pk.indexOf('Massachusetts')===-1&&pk.indexOf('United States')===-1){
+              var pv=Object.values(vd.populations.population[pk]);
+              if(pv.length) localPop+=pv[0]; // pop is constant across months
+              break;
+            }
+          }
+        }
+        // Get state rate (same in all responses)
+        if(!stViolentRate&&vd.offenses.rates){
+          var stKey=Object.keys(vd.offenses.rates).find(function(k){return k.indexOf('Massachusetts')>-1&&k.indexOf('Clearances')===-1;});
+          if(!stKey) stKey=Object.keys(vd.offenses.rates).find(function(k){return k!=='United States Offenses'&&k.indexOf('Clearances')===-1&&k.indexOf('Offenses')>-1&&!vd.populations.population[k.replace(' Offenses','')];});
+          // Get state key dynamically
+          for(var sk in vd.offenses.rates){
+            if(sk.indexOf('Clearances')===-1&&sk.indexOf('United States')===-1){
+              var isAgency=false;
+              if(vd.populations&&vd.populations.population){
+                var popKey=sk.replace(' Offenses','');
+                if(vd.populations.population[popKey]&&Object.values(vd.populations.population[popKey])[0]<1000000) isAgency=true;
+              }
+              if(!isAgency){
+                stViolentRate=0;
+                Object.values(vd.offenses.rates[sk]).forEach(function(v){stViolentRate+=v;});
+                break;
+              }
+            }
+          }
+        }
+        agencyNames.push(pick[i].name.replace(' Police Department','').replace(' Sheriff Office',''));
+      }
+      if(pd&&pd.offenses){
+        var pActs=pd.offenses.actuals||{};
+        for(var k2 in pActs){
+          if(k2.indexOf('Offenses')>-1&&k2.indexOf('Massachusetts')===-1&&k2.indexOf('United States')===-1){
+            Object.values(pActs[k2]).forEach(function(v){localPropertyAct+=v;});
+          }
+        }
+        if(!stPropertyRate&&pd.offenses.rates){
+          for(var sk2 in pd.offenses.rates){
+            if(sk2.indexOf('Clearances')===-1&&sk2.indexOf('United States')===-1){
+              var isAg2=false;
+              if(pd.populations&&pd.populations.population){
+                var pk2=sk2.replace(' Offenses','');
+                if(pd.populations.population[pk2]&&Object.values(pd.populations.population[pk2])[0]<1000000) isAg2=true;
+              }
+              if(!isAg2){
+                Object.values(pd.offenses.rates[sk2]).forEach(function(v){stPropertyRate+=v;});
+                break;
+              }
+            }
+          }
+        }
+      }
     }
-    if(vRates[natKey]){Object.values(vRates[natKey]).forEach(function(v){natViolent+=v;});}
-    var pRates=pData.offenses&&pData.offenses.rates||{};
-    var stKeyP=Object.keys(pRates).find(function(k){return k!=='United States Offenses';});
-    if(stKeyP&&pRates[stKeyP]){Object.values(pRates[stKeyP]).forEach(function(v){stProperty+=v;});}
-    if(pRates[natKey]){Object.values(pRates[natKey]).forEach(function(v){natProperty+=v;});}
+    if(!localPop) return null;
+    var localViolentRate=Math.round(localViolentAct/localPop*100000);
+    var localPropertyRate=Math.round(localPropertyAct/localPop*100000);
     return{
-      violent:Math.round(stViolent),property:Math.round(stProperty),
-      natViolent:Math.round(natViolent),natProperty:Math.round(natProperty),
-      stateName:stAbbr,year:2022
+      violent:localViolentRate,property:localPropertyRate,
+      stViolent:Math.round(stViolentRate),stProperty:Math.round(stPropertyRate),
+      stateName:stAbbr,year:2022,
+      agencies:agencyNames,localPop:localPop
     };
   }catch(e){return null;}
 }
@@ -4415,60 +4496,31 @@ async function fetchPermits(bgs){
   }catch(e){return null;}
 }
 
-// ═══════════════ API: TRAFFIC (Overpass road classification) ═══════════════
-async function fetchTraffic(lat,lon,radiusMi){
-  try{
-    var m=Math.round(radiusMi*1609.34);
-    if(m>25000) m=25000; // cap query radius
-    var q='[out:json][timeout:20];way["highway"~"^(motorway|trunk|primary|secondary)$"](around:'+m+','+lat+','+lon+');out tags;';
-    var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},20000);
-    var r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});
-    if(!r.ok) return null;
-    var d=await r.json();
-    if(!d.elements||!d.elements.length) return null;
-    // Classify and estimate AADT
-    var aadtMap={motorway:55000,trunk:22000,primary:12000,secondary:5500};
-    var counts={motorway:0,trunk:0,primary:0,secondary:0};
-    var totalAADT=0;
-    var roadNames={};
-    d.elements.forEach(function(w){
-      var t=w.tags||{};
-      var cls=t.highway;
-      if(counts[cls]!==undefined){
-        counts[cls]++;
-        totalAADT+=aadtMap[cls]||0;
-        var name=t.ref||t.name||'';
-        if(name&&!roadNames[name]) roadNames[name]={cls:cls,aadt:aadtMap[cls]};
-      }
-    });
-    // Top roads by estimated AADT
-    var topRoads=Object.keys(roadNames).map(function(n){return{name:n,cls:roadNames[n].cls,aadt:roadNames[n].aadt};})
-      .sort(function(a,b){return b.aadt-a.aadt;}).slice(0,6);
-    return{counts:counts,totalAADT:totalAADT,segments:d.elements.length,topRoads:topRoads};
-  }catch(e){return null;}
-}
-
 // ═══════════════ RENDER: CRIME ═══════════════
 function renderCrime(s,data){
   var hn=el('rcrime-'+s),sub=el('crime-sub-'+s),bars=el('crime-bars-'+s);
   if(!hn) return;
-  if(!data){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='Crime data unavailable';return;}
+  if(!data){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='No local agency data found';return;}
   var total=data.violent+data.property;
   hn.textContent=fmt(total)+' / 100K';hn.classList.remove('pending');
-  if(sub) sub.textContent=data.stateName+' vs national · '+data.year+' annual rate per 100K';
+  var agLabel=data.agencies?data.agencies.join(', '):'Local';
+  if(sub) sub.textContent=agLabel+' · '+data.year;
   if(bars){
-    var natV=data.natViolent||380,natP=data.natProperty||2000;
-    var vRatio=data.violent/(natV||1),pRatio=data.property/(natP||1);
-    var vColor=vRatio<=0.8?'var(--gn)':vRatio<=1.2?'var(--yw)':'var(--rd)';
-    var pColor=pRatio<=0.8?'var(--gn)':pRatio<=1.2?'var(--yw)':'var(--rd)';
+    var stV=data.stViolent||1,stP=data.stProperty||1;
+    var vRatio=data.violent/(stV||1),pRatio=data.property/(stP||1);
+    var vColor=vRatio<=0.7?'var(--gn)':vRatio<=1.1?'var(--yw)':'var(--rd)';
+    var pColor=pRatio<=0.7?'var(--gn)':pRatio<=1.1?'var(--yw)':'var(--rd)';
+    var vMult=vRatio>=1?vRatio.toFixed(1)+'×':((vRatio*100).toFixed(0)+'%');
+    var pMult=pRatio>=1?pRatio.toFixed(1)+'×':((pRatio*100).toFixed(0)+'%');
+    var vNote=vRatio<1?'below':'above',pNote=pRatio<1?'below':'above';
     bars.innerHTML=
       '<div class="cb-row"><div class="cb-label">Violent</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+vColor+'"></div></div><div class="cb-val">'+fmt(data.violent)+'</div></div>'+
       '<div class="cb-row"><div class="cb-label">Property</div><div class="cb-track"><div class="cb-fill" style="width:0%;background:'+pColor+'"></div></div><div class="cb-val">'+fmt(data.property)+'</div></div>'+
-      '<div style="font-size:10px;color:var(--m1);margin-top:3px">'+data.stateName+' vs US national: '+fmt(natV)+' violent · '+fmt(natP)+' property / 100K</div>';
+      '<div style="font-size:10px;color:var(--m1);margin-top:3px"><span style="color:'+vColor+';font-weight:600">'+vMult+'</span> violent, <span style="color:'+pColor+';font-weight:600">'+pMult+'</span> property vs '+data.stateName+' state avg ('+fmt(stV)+' / '+fmt(stP)+')</div>';
     setTimeout(function(){
       var fills=bars.querySelectorAll('.cb-fill');
-      if(fills[0]) fills[0].style.width=Math.min(vRatio*40,96)+'%';
-      if(fills[1]) fills[1].style.width=Math.min(pRatio*40,96)+'%';
+      if(fills[0]) fills[0].style.width=Math.min(vRatio*45,96)+'%';
+      if(fills[1]) fills[1].style.width=Math.min(pRatio*45,96)+'%';
     },200);
   }
 }
@@ -4501,34 +4553,6 @@ function renderPermits(s,data){
     },200);
   }
 }
-
-// ═══════════════ RENDER: TRAFFIC ═══════════════
-function renderTraffic(s,data){
-  var hn=el('rtraffic-'+s),sub=el('traffic-sub-'+s),detail=el('traffic-detail-'+s);
-  if(!hn) return;
-  if(!data){hn.textContent='N/A';hn.classList.remove('pending');if(sub)sub.textContent='No major roads found';return;}
-  hn.textContent=fmt(data.segments)+' segments';hn.classList.remove('pending');
-  var parts=[];
-  if(data.counts.motorway) parts.push(data.counts.motorway+' motorway');
-  if(data.counts.trunk) parts.push(data.counts.trunk+' trunk');
-  if(data.counts.primary) parts.push(data.counts.primary+' primary');
-  if(data.counts.secondary) parts.push(data.counts.secondary+' secondary');
-  if(sub) sub.textContent=parts.join(' · ');
-  if(detail&&data.topRoads&&data.topRoads.length){
-    var maxA=data.topRoads[0].aadt||1;
-    var clsColors={motorway:'var(--ac)',trunk:'var(--pu)',primary:'var(--gn)',secondary:'var(--yw)'};
-    detail.innerHTML=data.topRoads.map(function(rd){
-      var col=clsColors[rd.cls]||'var(--m1)';
-      return '<div class="tb-row"><div class="tb-label">'+rd.name+'</div><div class="tb-track"><div class="tb-fill" style="width:0%;background:'+col+'"></div></div><div class="tb-val">~'+fmt(rd.aadt)+'</div></div>';
-    }).join('')+'<div style="font-size:10px;color:var(--m1);margin-top:3px">Est. AADT by road classification</div>';
-    setTimeout(function(){
-      detail.querySelectorAll('.tb-fill').forEach(function(f,i){
-        if(data.topRoads[i]) f.style.width=Math.min(data.topRoads[i].aadt/maxA*90,96)+'%';
-      });
-    },200);
-  }
-}
-
 
 // ═══════════════ MAIN RUN ═══════════════
 async function run(){
