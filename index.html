@@ -3068,7 +3068,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
-/ Sync tab UI to what actually ran
+  // Sync tab UI to what actually ran
     var isDriveResult=usingDrive&&driveCache[0];
     var mtcR=el('mtab-circle'),mtdR=el('mtab-drive');
     var coR=el('circle-options'),droR=el('drive-options');
@@ -3150,6 +3150,7 @@ async function runDriveFirst(s,addr,min){
   await runDriveAnalysis(s,lat,lon,min);
 }
 
+
 </script>
 <div id="summary-modal" onclick="if(event.target===this)closeSummary()">
   <div id="summary-box">
@@ -3182,4 +3183,4 @@ async function runDriveFirst(s,addr,min){
   </div>
 </div>
 </body>
-</html>
+</html<div class="hcard" id="hcard-zoning-1" style="display:none"><div class="hl">ZONING &amp; LAND USE</div><div id="zoning-1"></div></div><div class="hcard" id="hcard-crime-1" style="display:none"><div class="hl">CRIME INDEX</div><div id="crime-1"><div class="crime-row"><span class="crime-label">Violent /100K</span><span class="crime-val" id="cv-1">…</span><div class="crime-bw"><div class="crime-bar" id="cvb-1"></div></div><span class="crime-note" id="cvn-1"></span></div><div class="crime-row"><span class="crime-label">Property /100K</span><span class="crime-val" id="cp-1">…</span><div class="crime-bw"><div class="crime-bar" id="cpb-1"></div></div><span class="crime-note" id="cpn-1"></span></div><div class="crime-src" id="csrc-1"></div></div></div><div class="hcard" id="hcard-zoning-0" style="display:none"><div class="hl">ZONING &amp; LAND USE</div><div id="zoning-0"></div></div><div class="hcard" id="hcard-crime-0" style="display:none"><div class="hl">CRIME INDEX</div><div id="crime-0"><div class="crime-row"><span class="crime-label">Violent /100K</span><span class="crime-val" id="cv-0">…</span><div class="crime-bw"><div class="crime-bar" id="cvb-0"></div></div><span class="crime-note" id="cvn-0"></span></div><div class="crime-row"><span class="crime-label">Property /100K</span><span class="crime-val" id="cp-0">…</span><div class="crime-bw"><div class="crime-bar" id="cpb-0"></div></div><span class="crime-note" id="cpn-0"></span></div><div class="crime-src" id="csrc-0"></div></div></div>>
