@@ -3387,11 +3387,32 @@ function clearExits(){if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(
 var MA_PCL='https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/L3_Parcels_FeatureService_4326/MapServer/1/query';
 async function fetchZoning(lat,lon,r){var g=encodeURIComponent(JSON.stringify({x:lon,y:lat})),all=[],off=0,pg=0;while(pg<4){try{var rr=await fetch(MA_PCL+'?geometry='+g+'&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&distance='+r+'&units=esriSRUnit_StatuteMile&inSR=4326&outFields=USE_CODE,LOT_SIZE,BLD_AREA&returnGeometry=false&resultRecordCount=2000&resultOffset='+off+'&f=json');if(!rr.ok)break;var d=await rr.json(),ff=d.features||[];all=all.concat(ff.map(function(f){return f.attributes;}));if(!d.exceededTransferLimit||!ff.length)break;off+=2000;pg++;}catch(e){break;}}return all.length?all:null;}
 async function fetchZoningPoly(rings){var g=encodeURIComponent(JSON.stringify({rings:[rings],spatialReference:{wkid:4326}})),all=[],off=0,pg=0;while(pg<4){try{var rr=await fetch(MA_PCL+'?geometry='+g+'&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&outFields=USE_CODE,LOT_SIZE,BLD_AREA&returnGeometry=false&resultRecordCount=2000&resultOffset='+off+'&f=json');if(!rr.ok)break;var d=await rr.json(),ff=d.features||[];all=all.concat(ff.map(function(f){return f.attributes;}));if(!d.exceededTransferLimit||!ff.length)break;off+=2000;pg++;}catch(e){break;}}return all.length?all:null;}
+
+// ── SIDEBAR TABS ──
+var activeTab='demo';
+function setTab(name){
+  activeTab=name;
+  document.querySelectorAll('.stab').forEach(function(b){
+    b.classList.toggle('on',b.dataset.tab===name);
+  });
+  document.querySelectorAll('.hcard[data-tab]').forEach(function(c){
+    var ct=c.dataset.tab;
+    if(c.id&&c.id.indexOf('hcard-zoning')===0){
+      c.style.display=(ct===name&&c.getAttribute('data-zone-visible')==='1')?'block':'none';
+    } else {
+      c.style.display=ct===name?'':'none';
+    }
+  });
+  var ip=el('intel-tab-panel');if(ip)ip.style.display=name==='intel'?'flex':'none';
+  var rw=el('res-wrap');if(rw)rw.style.display=name==='intel'?'none':'';
+}
+
 function renderZoning(s,parcels){
   var card=el('hcard-zoning-'+s),cont=el('zoning-'+s);
   if(!card)return;
   if(!parcels||!parcels.length){card.style.display='none';card.setAttribute('data-zone-visible','0');return;}
   card.style.display='block';
+  card.setAttribute('data-zone-visible','1');
   function cls(code){
     var c=parseInt(code)||0;
     if(c>=100&&c<200) return 'R';
@@ -3427,7 +3448,6 @@ function renderZoning(s,parcels){
   cont.innerHTML='<table class="zone-table"><thead><tr><th></th><th>Parcels</th><th>Lot SF</th><th>Bldg SF</th><th>Undev SF</th></tr></thead><tbody>'+rows+'</tbody>'
     +'<tfoot><tr><td style="font-size:10px">Total</td><td class="zone-mono">'+tp.toLocaleString()+'</td><td class="zone-mono">'+sf(tl)+'</td><td class="zone-mono">'+sf(tb)+'</td><td class="zone-mono zone-undev">'+sf(tvs)+'</td></tr></tfoot></table>'
     +'<div class="zone-note">MassGIS L3 assessors · '+parcels.length.toLocaleString()+' parcels · Undev = lot w/ no bldg SF</div>';
-  card.setAttribute('data-zone-visible','1');
 }
 function renderPop(s,pop,hu,area){
   // Animate main population number
@@ -4762,8 +4782,6 @@ async function runDriveFirst(s,addr,min){
     },3000);
   }
   // Run drive time analysis (mode state managed by run())
-  await runDriveAnalysis(s,lat,lon,min);
-}
 
 
 
