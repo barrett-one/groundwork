@@ -3382,14 +3382,16 @@ function renderZoning(s,parcels){
     if(c>=100&&c<200) return 'R';
     if((c>=300&&c<320)||(c>=330&&c<340)||(c>=360&&c<370)) return 'CR';
     if(c>=320&&c<330) return 'CA';
-    if((c>=340&&c<360)||(c>=370&&c<400)) return 'CO';
+    if(c>=340&&c<350||(c>=370&&c<400)) return 'CO';
+    if(c>=350&&c<360) return 'CH';
     if(c>=400&&c<500) return 'I';
     return 'X';
   }
   var G={
     I: {l:'Industrial',    c:'#f59e42',p:0,ls:0,bs:0,vs:0},
     CR:{l:'Retail / Food', c:'#4b7cf3',p:0,ls:0,bs:0,vs:0},
-    CO:{l:'Office / Hotel',c:'#a78bfa',p:0,ls:0,bs:0,vs:0},
+    CO:{l:'Office',        c:'#a78bfa',p:0,ls:0,bs:0,vs:0},
+    CH:{l:'Hotel / Lodging',c:'#e879f9',p:0,ls:0,bs:0,vs:0},
     CA:{l:'Auto / Service',c:'#38bdf8',p:0,ls:0,bs:0,vs:0},
     R: {l:'Residential',   c:'#3ecf8e',p:0,ls:0,bs:0,vs:0},
     X: {l:'Other / Exempt',c:'#6a768f',p:0,ls:0,bs:0,vs:0}
@@ -3400,7 +3402,7 @@ function renderZoning(s,parcels){
   });
   function sf(n){return n>=1e6?(n/1e6).toFixed(1)+'M SF':n>=1000?Math.round(n/1000)+'K SF':n+' SF';}
   var rows='',tp=0,tl=0,tb=0,tvs=0;
-  ['I','CR','CO','CA','R','X'].forEach(function(k){
+  ['I','CR','CO','CH','CA','R','X'].forEach(function(k){
     var g=G[k];if(!g.p)return;
     tp+=g.p;tl+=g.ls;tb+=g.bs;tvs+=g.vs;
     rows+='<tr><td><div class="zone-row-label"><span class="zone-dot" style="background:'+g.c+'"></span>'+g.l+'</div></td>'
@@ -4746,6 +4748,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
