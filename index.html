@@ -1059,6 +1059,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .zone-vacant{font-size:10px;color:var(--yw)}
 .zone-note{font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)}
 .zone-undev{color:var(--yw)}
+
+/* ── SIDEBAR TABS ── */
+#sidebar-tabs{display:flex;gap:0;padding:0 12px;border-bottom:1px solid var(--b1);flex-shrink:0}
+.stab{flex:1;padding:9px 4px;font-size:11px;font-weight:600;letter-spacing:.3px;
+  color:var(--m1);background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:color .15s,border-color .15s}
+.stab:hover{color:var(--m2)}
+.stab.on{color:var(--ac);border-bottom-color:var(--ac)}
+#res-wrap{flex:1;overflow-y:auto;min-height:0;padding:8px 12px}
+#intel-tab-panel{padding:8px 12px}
+
 </style>
 </head>
 <body>
@@ -1147,7 +1159,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   <div id="drive-ctl"><div id="mode-toggle"><button class="mode-btn on" id="mb-circle" onclick="setAnalysisMode('circle')">⬤ Circle</button><button class="mode-btn" id="mb-drive" onclick="setAnalysisMode('drive')">◷ Drive Time</button></div><span class="drive-lbl" style="margin-left:4px">Drive Time</span><button class="drb" data-min="10" onclick="setDriveTime(10)">10 min</button><button class="drb" data-min="15" onclick="setDriveTime(15)">15 min</button><button class="drb" data-min="20" onclick="setDriveTime(20)">20 min</button><button class="drb" data-min="30" onclick="setDriveTime(30)">30 min</button><button class="drb" onclick="clearDriveTime()" style="margin-left:auto;font-size:11px">✕ Clear</button><span id="drive-status"></span></div>
   <div id="err-box"></div>
 
-  <div id="res-wrap">
+  <div id="sidebar-tabs">
+  <button class="stab on" data-tab="demo" onclick="setTab('demo')">Demographics</button>
+  <button class="stab" data-tab="re" onclick="setTab('re')">Real Estate</button>
+  <button class="stab" data-tab="intel" onclick="setTab('intel')">Intel</button>
+</div>
+<div id="res-wrap">
    <!-- Slot A -->
    <div class="rcol" id="col-0">
     <div id="print-header">
@@ -1155,20 +1172,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="print-ts" id="print-ts"></div>
     </div>
     <div class="ra-label" id="ra-0"></div>
-    <div class="hcard pop"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-0">—</div><div class="hs" id="rs-0"></div>
+    <div class="hcard pop" data-tab="demo" data-tab="demo"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-0">—</div><div class="hs" id="rs-0"></div>
      <div class="cbar-wrap" id="cbar-0" style="display:none">
       <div class="cbar-row"><div class="cbar-label"><span id="nat-lbl-0"></span><span style="color:var(--m1)" id="nat-ref-0"></span></div><div class="cbar-track"><div class="cbar-fill" id="nat-bar-0"></div></div></div>
       <div class="cbar-row" id="st-row-0" style="display:none"><div class="cbar-label"><span id="st-lbl-0"></span><span style="color:var(--m1)" id="st-ref-0"></span></div><div class="cbar-track"><div class="cbar-fill" id="st-bar-0"></div></div></div>
       <div class="cbar-note" id="cbar-note-0"></div>
      </div>
     </div>
-    <div class="hcard grow"><div class="hl" data-tip="2020 vs 2010 Census population for the same block groups. Some boundaries may have changed between Census years.">Population Growth</div>
+    <div class="hcard grow" data-tab="demo" data-tab="demo"><div class="hl" data-tip="2020 vs 2010 Census population for the same block groups. Some boundaries may have changed between Census years.">Population Growth</div>
      <div class="grow-row"><span class="grow-year">2010</span><span class="grow-val" id="pop10-0">…</span></div>
      <div class="grow-row"><span class="grow-year">2020</span><span class="grow-val" id="pop20-0">…</span></div>
      <div class="grow-delta" id="grow-delta-0"></div>
     </div>
-    <div class="hcard inc"><div class="hl" data-tip="Population-weighted median household income across all block groups in the radius. Source: ACS 2022 5-year estimates.">Median Household Income</div><div class="hn pending" id="ri-0">…</div><div class="ibar-wrap"><div class="ibar" id="ibar-0" style="width:0%"></div></div><div class="hs" id="ictx-0"></div></div>
-    <div class="hcard labor"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
+    <div class="hcard inc" data-tab="demo" data-tab="demo"><div class="hl" data-tip="Population-weighted median household income across all block groups in the radius. Source: ACS 2022 5-year estimates.">Median Household Income</div><div class="hn pending" id="ri-0">…</div><div class="ibar-wrap"><div class="ibar" id="ibar-0" style="width:0%"></div></div><div class="hs" id="ictx-0"></div></div>
+    <div class="hcard labor" data-tab="demo" data-tab="demo"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
      <div class="labor-grid" id="labor-0">
       <div class="labor-row">
        <div class="labor-val-col">
@@ -1230,7 +1247,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="sc"><div class="sl" title="Census block groups whose centroid falls within the radius. Each has 600–3,000 residents.">Block Groups</div><div class="sv" id="rbg-0">—</div><div class="su">census units</div></div>
      <div class="sc"><div class="sl" title="Total area of the analysis circle (π × radius²) in square miles">Area</div><div class="sv" id="rarea-0">—</div><div class="su">sq miles</div></div>
     </div>
-    <div class="hcard biz sec"><div class="hl" data-tip="Employer businesses by size tier. Filter by employee count to see the competitive tenant landscape. State comparison adjusts for radius or drive-time area. Source: Census ZIP Business Patterns 2018.">Employer Businesses</div><div class="hn pending" id="rbiz-0">…</div><div class="hs" id="biz-sub-0"></div>
+    <div class="hcard biz sec" data-tab="re"><div class="hl" data-tip="Employer businesses by size tier. Filter by employee count to see the competitive tenant landscape. State comparison adjusts for radius or drive-time area. Source: Census ZIP Business Patterns 2018.">Employer Businesses</div><div class="hn pending" id="rbiz-0">…</div><div class="hs" id="biz-sub-0"></div>
      <div class="biz-size-filters" id="bsf-0">
        <button class="bsf on" data-size="all" onclick="setBizFilter(0,'all')">All (1+)</button>
        <button class="bsf" data-size="10" onclick="setBizFilter(0,'10')">10+</button>
@@ -1242,15 +1259,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <button type="button" id="breakdown-toggle-0" onclick="toggleBreakdown(0)"><span class="arr">▸</span> By sector</button>
      <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
     </div>
-    <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
-    <div class="hcard zone sec" id="hcard-zoning-0" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-0"></div></div><div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+    <div class="hcard hwy sec" data-tab="re"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
+    <div class="hcard zone sec" data-tab="re" id="hcard-zoning-0" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-0"></div></div><div class="hcard crime sec" data-tab="demo" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-0-note"></div></div></div>
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-0-note"></div></div></div>
      </div>
      <div class="hs" id="crime-sub-0"></div>
     </div>
-    <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
+    <div class="hcard permit sec" data-tab="re"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
      <div class="permit-detail" id="permit-detail-0"></div>
     </div>
     </div>
@@ -1259,20 +1276,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
    <!-- Slot B -->
    <div class="rcol b-col" id="col-1">
     <div class="ra-label" id="ra-1"></div>
-    <div class="hcard pop" style="--slot-accent:var(--slot-b)"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-1">—</div><div class="hs" id="rs-1"></div>
+    <div class="hcard pop" data-tab="demo" style="--slot-accent:var(--slot-b)"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-1">—</div><div class="hs" id="rs-1"></div>
      <div class="cbar-wrap" id="cbar-1" style="display:none">
       <div class="cbar-row"><div class="cbar-label"><span id="nat-lbl-1"></span><span style="color:var(--m1)" id="nat-ref-1"></span></div><div class="cbar-track"><div class="cbar-fill" id="nat-bar-1"></div></div></div>
       <div class="cbar-row" id="st-row-1" style="display:none"><div class="cbar-label"><span id="st-lbl-1"></span><span style="color:var(--m1)" id="st-ref-1"></span></div><div class="cbar-track"><div class="cbar-fill" id="st-bar-1"></div></div></div>
       <div class="cbar-note" id="cbar-note-1"></div>
      </div>
     </div>
-    <div class="hcard grow"><div class="hl" data-tip="2020 vs 2010 Census population for the same block groups. Some boundaries may have changed between Census years.">Population Growth</div>
+    <div class="hcard grow" data-tab="demo" data-tab="demo"><div class="hl" data-tip="2020 vs 2010 Census population for the same block groups. Some boundaries may have changed between Census years.">Population Growth</div>
      <div class="grow-row"><span class="grow-year">2010</span><span class="grow-val" id="pop10-1">…</span></div>
      <div class="grow-row"><span class="grow-year">2020</span><span class="grow-val" id="pop20-1">…</span></div>
      <div class="grow-delta" id="grow-delta-1"></div>
     </div>
-    <div class="hcard inc"><div class="hl" data-tip="Population-weighted median household income across all block groups in the radius. Source: ACS 2022 5-year estimates.">Median Household Income</div><div class="hn pending" id="ri-1">…</div><div class="ibar-wrap"><div class="ibar" id="ibar-1" style="width:0%"></div></div><div class="hs" id="ictx-1"></div></div>
-    <div class="hcard labor"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
+    <div class="hcard inc" data-tab="demo" data-tab="demo"><div class="hl" data-tip="Population-weighted median household income across all block groups in the radius. Source: ACS 2022 5-year estimates.">Median Household Income</div><div class="hn pending" id="ri-1">…</div><div class="ibar-wrap"><div class="ibar" id="ibar-1" style="width:0%"></div></div><div class="hs" id="ictx-1"></div></div>
+    <div class="hcard labor" data-tab="demo" data-tab="demo"><div class="hl" data-tip="Employment and education metrics aggregated across block groups. Source: ACS 2022 5-year estimates.">Labor Pool</div>
      <div class="labor-grid">
       <div class="labor-row">
        <div class="labor-val-col">
@@ -1334,7 +1351,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="sc"><div class="sl" title="Census block groups whose centroid falls within the radius. Each has 600–3,000 residents.">Block Groups</div><div class="sv" id="rbg-1">—</div><div class="su">census units</div></div>
      <div class="sc"><div class="sl" title="Total area of the analysis circle (π × radius²) in square miles">Area</div><div class="sv" id="rarea-1">—</div><div class="su">sq miles</div></div>
     </div>
-    <div class="hcard biz sec"><div class="hl" data-tip="Employer businesses by size tier. Filter by employee count to see the competitive tenant landscape. State comparison adjusts for radius or drive-time area. Source: Census ZIP Business Patterns 2018.">Employer Businesses</div><div class="hn pending" id="rbiz-1">…</div><div class="hs" id="biz-sub-1"></div>
+    <div class="hcard biz sec" data-tab="re"><div class="hl" data-tip="Employer businesses by size tier. Filter by employee count to see the competitive tenant landscape. State comparison adjusts for radius or drive-time area. Source: Census ZIP Business Patterns 2018.">Employer Businesses</div><div class="hn pending" id="rbiz-1">…</div><div class="hs" id="biz-sub-1"></div>
      <div class="biz-size-filters" id="bsf-1">
        <button class="bsf on" data-size="all" onclick="setBizFilter(1,'all')">All (1+)</button>
        <button class="bsf" data-size="10" onclick="setBizFilter(1,'10')">10+</button>
@@ -1346,21 +1363,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <button type="button" id="breakdown-toggle-1" onclick="toggleBreakdown(1)"><span class="arr">▸</span> By sector</button>
      <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
     </div>
-    <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
-    <div class="hcard zone sec" id="hcard-zoning-1" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-1"></div></div><div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+    <div class="hcard hwy sec" data-tab="re"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
+    <div class="hcard zone sec" data-tab="re" id="hcard-zoning-1" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-1"></div></div><div class="hcard crime sec" data-tab="demo" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-1-note"></div></div></div>
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-1-note"></div></div></div>
      </div>
      <div class="hs" id="crime-sub-1"></div>
     </div>
-    <div class="hcard permit sec"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
+    <div class="hcard permit sec" data-tab="re"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
      <div class="permit-detail" id="permit-detail-1"></div>
     </div>
     </div>
    </div>
   </div><!-- /res-wrap -->
-  <div id="action-panel">
+  <div id="intel-tab-panel" style="display:none;flex-direction:column;gap:8px;padding:0 12px">
+  <div class="hcard" style="background:var(--card)">
+    <div class="hl">BROKER INTEL</div>
+    <div id="broker-intel-inline">
+      <div id="broker-btns-inline" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <button class="broker-btn" onclick="brokerIntel('industrial')">Industrial</button>
+        <button class="broker-btn" onclick="brokerIntel('office')">Office</button>
+        <button class="broker-btn" onclick="brokerIntel('retail')">Retail</button>
+      </div>
+    </div>
+  </div>
+  <button id="gen-summary-btn-inline" onclick="generateSummary()" style="width:100%;padding:10px 16px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:14px">✦</span>Generate Market Summary</button>
+</div>
+<div id="action-panel">
     <div id="broker-intel">
       <div id="broker-lbl">Broker Intel</div>
       <div id="broker-btns">
@@ -1393,23 +1423,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
    <div id="port-filters"><button class="pf-btn on" data-filter="all" onclick="setPortFilter(this,'all')">All</button><button class="pf-btn" data-filter="owned" onclick="setPortFilter(this,'owned')">Owned</button><button class="pf-btn" data-filter="target" onclick="setPortFilter(this,'target')">Target</button><button class="pf-btn" data-filter="loi" onclick="setPortFilter(this,'loi')">Under LOI</button></div>
    <div id="port-controls">
      <div id="port-radius-row"><span style="font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);flex-shrink:0">Radius</span><div style="display:flex;gap:4px;flex:1"><button class="rb" data-r="1" onclick="setPortRadius(this,1)">1 mi</button><button class="rb" data-r="3" onclick="setPortRadius(this,3)">3 mi</button><button class="rb on" data-r="5" onclick="setPortRadius(this,5)">5 mi</button><button class="rb" data-r="10" onclick="setPortRadius(this,10)">10 mi</button><button class="rb" data-r="15" onclick="setPortRadius(this,15)">15 mi</button></div></div>
-     <div id="port-drive-row"><span style="font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);flex-shrink:0">Drive Time</span><div style="display:flex;gap:4px;flex:1"><button class="drb" data-min="10" onclick="setPortDrive(this,10)">10 min</button><button class="drb" data-min="15" onclick="setPortDrive(this,15)">15 min</button><button class="drb" data-min="20" onclick="setPortDrive(this,20)">20 min</button><button class="drb" data-min="30" onclick="setPortDrive(this,30)">30 min</button><button class="drb" onclick="clearPortDrive()" style="margin-left:auto;font-size:10px;color:var(--m1)">✕</button></div></div>
-   </div>
-   <div id="port-list"><div id="port-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><div>No properties yet</div><div style="font-size:11px;color:var(--m1)">Add properties to track your portfolio</div></div></div>
-   <div id="port-form">
-     <div><div class="pf-label">Property Name</div><input class="pf-input" id="pf-name" placeholder="e.g. 47 October Hill Rd"/></div>
-     <div><div class="pf-label">Address</div><input class="pf-input" id="pf-addr" placeholder="Full address"/></div>
-     <div class="pf-row">
-       <div style="flex:1"><div class="pf-label">Asset Type</div><select class="pf-select" id="pf-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="mixed">Mixed Use</option></select></div>
-       <div style="flex:1"><div class="pf-label">Status</div><select class="pf-select" id="pf-status"><option value="target">Acquisition Target</option><option value="owned">Owned</option><option value="loi">Under LOI</option><option value="sold">Sold</option></select></div>
-     </div>
-     <div><div class="pf-label">Notes (optional)</div><input class="pf-input" id="pf-notes" placeholder="SF, price, cap rate, thesis…"/></div>
-     <div id="port-form-btns"><button id="port-form-save" onclick="savePortProp()">Save Property</button><button id="port-form-cancel" onclick="hidePortForm()">Cancel</button></div>
-   </div>
-  </div>
-  <!-- END PORTFOLIO -->
-
-</div><!-- /side -->
+     <div id="por
 <div id="map-hint">Drag to explore · type address to analyze</div>
 <div id="map"></div>
 <div id="toast">🔗 Link copied to clipboard</div>
@@ -2789,6 +2803,7 @@ document.addEventListener('DOMContentLoaded',function(){
   })();
   renderSaves();
   updatePortCount();
+  setTab('demo');
 });
 window.addEventListener('resize',fixMapSize);
 
@@ -4748,6 +4763,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
