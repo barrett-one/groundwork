@@ -1243,7 +1243,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
-    <div <div class="hcard zone sec" id="hcard-zoning-0" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-0"></div></div>class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+    <div class="hcard zone sec" id="hcard-zoning-0" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-0"></div></div><div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-0-note"></div></div></div>
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-0-note"></div></div></div>
@@ -1347,7 +1347,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
     </div>
     <div class="hcard hwy sec"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
-    <div <div class="hcard zone sec" id="hcard-zoning-1" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-1"></div></div>class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+    <div class="hcard zone sec" id="hcard-zoning-1" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-1"></div></div><div class="hcard crime sec"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-1-note"></div></div></div>
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-1-note"></div></div></div>
@@ -4748,6 +4748,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
