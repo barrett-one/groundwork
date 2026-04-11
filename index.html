@@ -1412,7 +1412,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 </div><!-- /side -->
 <div id="map-hint">Drag to explore · type address to analyze</div>
 <div id="map"></div>
-<div id="toast">🔗 Link copied
+<div id="toast">🔗 Link copied to clipboard</div>
+<script>
 // ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
 var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
@@ -3371,8 +3372,45 @@ function clearExits(){if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(
 var MA_PCL='https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/L3_Parcels_FeatureService_4326/MapServer/1/query';
 async function fetchZoning(lat,lon,r){var g=encodeURIComponent(JSON.stringify({x:lon,y:lat})),all=[],off=0,pg=0;while(pg<4){try{var rr=await fetch(MA_PCL+'?geometry='+g+'&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&distance='+r+'&units=esriSRUnit_StatuteMile&inSR=4326&outFields=USE_CODE,LOT_SIZE,BLD_AREA&returnGeometry=false&resultRecordCount=2000&resultOffset='+off+'&f=json');if(!rr.ok)break;var d=await rr.json(),ff=d.features||[];all=all.concat(ff.map(function(f){return f.attributes;}));if(!d.exceededTransferLimit||!ff.length)break;off+=2000;pg++;}catch(e){break;}}return all.length?all:null;}
 async function fetchZoningPoly(rings){var g=encodeURIComponent(JSON.stringify({rings:[rings],spatialReference:{wkid:4326}})),all=[],off=0,pg=0;while(pg<4){try{var rr=await fetch(MA_PCL+'?geometry='+g+'&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&outFields=USE_CODE,LOT_SIZE,BLD_AREA&returnGeometry=false&resultRecordCount=2000&resultOffset='+off+'&f=json');if(!rr.ok)break;var d=await rr.json(),ff=d.features||[];all=all.concat(ff.map(function(f){return f.attributes;}));if(!d.exceededTransferLimit||!ff.length)break;off+=2000;pg++;}catch(e){break;}}return all.length?all:null;}
-function renderZoning(s,parcels){var card=el('hcard-zoning-'+s),cont=el('zoning-'+s);if(!card)return;if(!parcels||!parcels.length){card.style.display='none';return;}card.style.display='block';var G={I:{l:'Industrial',c:'#f59e42',p:0,ls:0,bs:0,v:0,vs:0},C:{l:'Commercial',c:'#4b7cf3',p:0,ls:0,bs:0,v:0,vs:0},R:{l:'Residential',c:'#3ecf8e',p:0,ls:0,bs:0,v:0,vs:0},O:{l:'Other',c:'#6a768f',p:0,ls:0,bs:0,v:0,vs:0}};parcels.forEach(function(p){var code=String(p.USE_CODE||'0'),f=code.charAt(0),lot=Math.round((parseFloat(p.LOT_SIZE)||0)*43560),bld=parseInt(p.BLD_AREA)||0,g=f==='4'?G.I:f==='3'?G.C:f==='1'?G.R:G.O;g.p++;g.ls+=lot;g.bs+=bld;if(lot>0&&bld===0){g.v++;g.vs+=lot;}});function sf(n){return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?Math.round(n/1000)+'K':String(n);}var rows='',tp=0,tl=0,tb=0,tv=0,tvs=0;['I','C','R','O'].forEach(function(k){var g=G[k];if(!g.p)return;tp+=g.p;tl+=g.ls;tb+=g.bs;tv+=g.v;tvs+=g.vs;rows+='<tr><td><div class="zone-row-label"><span class="zone-dot" style="background:'+g.c+'"></span>'+g.l+'</div></td><td class="zone-mono">'+g.p.toLocaleString()+'</td><td class="zone-mono">'+sf(g.ls)+' SF</td><td class="zone-mono">'+sf(g.bs)+' SF</td><td class="zone-mono zone-undev">'+(g.vs?sf(g.vs)+' SF':'—')+'</td></tr>';});cont.innerHTML='<table class="zone-table"><thead><tr><th></th><th>Parcels</th><th>Lot SF</th><th>Bldg SF</th><th>Undev SF</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td style="font-size:10px">Total</td><td class="zone-mono">'+tp.toLocaleString()+'</td><td class="zone-mono">'+sf(tl)+' SF</td><td class="zone-mono">'+sf(tb)+' SF</td><td class="zone-mono zone-undev">'+sf(tvs)+' SF</td></tr></tfoot></table><div class="zone-note">MassGIS L3 assessors · '+parcels.length.toLocaleString()+' parcels · Undev = lot w/ no bldg SF</div>';}
-// ═══════════════ RENDER FUNCTIONS ═══════════════
+function renderZoning(s,parcels){
+  var card=el('hcard-zoning-'+s),cont=el('zoning-'+s);
+  if(!card)return;
+  if(!parcels||!parcels.length){card.style.display='none';return;}
+  card.style.display='block';
+  function cls(code){
+    var c=parseInt(code)||0;
+    if(c>=100&&c<200) return 'R';
+    if((c>=300&&c<320)||(c>=330&&c<340)||(c>=360&&c<370)) return 'CR';
+    if(c>=320&&c<330) return 'CA';
+    if((c>=340&&c<360)||(c>=370&&c<400)) return 'CO';
+    if(c>=400&&c<500) return 'I';
+    return 'X';
+  }
+  var G={
+    I: {l:'Industrial',    c:'#f59e42',p:0,ls:0,bs:0,vs:0},
+    CR:{l:'Retail / Food', c:'#4b7cf3',p:0,ls:0,bs:0,vs:0},
+    CO:{l:'Office / Hotel',c:'#a78bfa',p:0,ls:0,bs:0,vs:0},
+    CA:{l:'Auto / Service',c:'#38bdf8',p:0,ls:0,bs:0,vs:0},
+    R: {l:'Residential',   c:'#3ecf8e',p:0,ls:0,bs:0,vs:0},
+    X: {l:'Other / Exempt',c:'#6a768f',p:0,ls:0,bs:0,vs:0}
+  };
+  parcels.forEach(function(p){
+    var k=cls(p.USE_CODE),lot=Math.round((parseFloat(p.LOT_SIZE)||0)*43560),bld=parseInt(p.BLD_AREA)||0,g=G[k];
+    g.p++;g.ls+=lot;g.bs+=bld;if(lot>0&&bld===0)g.vs+=lot;
+  });
+  function sf(n){return n>=1e6?(n/1e6).toFixed(1)+'M SF':n>=1000?Math.round(n/1000)+'K SF':n+' SF';}
+  var rows='',tp=0,tl=0,tb=0,tvs=0;
+  ['I','CR','CO','CA','R','X'].forEach(function(k){
+    var g=G[k];if(!g.p)return;
+    tp+=g.p;tl+=g.ls;tb+=g.bs;tvs+=g.vs;
+    rows+='<tr><td><div class="zone-row-label"><span class="zone-dot" style="background:'+g.c+'"></span>'+g.l+'</div></td>'
+      +'<td class="zone-mono">'+g.p.toLocaleString()+'</td><td class="zone-mono">'+sf(g.ls)+'</td>'
+      +'<td class="zone-mono">'+sf(g.bs)+'</td><td class="zone-mono zone-undev">'+(g.vs?sf(g.vs):'—')+'</td></tr>';
+  });
+  cont.innerHTML='<table class="zone-table"><thead><tr><th></th><th>Parcels</th><th>Lot SF</th><th>Bldg SF</th><th>Undev SF</th></tr></thead><tbody>'+rows+'</tbody>'
+    +'<tfoot><tr><td style="font-size:10px">Total</td><td class="zone-mono">'+tp.toLocaleString()+'</td><td class="zone-mono">'+sf(tl)+'</td><td class="zone-mono">'+sf(tb)+'</td><td class="zone-mono zone-undev">'+sf(tvs)+'</td></tr></tfoot></table>'
+    +'<div class="zone-note">MassGIS L3 assessors · '+parcels.length.toLocaleString()+' parcels · Undev = lot w/ no bldg SF</div>';
+}
 function renderPop(s,pop,hu,area){
   // Animate main population number
   animateNumber(el('rp-'+s), fmt(pop), 0);
@@ -4711,6 +4749,7 @@ async function runDriveFirst(s,addr,min){
 
 eAnalysis(s,lat,lon,min);
 }
+
 
 </script>
 <div id="summary-modal" onclick="if(event.target===this)closeSummary()">
