@@ -1905,7 +1905,7 @@ function applyDriveResults(s,cache){
   renderBiz(s,cache.bizData,cache.stateData);
   renderTenure(s,cache.tenureData!==undefined?cache.tenureData:null,cache.stateData);
   renderCrime(s,cache.crimeData||null);
-  if(cache.stateData&&cache.stateData.fips==='25'&&cache.polyRing){fetchZoningPoly(cache.polyRing).then(function(z){renderZoning(s,z);}).catch(function(){var c=el('hcard-zoning-'+s);if(c)c.style.display='none';});}else{var _zc=el('hcard-zoning-'+s);if(_zc)_zc.style.display='none';}
+  if(cache.zoningData){renderZoning(s,cache.zoningData);}else if(cache.stateData&&cache.stateData.fips==='25'&&cache.polyRing){fetchZoningPoly(cache.polyRing).then(function(z){renderZoning(s,z);}).catch(function(){var c=el('hcard-zoning-'+s);if(c)c.style.display='none';});}else{var _zc=el('hcard-zoning-'+s);if(_zc)_zc.style.display='none';}
   renderPermits(s,cache.permitData||null);
 
   renderGrowth(s,cache.pop,cache.data2010);
@@ -3076,7 +3076,7 @@ function closePdfTip(){
 
 // ═══════════════ RESET SLOT ═══════════════
 function resetSlot(s){
-  var _zc2=el('hcard-zoning-'+s);if(_zc2)_zc2.style.display='none';
+  var _zc2=el('hcard-zoning-'+s);if(_zc2){_zc2.style.display='none';_zc2.setAttribute('data-zone-visible','0');}
   ['rp','rs','ri','rbiz','rhwy','pop10','pop20','own'].forEach(function(id){
     var e=el(id+'-'+s); if(e){e.textContent='…';e.classList.add('pending');}
   });
@@ -3412,9 +3412,7 @@ function renderZoning(s,parcels){
   var card=el('hcard-zoning-'+s),cont=el('zoning-'+s);
   if(!card)return;
   if(!parcels||!parcels.length){card.style.display='none';card.setAttribute('data-zone-visible','0');return;}
-  // Set zone-visible flag so setTab knows MA data is ready
   card.setAttribute('data-zone-visible','1');
-  // Only show card if RE tab is currently active
   if(activeTab==='re') card.style.display='block';
   function cls(code){
     var c=parseInt(code)||0;
@@ -4421,7 +4419,7 @@ async function runSlot(s,addr,r){
   renderCrime(s,crimeData);
   renderZoning(s,zoningData);
   renderPermits(s,permitData);
-  slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;
+  slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;slotCache[s].zoningData=zoningData||null;
   (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive')drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
@@ -4788,6 +4786,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
