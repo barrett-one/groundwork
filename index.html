@@ -3398,9 +3398,10 @@ function setTab(name){
   document.querySelectorAll('.hcard[data-tab]').forEach(function(c){
     var ct=c.dataset.tab;
     if(c.id&&c.id.indexOf('hcard-zoning')===0){
+      // Zone card: only show in RE tab AND if MA data available
       c.style.display=(ct===name&&c.getAttribute('data-zone-visible')==='1')?'block':'none';
     } else {
-      c.style.display=ct===name?'':'none';
+      c.style.display=ct===name?'block':'none';
     }
   });
   var ip=el('intel-tab-panel');if(ip)ip.style.display=name==='intel'?'flex':'none';
@@ -3411,8 +3412,10 @@ function renderZoning(s,parcels){
   var card=el('hcard-zoning-'+s),cont=el('zoning-'+s);
   if(!card)return;
   if(!parcels||!parcels.length){card.style.display='none';card.setAttribute('data-zone-visible','0');return;}
-  card.style.display='block';
+  // Set zone-visible flag so setTab knows MA data is ready
   card.setAttribute('data-zone-visible','1');
+  // Only show card if RE tab is currently active
+  if(activeTab==='re') card.style.display='block';
   function cls(code){
     var c=parseInt(code)||0;
     if(c>=100&&c<200) return 'R';
@@ -4784,6 +4787,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 </script>
 <div id="summary-modal" onclick="if(event.target===this)closeSummary()">
