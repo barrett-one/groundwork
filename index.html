@@ -4417,6 +4417,7 @@ async function runSlot(s,addr,r){
   if(hwyElements) drawHighways(hwyElements);
   var crimeData=results[6]&&results[6].status==='fulfilled'?results[6].value:null;
   var permitData=results[7]&&results[7].status==='fulfilled'?results[7].value:null;
+  var zoningData=results[8]&&results[8].status==='fulfilled'?results[8].value:null;
   renderCrime(s,crimeData);
   renderZoning(s,zoningData);
   renderPermits(s,permitData);
@@ -4787,6 +4788,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
