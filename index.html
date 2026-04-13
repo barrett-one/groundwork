@@ -2003,6 +2003,11 @@ function applyDriveResults(s,cache){
     MAP.fitBounds(driveLayer[s].getBounds(),{padding:[50,50]});
   }catch(e){}
   slotCache[s].area=cache.approxArea;
+  // Populate slotCache fields needed by refreshPopup BEFORE calling it
+  slotCache[s].pop=cache.pop;
+  if(cache.incData) slotCache[s].income=cache.incData.income;
+  if(cache.bizData) slotCache[s].biz=cache.bizData;
+  if(cache.data2010) slotCache[s].pop10=cache.data2010.pop;
   // Re-run EPA with drive polygon
     renderPop(s,cache.pop,cache.hu,cache.approxArea);
   el('rs-'+s).textContent='within '+cache.min+'-min drive · '+fmt(cache.hu)+' housing units';
@@ -5000,6 +5005,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
