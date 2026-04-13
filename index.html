@@ -1094,6 +1094,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .hd-key-dot.ok{background:var(--gn)}
 /* keep sp-dot in sync */
 #sp-dot{display:none}
+
+.zone-cat-hdr td{padding:8px 4px 2px;border-bottom:none}
+.zone-cat-hdr:first-child td{padding-top:4px}
+.zone-sub-row td{padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.03)}
+.zone-indent{font-size:10.5px;color:var(--m2);padding-left:14px}
+.zone-undev-lbl{color:var(--yw)}
 </style>
 </head>
 <body>
@@ -3510,39 +3516,43 @@ function renderZoning(s,parcels){
     if(c>=100&&c<200) return 'R';
     if((c>=300&&c<320)||(c>=330&&c<340)||(c>=360&&c<370)) return 'CR';
     if(c>=320&&c<330) return 'CA';
-    if((c>=340&&c<360)||(c>=370&&c<400)) return 'CO';
     if(c>=350&&c<360) return 'CH';
+    if((c>=340&&c<350)||(c>=370&&c<400)) return 'CO';
     if(c>=400&&c<500) return 'I';
     return 'X';
   }
 
-  // G tracks: p=parcels, ls=total lot SF, bs=bldg SF, devls=lot SF on developed parcels, undls=lot SF on undeveloped
+  // Each category tracks developed and undeveloped separately
   var G={
-    I: {l:'Industrial',    c:'#f59e42',p:0,ls:0,bs:0,devls:0,undls:0},
-    CR:{l:'Retail / Food', c:'#4b7cf3',p:0,ls:0,bs:0,devls:0,undls:0},
-    CO:{l:'Office',        c:'#a78bfa',p:0,ls:0,bs:0,devls:0,undls:0},
-    CH:{l:'Hotel / Lodging',c:'#e879f9',p:0,ls:0,bs:0,devls:0,undls:0},
-    CA:{l:'Auto / Service',c:'#38bdf8',p:0,ls:0,bs:0,devls:0,undls:0},
-    R: {l:'Residential',   c:'#3ecf8e',p:0,ls:0,bs:0,devls:0,undls:0},
-    X: {l:'Other / Exempt',c:'#6a768f',p:0,ls:0,bs:0,devls:0,undls:0}
+    I: {l:'Industrial',    c:'#f59e42'},
+    CR:{l:'Retail / Food', c:'#4b7cf3'},
+    CO:{l:'Office',        c:'#a78bfa'},
+    CH:{l:'Hotel / Lodging',c:'#e879f9'},
+    CA:{l:'Auto / Service',c:'#38bdf8'},
+    R: {l:'Residential',   c:'#3ecf8e'},
+    X: {l:'Other / Exempt',c:'#6a768f'}
   };
+  // Initialize dev + undev sub-rows for each category
+  ['I','CR','CO','CH','CA','R','X'].forEach(function(k){
+    G[k].dev ={p:0,ls:0,bs:0};  // developed: has BLD_AREA > 0
+    G[k].und ={p:0,ls:0};       // undeveloped: BLD_AREA = 0
+  });
 
   parcels.forEach(function(p){
     var k=cls(p.USE_CODE);
-    // LOT_SIZE from MassGIS is in acres — convert to SF
-    // Sanity cap: single parcel > 500 acres is likely bad data
     var rawAcres=parseFloat(p.LOT_SIZE)||0;
     var lot=rawAcres>500?0:Math.round(rawAcres*43560);
     var bld=parseInt(p.BLD_AREA)||0;
-    var g=G[k];
-    g.p++;
-    g.ls+=lot;
-    g.bs+=bld;
-    if(bld>0){ g.devls+=lot; }
-    else if(lot>0){ g.undls+=lot; }
+    if(bld>0){
+      G[k].dev.p++;
+      G[k].dev.ls+=lot;
+      G[k].dev.bs+=bld;
+    } else {
+      G[k].und.p++;
+      G[k].und.ls+=lot;
+    }
   });
 
-  // Format SF numbers cleanly — no decimals for large numbers
   function sf(n){
     if(!n||n<=0) return '—';
     if(n>=1e9) return Math.round(n/1e9).toLocaleString()+'B';
@@ -3551,17 +3561,41 @@ function renderZoning(s,parcels){
     return n.toLocaleString();
   }
 
-  var rows='',tp=0,tl=0,tb=0,tdl=0,tul=0;
+  var rows='',tp=0,tdevp=0,tundp=0,tbs=0,tdevls=0,tundls=0;
+
   ['I','CR','CO','CH','CA','R','X'].forEach(function(k){
-    var g=G[k];if(!g.p)return;
-    tp+=g.p;tl+=g.ls;tb+=g.bs;tdl+=g.devls;tul+=g.undls;
-    rows+='<tr>'
-      +'<td><div class="zone-row-label"><span class="zone-dot" style="background:'+g.c+'"></span>'+g.l+'</div></td>'
-      +'<td class="zone-mono">'+g.p.toLocaleString()+'</td>'
-      +'<td class="zone-mono">'+sf(g.bs)+' SF</td>'
-      +'<td class="zone-mono">'+(g.devls?sf(g.devls)+' SF':'—')+'</td>'
-      +'<td class="zone-mono zone-undev">'+(g.undls?sf(g.undls)+' SF':'—')+'</td>'
+    var g=G[k];
+    var totalP=g.dev.p+g.und.p;
+    if(!totalP) return;
+    tp+=totalP; tdevp+=g.dev.p; tundp+=g.und.p;
+    tbs+=g.dev.bs; tdevls+=g.dev.ls; tundls+=g.und.ls;
+
+    // Category header row
+    rows+='<tr class="zone-cat-hdr">'
+      +'<td colspan="5"><div class="zone-row-label"><span class="zone-dot" style="background:'+g.c+'"></span><strong>'+g.l+'</strong></div></td>'
       +'</tr>';
+
+    // Developed sub-row
+    if(g.dev.p>0){
+      rows+='<tr class="zone-sub-row">'
+        +'<td><div class="zone-indent">↳ Developed</div></td>'
+        +'<td class="zone-mono">'+g.dev.p.toLocaleString()+'</td>'
+        +'<td class="zone-mono">'+sf(g.dev.bs)+' SF</td>'
+        +'<td class="zone-mono">'+sf(g.dev.ls)+' SF</td>'
+        +'<td class="zone-mono">—</td>'
+        +'</tr>';
+    }
+
+    // Undeveloped sub-row
+    if(g.und.p>0){
+      rows+='<tr class="zone-sub-row">'
+        +'<td><div class="zone-indent zone-undev-lbl">↳ Undeveloped</div></td>'
+        +'<td class="zone-mono zone-undev">'+g.und.p.toLocaleString()+'</td>'
+        +'<td class="zone-mono">—</td>'
+        +'<td class="zone-mono">—</td>'
+        +'<td class="zone-mono zone-undev">'+sf(g.und.ls)+' SF</td>'
+        +'</tr>';
+    }
   });
 
   cont.innerHTML=
@@ -3571,12 +3605,12 @@ function renderZoning(s,parcels){
     +'<tfoot><tr>'
     +'<td style="font-size:10px">Total</td>'
     +'<td class="zone-mono">'+tp.toLocaleString()+'</td>'
-    +'<td class="zone-mono">'+sf(tb)+' SF</td>'
-    +'<td class="zone-mono">'+sf(tdl)+' SF</td>'
-    +'<td class="zone-mono zone-undev">'+sf(tul)+' SF</td>'
+    +'<td class="zone-mono">'+sf(tbs)+' SF</td>'
+    +'<td class="zone-mono">'+sf(tdevls)+' SF</td>'
+    +'<td class="zone-mono zone-undev">'+sf(tundls)+' SF</td>'
     +'</tr></tfoot>'
     +'</table>'
-    +'<div class="zone-note">MassGIS L3 assessors \xb7 '+parcels.length.toLocaleString()+' parcels \xb7 Dev Lot = land with bldg \xb7 Undev = vacant land</div>';
+    +'<div class="zone-note">MassGIS L3 assessors \xb7 '+parcels.length.toLocaleString()+' parcels \xb7 Developed = parcels with bldg SF recorded</div>';
 }
 function renderPop(s,pop,hu,area){
   // Animate main population number
@@ -4918,6 +4952,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
