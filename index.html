@@ -1125,6 +1125,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   content:'';position:absolute;bottom:calc(120% - 5px);left:50%;
   transform:translateX(-50%);border:5px solid transparent;
   border-top-color:#1a2035;z-index:1000}
+
+/* ── OPPORTUNITY ZONE OVERLAY ── */
+#oz-toggle{
+  position:absolute;top:10px;right:50px;z-index:1000;
+  background:var(--panel);border:1px solid var(--b2);border-radius:20px;
+  padding:5px 12px 5px 9px;display:flex;align-items:center;gap:6px;
+  cursor:pointer;font-size:11px;font-weight:600;color:var(--m2);
+  transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.2px;
+  user-select:none}
+#oz-toggle:hover{border-color:var(--oz-color,#f59e42);color:var(--oz-color,#f59e42)}
+#oz-toggle.oz-on{
+  background:rgba(245,158,66,.12);border-color:#f59e42;color:#f59e42}
+#oz-toggle .oz-dot{
+  width:8px;height:8px;border-radius:50%;border:1.5px solid currentColor;
+  flex-shrink:0;transition:background .2s}
+#oz-toggle.oz-on .oz-dot{background:#f59e42;border-color:#f59e42}
+/* OZ badge in sidebar */
+.oz-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(245,158,66,.12);border:1px solid rgba(245,158,66,.4);
+  color:#f59e42;font-size:10px;font-weight:700;padding:3px 9px;
+  border-radius:12px;letter-spacing:.3px;margin-top:2px}
+.oz-badge svg{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -1511,6 +1534,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 </div><!-- /side -->
 <div id="map-hint">Drag to explore · type address to analyze</div>
 <div id="map"></div>
+<button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
+  <span class="oz-dot"></span>OZ Overlay
+</button>
 <div id="toast">🔗 Link copied to clipboard</div>
 <script>
 // ═══════════════ CONSTANTS ═══════════════
@@ -2093,6 +2119,7 @@ function clearDriveTime(){
   var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
   updateAnalyzeBtn();
   if(typeof setTab==='function') setTab(activeTab);
+  checkAddressInOZ(cache.lat,cache.lon,s);
 }
 
 async function fetchIsochrone(min){
@@ -2934,6 +2961,111 @@ function updateApiKeyStatus(){
 
 
 // ── SETTINGS PANEL ──
+
+// ═══════════════ OPPORTUNITY ZONES ═══════════════
+var OZ_FS = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones/FeatureServer/0/query';
+var ozLayer = null;
+var ozActive = false;
+var ozCache = {}; // keyed by "zoom:sw:ne"
+
+function toggleOZ(){
+  ozActive = !ozActive;
+  var btn = el('oz-toggle');
+  if(btn) btn.classList.toggle('oz-on', ozActive);
+  if(!ozActive){
+    if(ozLayer){ MAP.removeLayer(ozLayer); ozLayer = null; }
+    return;
+  }
+  loadOZLayer();
+  MAP.on('moveend', onMapMoveOZ);
+}
+
+function onMapMoveOZ(){
+  if(!ozActive) return;
+  loadOZLayer();
+}
+
+async function loadOZLayer(){
+  if(!MAP) return;
+  var b = MAP.getBounds();
+  var cacheKey = MAP.getZoom()+':'+b.getSouthWest().lat.toFixed(2)+','+b.getSouthWest().lng.toFixed(2)+':'+b.getNorthEast().lat.toFixed(2)+','+b.getNorthEast().lng.toFixed(2);
+  if(ozCache[cacheKey]){
+    renderOZLayer(ozCache[cacheKey]);
+    return;
+  }
+  var env = {xmin:b.getWest(),ymin:b.getSouth(),xmax:b.getEast(),ymax:b.getNorth(),spatialReference:{wkid:4326}};
+  var params = new URLSearchParams({
+    geometry: JSON.stringify(env),
+    geometryType: 'esriGeometryEnvelope',
+    spatialRel: 'esriSpatialRelIntersects',
+    inSR: '4326',
+    outSR: '4326',
+    outFields: 'GEOID10,STATE',
+    returnGeometry: 'true',
+    resultRecordCount: '500',
+    f: 'geojson'
+  });
+  try{
+    var resp = await fetch(OZ_FS + '?' + params.toString());
+    if(!resp.ok) return;
+    var geojson = await resp.json();
+    if(!geojson.features || !geojson.features.length) return;
+    ozCache[cacheKey] = geojson;
+    renderOZLayer(geojson);
+  }catch(e){ console.warn('OZ fetch failed:', e); }
+}
+
+function renderOZLayer(geojson){
+  if(ozLayer){ MAP.removeLayer(ozLayer); ozLayer = null; }
+  ozLayer = L.geoJSON(geojson, {
+    style: function(){
+      return {
+        color: '#f59e42',
+        weight: 1.5,
+        opacity: 0.7,
+        fillColor: '#f59e42',
+        fillOpacity: 0.10
+      };
+    },
+    onEachFeature: function(feature, layer){
+      var geoid = feature.properties && (feature.properties.GEOID10 || feature.properties.GEOID || '');
+      if(geoid) layer.bindTooltip('OZ · Tract '+geoid.slice(-6), {sticky:true, className:'oz-tooltip'});
+    }
+  }).addTo(MAP);
+  // Ensure OZ layer stays below highway/drive layers
+  if(ozLayer) ozLayer.bringToBack();
+}
+
+async function checkAddressInOZ(lat, lon, slot){
+  var statusEl = el('oz-status-'+slot);
+  if(!statusEl) return;
+  try{
+    // Use Census geocoder to get tract GEOID
+    var gcResp = await fetch('https://geocoding.geo.census.gov/geocoder/geographies/coordinates'
+      +'?x='+lon+'&y='+lat+'&benchmark=Public_AR_Current&vintage=Current_Current&format=json');
+    if(!gcResp.ok) return;
+    var gcData = await gcResp.json();
+    var tracts = gcData.result && gcData.result.geographies && gcData.result.geographies['Census Tracts'];
+    if(!tracts || !tracts.length) return;
+    var geoid = tracts[0].GEOID;
+    // Query CDFI OZ service for this specific GEOID
+    var params = new URLSearchParams({
+      where: "GEOID10='"+geoid+"'",
+      outFields: 'GEOID10',
+      returnGeometry: 'false',
+      f: 'json'
+    });
+    var ozResp = await fetch(OZ_FS + '?' + params.toString());
+    if(!ozResp.ok) return;
+    var ozData = await ozResp.json();
+    var inOZ = ozData.features && ozData.features.length > 0;
+    statusEl.style.display = inOZ ? 'block' : 'none';
+    if(inOZ){
+      statusEl.innerHTML = '<span class="oz-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="#f59e42"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>Opportunity Zone</span>';
+    }
+  }catch(e){ console.warn('OZ check failed:', e); }
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
   initCollapsible();
@@ -5075,6 +5207,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
