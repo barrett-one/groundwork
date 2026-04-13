@@ -31,7 +31,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #side-inner{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 
 /* header */
-#hd{padding:10px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0;position:relative}
+#hd{padding:10px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0}
 #logo-wrap{justify-content:space-between}
 #logo-inner{display:flex;align-items:center;gap:10px}
 #logo-wrap{display:flex;align-items:center;gap:11px}
@@ -1056,45 +1056,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .zone-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;flex-shrink:0}
 .zone-row-label{display:flex;align-items:center;font-size:11px}
 .zone-mono{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx)}
-.zone-vacant{font-size:10px;color:var(--yw)}
-.zone-note{font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)}
 .zone-undev{color:var(--yw)}
+.zone-note{font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)}
 /* ── SIDEBAR TABS ── */
 #sidebar-tabs{display:flex;gap:0;padding:0 12px;border-bottom:1px solid var(--b1);flex-shrink:0}
-.stab{flex:1;padding:9px 4px;font-size:11px;font-weight:600;letter-spacing:.3px;
-  color:var(--m1);background:none;border:none;cursor:pointer;
-  border-bottom:2px solid transparent;margin-bottom:-1px;
-  transition:color .15s,border-color .15s}
+.stab{flex:1;padding:9px 4px;font-size:11px;font-weight:600;letter-spacing:.3px;color:var(--m1);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
 .stab:hover{color:var(--m2)}
 .stab.on{color:var(--ac);border-bottom-color:var(--ac)}
-#res-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
-#intel-tab-panel{display:none;flex-direction:column;gap:8px;padding:8px 12px;overflow-y:auto;flex:1;min-height:0}
-
-
-/* ── SETTINGS HAMBURGER ── */
-#settings-btn{padding:6px 10px;background:none;border:1px solid var(--b2);border-radius:7px;
-  color:var(--m2);cursor:pointer;font-size:16px;line-height:1;transition:all .15s;flex-shrink:0}
+/* ── SETTINGS GEAR ── */
+#settings-btn{padding:6px 10px;background:none;border:1px solid var(--b2);border-radius:7px;color:var(--m2);cursor:pointer;font-size:15px;line-height:1;transition:all .15s;flex-shrink:0}
 #settings-btn:hover{border-color:var(--ac);color:var(--ac)}
-#settings-panel{display:none;position:absolute;top:52px;right:12px;
-  background:var(--panel);border:1px solid var(--b2);border-radius:10px;
-  width:260px;z-index:2000;box-shadow:0 8px 32px rgba(0,0,0,.6);padding:14px 16px}
+#settings-panel{display:none;position:absolute;top:48px;left:0;right:0;margin:0 12px;background:var(--panel);border:1px solid var(--b2);border-radius:10px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.6);padding:14px 16px}
 #settings-panel.vis{display:block}
-.sp-label{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;
-  color:var(--m1);margin-bottom:6px}
-.sp-row{margin-bottom:12px}
-.sp-inp{width:100%;background:var(--b1);border:1px solid var(--b2);border-radius:7px;
-  padding:8px 11px;color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11.5px;
-  outline:none;transition:border-color .2s}
+.sp-label{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--m1);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.sp-dot{width:7px;height:7px;border-radius:50%;background:var(--m1);flex-shrink:0}
+.sp-dot.ok{background:var(--gn)}
+.sp-inp{width:100%;background:var(--b1);border:1px solid var(--b2);border-radius:7px;padding:8px 11px;color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11.5px;outline:none;transition:border-color .2s;margin-bottom:6px}
 .sp-inp:focus{border-color:var(--ac)}
 .sp-inp::placeholder{color:var(--m1);font-family:'DM Sans',sans-serif;font-size:12px}
-.sp-save{width:100%;padding:8px;background:var(--ac);border:none;border-radius:7px;
-  color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;
-  transition:opacity .15s;margin-top:4px}
-.sp-save:hover{opacity:.85}
-.sp-key-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--m1);margin-bottom:8px}
-.sp-key-dot{width:7px;height:7px;border-radius:50%;background:var(--m1);flex-shrink:0}
-.sp-key-dot.ok{background:var(--gn)}
-
+.sp-save{width:100%;padding:8px;background:var(--ac);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif}
 </style>
 </head>
 <body>
@@ -1123,12 +1103,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     </div><!-- /logo-inner -->
     <button id="port-btn" onclick="togglePortfolio()" title="Portfolio">⬡ Portfolio<span class="port-count" id="port-count">0</span></button>
     <button id="settings-btn" onclick="toggleSettings()" title="Settings">⚙</button>
-    <div id="settings-panel">
-      <div class="sp-row"><div class="sp-label"><span id="sp-key-dot" class="sp-key-dot"></span> Claude API Key</div><input class="sp-inp" id="sp-key-inp" type="password" placeholder="sk-ant-api03-…" autocomplete="off"/><button class="sp-save" onclick="saveApiKeyFromSettings()">Save Key</button></div>
-      <div style="font-size:10px;color:var(--m1);line-height:1.5">Required for Broker Intel and Market Summary. Key stored in browser only.</div>
-    </div>
     <button id="hd-toggle" onclick="toggleSidebar()" title="Toggle sidebar">‹</button>
    </div>
+  
+  <div id="settings-panel">
+      <div class="sp-label"><span class="sp-dot" id="sp-dot"></span>Claude API Key</div>
+      <input class="sp-inp" id="sp-inp" type="password" placeholder="sk-ant-api03-…" autocomplete="off"/>
+      <button class="sp-save" onclick="saveKeyFromPanel()">Save Key</button>
+      <div style="font-size:10px;color:var(--m1);margin-top:8px;line-height:1.5">Required for Broker Intel + Market Summary. Stored in browser only.</div>
+    </div>
   </div>
 
   <div id="ctl">
@@ -1188,8 +1171,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   <div id="drive-ctl"><div id="mode-toggle"><button class="mode-btn on" id="mb-circle" onclick="setAnalysisMode('circle')">⬤ Circle</button><button class="mode-btn" id="mb-drive" onclick="setAnalysisMode('drive')">◷ Drive Time</button></div><span class="drive-lbl" style="margin-left:4px">Drive Time</span><button class="drb" data-min="10" onclick="setDriveTime(10)">10 min</button><button class="drb" data-min="15" onclick="setDriveTime(15)">15 min</button><button class="drb" data-min="20" onclick="setDriveTime(20)">20 min</button><button class="drb" data-min="30" onclick="setDriveTime(30)">30 min</button><button class="drb" onclick="clearDriveTime()" style="margin-left:auto;font-size:11px">✕ Clear</button><span id="drive-status"></span></div>
   <div id="err-box"></div>
 
-  
-<div id="sidebar-tabs">
+  <div id="sidebar-tabs">
   <button class="stab on" data-tab="demo" onclick="setTab('demo')">Demographics</button>
   <button class="stab" data-tab="re" onclick="setTab('re')">Real Estate</button>
   <button class="stab" data-tab="intel" onclick="setTab('intel')">Intel</button>
@@ -1407,19 +1389,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     </div>
    </div>
   </div><!-- /res-wrap -->
-  
-<div id="intel-tab-panel" style="display:none;flex-direction:column;gap:8px;padding:0 12px">
-  <div class="hcard" style="background:var(--card);margin-bottom:0">
-    <div class="hl" style="margin-bottom:8px">BROKER INTEL</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="broker-btn" onclick="brokerIntel('industrial')">Industrial</button>
-      <button class="broker-btn" onclick="brokerIntel('office')">Office</button>
-      <button class="broker-btn" onclick="brokerIntel('retail')">Retail</button>
+  <div id="action-panel">
+    <!-- Intel tab content (shown/hidden by setTab) -->
+    <div id="intel-tab-panel" style="display:none;flex-direction:column;gap:8px;padding:0 0 8px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="broker-btns-tab">
+        <button class="broker-btn" onclick="brokerIntel('industrial')">Industrial</button>
+        <button class="broker-btn" onclick="brokerIntel('office')">Office</button>
+        <button class="broker-btn" onclick="brokerIntel('retail')">Retail</button>
+      </div>
+      <button onclick="generateSummary()" id="gen-summary-intel" style="width:100%;padding:10px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:14px">✦</span>Generate Market Summary</button>
     </div>
-  </div>
-  <button onclick="generateSummary()" style="width:100%;padding:10px 16px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:14px">✦</span>Generate Market Summary</button>
-</div>
-<div id="action-panel">
     <div id="broker-intel" style="display:none">
       <div id="broker-lbl">Broker Intel</div>
       <div id="broker-btns">
@@ -1430,7 +1409,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     </div>
     <button id="port-back-btn" onclick="goBackToPortfolio()">← Back to Portfolio</button>
       <button id="add-port-btn" onclick="addCurrentToPortfolio()" style="display:none;width:100%;padding:8px 14px;background:none;border:1px solid var(--b2);border-radius:9px;color:var(--m2);font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gn)';this.style.color='var(--gn)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--m2)'">+ Add to Portfolio</button>
-    <button id="gen-summary-btn" onclick="generateSummary()"><span class="gsb-icon">✦</span>Generate Market Summary</button>
+    <button id="gen-summary-btn" style="display:none" onclick="generateSummary()"><span class="gsb-icon">✦</span>Generate Market Summary</button>
     <div id="action-row2">
       <button id="save-btn" onclick="showSaveForm()">Save Analysis</button>
       <button id="api-key-toggle" onclick="toggleApiKeyForm()">
@@ -2850,6 +2829,13 @@ function updateApiKeyStatus(){
   if(inp&&key) inp.placeholder='Key saved ✓';
 }
 
+
+// ── SETTINGS PANEL ──
+function toggleSettings(){var p=el('settings-panel');if(p)p.classList.toggle('vis');}
+document.addEventListener('click',function(e){var btn=el('settings-btn'),panel=el('settings-panel');if(btn&&panel&&!btn.contains(e.target)&&!panel.contains(e.target))panel.classList.remove('vis');});
+function saveKeyFromPanel(){var inp=el('sp-inp');if(!inp||!inp.value.trim())return;localStorage.setItem('claude_api_key',inp.value.trim());updateKeyStatus();el('settings-panel').classList.remove('vis');}
+function updateKeyStatus(){var key=localStorage.getItem('claude_api_key')||'';var dot=el('sp-dot');if(dot)dot.classList.toggle('ok',!!key);var oldDot=el('api-key-dot');if(oldDot)oldDot.classList.toggle('ok',!!key);var inp=el('sp-inp');if(inp&&key)inp.placeholder='API key saved ✓';}
+
 document.addEventListener('DOMContentLoaded',function(){
   MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
   initCollapsible();
@@ -3485,6 +3471,7 @@ function setTab(name){
     }
   });
   var ip=el('intel-tab-panel');if(ip)ip.style.display=name==='intel'?'flex':'none';
+  var rw=el('res-wrap');if(rw)rw.style.display=name==='intel'?'none':'flex';
   var rw=el('res-wrap');if(rw)rw.style.display=name==='intel'?'none':'flex';
 }
 
@@ -4866,6 +4853,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
