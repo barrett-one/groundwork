@@ -2831,7 +2831,40 @@ function updateApiKeyStatus(){
 
 
 // ── SETTINGS PANEL ──
-);
+document.addEventListener('DOMContentLoaded',function(){
+  MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
+  initCollapsible();
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
+    maxZoom:16,attribution:'© <a href="https://www.esri.com">Esri</a> · US Census'
+  }).addTo(MAP);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{
+    maxZoom:16,attribution:''
+  }).addTo(MAP);
+  // Force map to recalculate size after layout settles
+  setTimeout(fixMapSize,100);
+  setTimeout(fixMapSize,300);
+  setTimeout(fixMapSize,600);
+  setTimeout(fixMapSize,1200);
+  // ResizeObserver
+  if(typeof ResizeObserver!=='undefined'){
+    new ResizeObserver(function(){fixMapSize();}).observe(document.getElementById('map'));
+  }
+  // Load from URL params
+  (function(){
+    var p=new URLSearchParams(window.location.search);
+    if(p.get('a')) el('inp-a').value=p.get('a');
+    if(p.get('r')){
+      var r=parseFloat(p.get('r'));
+      radius=r;
+      document.querySelectorAll('.rb').forEach(function(b){b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===r);});
+    }
+    if(p.get('b')){toggleCompare();el('inp-b').value=p.get('b');}
+    if(p.get('a')) setTimeout(run,400);
+  })();
+  renderSaves();
+  updatePortCount();
+  setTab('demo');
+});
 window.addEventListener('resize',fixMapSize);
 
 
