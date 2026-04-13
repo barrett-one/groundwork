@@ -1110,6 +1110,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .card-reload-btn:hover{border-color:var(--ac);color:var(--ac);background:var(--ag)}
 .card-reload-btn.spinning{animation:spin .6s linear infinite;opacity:1}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── CRIME CONFIDENCE ── */
+.crime-info-icon{cursor:help;font-size:10px;opacity:.7;position:relative;display:inline-block}
+.crime-info-icon:hover::after{
+  content:attr(data-tip);
+  position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  background:#1a2035;border:1px solid var(--b2);color:var(--m2);
+  font-size:10px;line-height:1.5;padding:8px 10px;border-radius:7px;
+  width:240px;z-index:999;pointer-events:none;font-weight:400;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);white-space:normal;
+  letter-spacing:0;text-transform:none}
+.crime-info-icon:hover::before{
+  content:'';position:absolute;bottom:calc(120% - 5px);left:50%;
+  transform:translateX(-50%);border:5px solid transparent;
+  border-top-color:#1a2035;z-index:1000}
 </style>
 </head>
 <body>
@@ -1956,7 +1971,7 @@ async function runDriveAnalysis(s,lat,lon,min){
       fetchBiz(lat,lon,Math.sqrt(approxArea/Math.PI)||5),
       fetchState(stateFips),
       fetch2010(bgs),
-      fetchCrime(stateFips,lat,lon,Math.sqrt(approxArea/Math.PI)||5),
+      fetchCrime(stateFips,lat,lon,5),
       fetchPermits(bgs),
     ]);
 
@@ -4589,7 +4604,7 @@ async function runSlot(s,addr,r){
     fetchHwy(lat,lon),
     fetch2010(bgs),
     fetchTenure(bgs),
-    fetchCrime(stateFips,lat,lon,r),
+    fetchCrime(stateFips,lat,lon,Math.min(r,5)),
     fetchPermits(bgs),
     stateFips==='25'?fetchZoning(lat,lon,r):Promise.resolve(null),
   ]);
@@ -4684,14 +4699,14 @@ async function fetchCrime(stateFips,lat,lon,radiusMi){
     // Get agencies and find nearest within trade area
     var agencies=await fetchAgencies(stAbbr);
     if(!agencies||!agencies.length) return null;
-    var searchR=Math.max(radiusMi||5,5);
+    var searchR=Math.min(Math.max(radiusMi||3,3),5); // cap 3-5 miles
     var nearby=[];
     agencies.forEach(function(a){
       var d=hav(lat,lon,a.latitude,a.longitude);
       if(d<=searchR) nearby.push({ori:a.ori,name:a.agency_name,dist:d,county:a.counties||''});
     });
     nearby.sort(function(a,b){return a.dist-b.dist;});
-    var pick=nearby.slice(0,3); // up to 3 nearest
+    var pick=nearby.slice(0,8); // up to 8 agencies in radius
     if(!pick.length) return null;
     // Query crime for picked agencies in parallel
     var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},15000);
@@ -4775,11 +4790,29 @@ async function fetchCrime(stateFips,lat,lon,radiusMi){
     if(!localPop) return null;
     var localViolentRate=Math.round(localViolentAct/localPop*100000);
     var localPropertyRate=Math.round(localPropertyAct/localPop*100000);
+    // Confidence: based on reporting agencies vs agencies found in radius
+    var nearbyCount=nearby.length;
+    var reportingCount=agencyNames.length;
+    var confidence;
+    var confidenceReason;
+    if(reportingCount>=3||(reportingCount>=2&&reportingCount/Math.max(nearbyCount,1)>=0.5)){
+      confidence='high';
+      confidenceReason=''+reportingCount+' of '+nearbyCount+' agencies in this area reported data to FBI CDE in 2022.';
+    } else if(reportingCount>=2||(reportingCount===1&&nearbyCount<=2)){
+      confidence='medium';
+      confidenceReason=''+reportingCount+' of '+nearbyCount+' agencies in this area reported data. Coverage may be partial.';
+    } else {
+      confidence='low';
+      confidenceReason='Only '+reportingCount+' of '+nearbyCount+' agencies reported data. '+
+        (nearbyCount>reportingCount?'The remaining '+(nearbyCount-reportingCount)+' agencies did not submit 2022 data to FBI CDE, likely due to the NIBRS reporting transition.':'Limited data available for this area.');
+    }
     return{
       violent:localViolentRate,property:localPropertyRate,
       stViolent:Math.round(stViolentRate),stProperty:Math.round(stPropertyRate),
       stateName:stAbbr,year:2022,
-      agencies:agencyNames,localPop:localPop
+      agencies:agencyNames,localPop:localPop,
+      nearbyCount:nearbyCount,reportingCount:reportingCount,
+      confidence:confidence,confidenceReason:confidenceReason
     };
   }catch(e){return null;}
 }
@@ -4826,7 +4859,7 @@ function renderCrime(s,data){
   if(!data){
     cvEl.textContent='N/A';cvEl.classList.remove('pending');cvEl.className='labor-val';
     cpEl.textContent='N/A';cpEl.classList.remove('pending');cpEl.className='labor-val';
-    if(sub) sub.textContent='No local agency data found';
+    if(sub) sub.innerHTML='<span style="color:var(--m1);font-size:10px">No agency data found within 3–5 mi radius</span>';
     return;
   }
   var stV=data.stViolent||1,stP=data.stProperty||1;
@@ -5005,6 +5038,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
