@@ -1919,7 +1919,7 @@ async function runDriveAnalysis(s,lat,lon,min){
     driveCache[s]={pop:pop,hu:hu,approxArea:approxArea,bgs:bgs,
       incData:incData,bizData:bizData,stateData:stateData,data2010:data2010,
       crimeData:crimeData,permitData:permitData,
-      lat:lat,lon:lon,min:min,polyRing:rings,tenureData:null};
+      lat:lat,lon:lon,min:min,polyRing:rings,tenureData:null,zoningData:null};
     // Fetch tenure separately so it can't break drive analysis
     fetchTenure(bgs).then(function(t){if(driveCache[s])driveCache[s].tenureData=t;renderTenure(s,t,stateData);}).catch(function(){});
 
@@ -1967,7 +1967,7 @@ function applyDriveResults(s,cache){
   renderBiz(s,cache.bizData,cache.stateData);
   renderTenure(s,cache.tenureData!==undefined?cache.tenureData:null,cache.stateData);
   renderCrime(s,cache.crimeData||null);
-  if(cache.zoningData){renderZoning(s,cache.zoningData);}else if(cache.stateData&&cache.stateData.fips==='25'&&cache.polyRing){fetchZoningPoly(cache.polyRing).then(function(z){renderZoning(s,z);}).catch(function(){var c=el('hcard-zoning-'+s);if(c)c.style.display='none';});}else{var _zc=el('hcard-zoning-'+s);if(_zc)_zc.style.display='none';}
+  if(cache.zoningData){renderZoning(s,cache.zoningData);}else if(cache.stateData&&cache.stateData.fips==='25'&&cache.polyRing){fetchZoningPoly(cache.polyRing).then(function(z){renderZoning(s,z);if(driveCache[s])driveCache[s].zoningData=z;}).catch(function(){var c=el('hcard-zoning-'+s);if(c)c.style.display='none';});}else{var _zc=el('hcard-zoning-'+s);if(_zc)_zc.style.display='none';}
   renderPermits(s,cache.permitData||null);
 
   renderGrowth(s,cache.pop,cache.data2010);
@@ -3382,7 +3382,7 @@ async function fetchState(fips){
       var stateLand=STATE_LAND[fips]||1;
       stateLabor={lfpr:sp16>0?slf/sp16:null,unempRate:slf>0?sun/slf:null,bachRate:sp25>0?sbch/sp25:null,pop16PerSqMi:sp16/stateLand,ownerRate:stotHH>0?sownHH/stotHH:null};
     }
-    return{density:pop/land,name:popD[1][1],pop:pop,biz:stateBiz,bizSizes:stateBizSizes,hhi:stateHHI,labor:stateLabor};
+    return{density:pop/land,name:popD[1][1],pop:pop,biz:stateBiz,bizSizes:stateBizSizes,hhi:stateHHI,labor:stateLabor,fips:fips};
   }catch(e){return null;}
 }
 
@@ -4952,6 +4952,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
