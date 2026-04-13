@@ -1516,7 +1516,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 // ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
 var STATE_LAND={'01':50645,'02':571951,'04':113594,'05':52035,'06':155779,'08':103642,'09':4842,'10':1949,'11':61,'12':53625,'13':57513,'15':6423,'16':82643,'17':55519,'18':35826,'19':55857,'20':81759,'21':39486,'22':43204,'23':30843,'24':9707,'25':7800,'26':56804,'27':79627,'28':46923,'29':68742,'30':145546,'31':76824,'32':109781,'33':8953,'34':7354,'35':121298,'36':47126,'37':48618,'38':69001,'39':40861,'40':68595,'41':95988,'42':44743,'44':1034,'45':30061,'46':75811,'47':41235,'48':261232,'49':82170,'50':9217,'51':39490,'53':66456,'54':24038,'55':54158,'56':97093};
-var NAICS_LABEL={'11':'Agriculture','21':'Mining/Oil & Gas','22':'Utilities','23':'Construction','31':'Manufacturing','32':'Manufacturing','33':'Manufacturing','42':'Wholesale Trade','44':'Retail Trade','45':'Retail Trade','48':'Transportation','49':'Warehousing','51':'Information & Tech','52':'Finance & Insurance','53':'Real Estate','54':'Professional Services','55':'Management','56':'Admin & Support','61':'Education','62':'Healthcare','71':'Arts & Entertainment','72':'Food & Hospitality','81':'Other Services','92':'Government'};
+var NAICS_LABEL={'11':'Agriculture','21':'Mining/Oil & Gas','22':'Utilities','23':'Construction & Trades','31':'Manufacturing','32':'Manufacturing','33':'Manufacturing','42':'Wholesale Trade','44':'Retail Trade','45':'Retail Trade','48':'Transportation','49':'Warehousing','51':'Information & Tech','52':'Finance & Insurance','53':'Real Estate','54':'Professional Services','55':'Management','56':'Admin & Support','61':'Education','62':'Healthcare','71':'Arts & Entertainment','72':'Food & Hospitality','81':'Other Services','92':'Government'};
 var NAICS_MERGE={'32':'31','33':'31','45':'44','49':'48'};
 var SLOT_COLOR=['#4b7cf3','#f59e42'];
 
@@ -5075,6 +5075,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
