@@ -2964,15 +2964,10 @@ function updateApiKeyStatus(){
 // ── SETTINGS PANEL ──
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
-// OZ services - try in order (CDFI official + fallbacks)
-var OZ_SERVICES = [
-  'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones/FeatureServer/0/query',
-  'https://services2.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones_FS/FeatureServer/0/query',
-];
-var OZ_FS = OZ_SERVICES[0];
+var OZ_FS = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones/FeatureServer/0/query';
 var ozLayer = null;
 var ozActive = false;
-var ozCache = {}; // keyed by "zoom:sw:ne"
+var ozCache = {};
 
 function toggleOZ(){
   ozActive = !ozActive;
@@ -2987,104 +2982,78 @@ function toggleOZ(){
   MAP.on('moveend', onMapMoveOZ);
 }
 
-function onMapMoveOZ(){
-  if(!ozActive) return;
-  loadOZLayer();
-}
+function onMapMoveOZ(){ if(ozActive) loadOZLayer(); }
 
 async function loadOZLayer(){
   if(!MAP) return;
   var b = MAP.getBounds();
-  var cacheKey = MAP.getZoom()+':'+b.getSouthWest().lat.toFixed(2)+','+b.getSouthWest().lng.toFixed(2)+':'+b.getNorthEast().lat.toFixed(2)+','+b.getNorthEast().lng.toFixed(2);
-  if(ozCache[cacheKey]){
-    renderOZLayer(ozCache[cacheKey]);
-    return;
+  var key = MAP.getZoom()+':'+b.getSouth().toFixed(2)+','+b.getWest().toFixed(2);
+  if(ozCache[key]){ renderOZLayer(ozCache[key]); return; }
+  var btn = el('oz-toggle');
+  if(btn) btn.textContent = '⟳ OZ';
+
+  // Build URL with simple bbox format — ArcGIS needs plain xmin,ymin,xmax,ymax
+  var geom = b.getWest()+','+b.getSouth()+','+b.getEast()+','+b.getNorth();
+  var url = OZ_FS
+    + '?geometry=' + encodeURIComponent(geom)
+    + '&geometryType=esriGeometryEnvelope'
+    + '&spatialRel=esriSpatialRelIntersects'
+    + '&inSR=4326&outSR=4326'
+    + '&outFields=GEOID10,STATE'
+    + '&returnGeometry=true'
+    + '&resultRecordCount=500'
+    + '&f=geojson';
+  try{
+    var resp = await fetch(url);
+    if(btn) btn.innerHTML = '<span class="oz-dot"></span>OZ Overlay';
+    if(!resp.ok){ console.warn('OZ fetch failed:', resp.status); return; }
+    var text = await resp.text();
+    var geojson;
+    try{ geojson = JSON.parse(text); }catch(e){ console.warn('OZ JSON parse error'); return; }
+    if(geojson.error){ console.warn('OZ service error:', geojson.error); return; }
+    if(!geojson.features || !geojson.features.length){
+      if(btn) btn.setAttribute('title','No Opportunity Zones in this view'); return;
+    }
+    ozCache[key] = geojson;
+    renderOZLayer(geojson);
+  }catch(e){
+    if(btn) btn.innerHTML = '<span class="oz-dot"></span>OZ Overlay';
+    console.warn('OZ error:', e);
   }
-  var env = {xmin:b.getWest(),ymin:b.getSouth(),xmax:b.getEast(),ymax:b.getNorth(),spatialReference:{wkid:4326}};
-  var params = new URLSearchParams({
-    geometry: JSON.stringify(env),
-    geometryType: 'esriGeometryEnvelope',
-    spatialRel: 'esriSpatialRelIntersects',
-    inSR: '4326',
-    outSR: '4326',
-    outFields: 'GEOID10,STATE',
-    returnGeometry: 'true',
-    resultRecordCount: '500',
-    f: 'geojson'
-  });
-  for(var _si=0;_si<OZ_SERVICES.length;_si++){
-    try{
-      var resp = await fetch(OZ_SERVICES[_si] + '?' + params.toString());
-      if(!resp.ok) continue;
-      var geojson = await resp.json();
-      if(geojson.error){ console.warn('OZ service error:',geojson.error); continue; }
-      if(!geojson.features || !geojson.features.length){
-        // Show message if no OZ in this area
-        var btn=el('oz-toggle');
-        if(btn) btn.setAttribute('title','No Opportunity Zones in current view');
-        return;
-      }
-      OZ_FS=OZ_SERVICES[_si]; // cache working service
-      ozCache[cacheKey] = geojson;
-      renderOZLayer(geojson);
-      return;
-    }catch(e){ console.warn('OZ service',_si,'failed:',e); }
-  }
-  // All services failed - show indicator
-  var btn2=el('oz-toggle');
-  if(btn2){ btn2.setAttribute('title','OZ data unavailable — try again'); }
 }
 
 function renderOZLayer(geojson){
   if(ozLayer){ MAP.removeLayer(ozLayer); ozLayer = null; }
-  ozLayer = L.geoJSON(geojson, {
-    style: function(){
-      return {
-        color: '#f59e42',
-        weight: 1.5,
-        opacity: 0.7,
-        fillColor: '#f59e42',
-        fillOpacity: 0.10
-      };
-    },
-    onEachFeature: function(feature, layer){
-      var geoid = feature.properties && (feature.properties.GEOID10 || feature.properties.GEOID || '');
-      if(geoid) layer.bindTooltip('OZ · Tract '+geoid.slice(-6), {sticky:true, className:'oz-tooltip'});
+  ozLayer = L.geoJSON(geojson,{
+    style:function(){ return{color:'#f59e42',weight:1.5,opacity:0.7,fillColor:'#f59e42',fillOpacity:0.10}; },
+    onEachFeature:function(feature,layer){
+      var g=feature.properties&&(feature.properties.GEOID10||feature.properties.GEOID||'');
+      if(g) layer.bindTooltip('OZ · Tract '+g.slice(-6),{sticky:true});
     }
   }).addTo(MAP);
-  // Ensure OZ layer stays below highway/drive layers
   if(ozLayer) ozLayer.bringToBack();
 }
 
-async function checkAddressInOZ(lat, lon, slot){
-  var statusEl = el('oz-status-'+slot);
+async function checkAddressInOZ(lat,lon,slot){
+  var statusEl=el('oz-status-'+slot);
   if(!statusEl) return;
   try{
-    // Use Census geocoder to get tract GEOID
-    var gcResp = await fetch('https://geocoding.geo.census.gov/geocoder/geographies/coordinates'
-      +'?x='+lon+'&y='+lat+'&benchmark=Public_AR_Current&vintage=Current_Current&format=json');
+    var gcResp=await fetch('https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x='+lon+'&y='+lat+'&benchmark=Public_AR_Current&vintage=Current_Current&format=json');
     if(!gcResp.ok) return;
-    var gcData = await gcResp.json();
-    var tracts = gcData.result && gcData.result.geographies && gcData.result.geographies['Census Tracts'];
-    if(!tracts || !tracts.length) return;
-    var geoid = tracts[0].GEOID;
-    // Query CDFI OZ service for this specific GEOID
-    var params = new URLSearchParams({
-      where: "GEOID10='"+geoid+"'",
-      outFields: 'GEOID10',
-      returnGeometry: 'false',
-      f: 'json'
-    });
-    var ozResp = await fetch(OZ_FS + '?' + params.toString());
+    var gcData=await gcResp.json();
+    var tracts=gcData.result&&gcData.result.geographies&&gcData.result.geographies['Census Tracts'];
+    if(!tracts||!tracts.length) return;
+    var geoid=tracts[0].GEOID;
+    var url=OZ_FS+'?where='+encodeURIComponent("GEOID10='"+geoid+"'")+'&outFields=GEOID10&returnGeometry=false&f=json';
+    var ozResp=await fetch(url);
     if(!ozResp.ok) return;
-    var ozData = await ozResp.json();
-    var inOZ = ozData.features && ozData.features.length > 0;
-    statusEl.style.display = inOZ ? 'block' : 'none';
-    if(inOZ){
-      statusEl.innerHTML = '<span class="oz-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="#f59e42"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>Opportunity Zone</span>';
-    }
-  }catch(e){ console.warn('OZ check failed:', e); }
+    var ozData=await ozResp.json();
+    var inOZ=ozData.features&&ozData.features.length>0;
+    statusEl.style.display=inOZ?'block':'none';
+    if(inOZ) statusEl.innerHTML='<span class="oz-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="#f59e42"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>Opportunity Zone</span>';
+  }catch(e){ console.warn('OZ check:',e); }
 }
+
 
 document.addEventListener('DOMContentLoaded',function(){
   MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
@@ -5227,6 +5196,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
