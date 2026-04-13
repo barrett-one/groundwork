@@ -1340,7 +1340,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
     </div>
     <div class="hcard hwy sec" data-tab="re" style="position:relative"><button class="card-reload-btn" id="hwy-reload-0" onclick="reloadTransport(0)" title="Reload transport data">↺</button><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
-    <div class="hcard zone sec" data-tab="re" id="hcard-zoning-0" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-0"></div></div><div class="hcard crime sec" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+    <div class="hcard zone sec" data-tab="re" id="hcard-zoning-0" style="display:none;position:relative"><button class="card-reload-btn" id="zone-reload-0" onclick="reloadZoning(0)" title="Reload zoning data">↺</button><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-0"></div></div><div class="hcard crime sec" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-0-note"></div></div></div>
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-0-note"></div></div></div>
@@ -1444,7 +1444,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
     </div>
     <div class="hcard hwy sec" data-tab="re" style="position:relative"><button class="card-reload-btn" id="hwy-reload-1" onclick="reloadTransport(1)" title="Reload transport data">↺</button><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
-    <div class="hcard zone sec" data-tab="re" id="hcard-zoning-1" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-1"></div></div><div class="hcard crime sec" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
+    <div class="hcard zone sec" data-tab="re" id="hcard-zoning-1" style="display:none;position:relative"><button class="card-reload-btn" id="zone-reload-1" onclick="reloadZoning(1)" title="Reload zoning data">↺</button><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-1"></div></div><div class="hcard crime sec" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-1-note"></div></div></div>
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cp-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Property crime / 100K</span><div class="labor-bar-track" id="cp-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cp-1-note"></div></div></div>
@@ -3572,6 +3572,34 @@ function setTab(name){
   var rw=el('res-wrap');if(rw)rw.style.display=name==='intel'?'none':'flex';
 }
 
+
+// ── ZONING CARD RELOAD ──
+async function reloadZoning(s){
+  var lat=slotCache[s]&&slotCache[s].lat;
+  var lon=slotCache[s]&&slotCache[s].lon;
+  if(!lat||!lon) return;
+  var btn=el('zone-reload-'+s);
+  if(btn) btn.classList.add('spinning');
+  var zc=el('hcard-zoning-'+s);
+  var zd=el('zoning-'+s);
+  if(zd) zd.innerHTML='<div style="font-size:11px;color:var(--m1);padding:8px 0">Loading parcel data…</div>';
+  try{
+    // Determine radius: use analysis radius or drive-time equivalent
+    var r=slotCache[s].r||5;
+    if(driveCache[s]&&driveCache[s].approxArea){
+      r=Math.min(Math.max(Math.sqrt(driveCache[s].approxArea/Math.PI),1),15);
+    }
+    var z=await fetchZoning(lat,lon,r);
+    renderZoning(s,z);
+    if(driveCache[s]) driveCache[s].zoningData=z;
+    if(typeof setTab==='function') setTab(activeTab);
+  }catch(e){
+    if(zd) zd.innerHTML='<div style="font-size:11px;color:var(--rd,#ef5858);padding:8px 0">Failed — try again</div>';
+  }finally{
+    if(btn) btn.classList.remove('spinning');
+  }
+}
+
 function renderZoning(s,parcels){
   var card=el('hcard-zoning-'+s),cont=el('zoning-'+s);
   if(!card)return;
@@ -5047,6 +5075,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
