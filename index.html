@@ -1100,6 +1100,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .zone-sub-row td{padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.03)}
 .zone-indent{font-size:10.5px;color:var(--m2);padding-left:14px}
 .zone-undev-lbl{color:var(--yw)}
+
+/* ── CARD RELOAD BUTTON ── */
+.card-reload-btn{position:absolute;top:10px;right:10px;width:22px;height:22px;
+  background:none;border:1px solid rgba(255,255,255,.08);border-radius:5px;
+  color:var(--m1);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:11px;line-height:1;transition:all .15s;padding:0;opacity:0;z-index:2}
+.hcard:hover .card-reload-btn{opacity:1}
+.card-reload-btn:hover{border-color:var(--ac);color:var(--ac);background:var(--ag)}
+.card-reload-btn.spinning{animation:spin .6s linear infinite;opacity:1}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -1314,7 +1324,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <button type="button" id="breakdown-toggle-0" onclick="toggleBreakdown(0)"><span class="arr">▸</span> By sector</button>
      <div class="bk-wrap" id="bk-0"><div class="sector-list" id="sl-0"></div></div>
     </div>
-    <div class="hcard hwy sec" data-tab="re"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
+    <div class="hcard hwy sec" data-tab="re" style="position:relative"><button class="card-reload-btn" id="hwy-reload-0" onclick="reloadTransport(0)" title="Reload transport data">↺</button><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-0">…</div><div class="hwy-list" id="hwy-0"></div><div class="hwy-section" id="air-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-0"></div></div><div class="hwy-section" id="port-sec-0" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-0"></div></div></div>
     <div class="hcard zone sec" data-tab="re" id="hcard-zoning-0" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-0"></div></div><div class="hcard crime sec" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-0">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-0-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-0-note"></div></div></div>
@@ -1418,7 +1428,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <button type="button" id="breakdown-toggle-1" onclick="toggleBreakdown(1)"><span class="arr">▸</span> By sector</button>
      <div class="bk-wrap" id="bk-1"><div class="sector-list" id="sl-1"></div></div>
     </div>
-    <div class="hcard hwy sec" data-tab="re"><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
+    <div class="hcard hwy sec" data-tab="re" style="position:relative"><button class="card-reload-btn" id="hwy-reload-1" onclick="reloadTransport(1)" title="Reload transport data">↺</button><div class="hl" data-tip="Straight-line distances from the radius center point to nearest interstate, major airport, and commercial seaport.">Transportation Access</div><div class="hn pending" id="rhwy-1">…</div><div class="hwy-list" id="hwy-1"></div><div class="hwy-section" id="air-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Airport</div><div class="hwy-list" id="air-1"></div></div><div class="hwy-section" id="port-sec-1" style="display:none"><div class="hwy-section-lbl">Nearest Seaport</div><div class="hwy-list" id="port-1"></div></div></div>
     <div class="hcard zone sec" data-tab="re" id="hcard-zoning-1" style="display:none"><div class="hl" data-tip="MassGIS Level 3 assessors — Massachusetts only">Zoning &amp; Land Use</div><div id="zoning-1"></div></div><div class="hcard crime sec" data-tab="demo"><div class="hl" data-tip="FBI Crime Data Explorer: local police department crime rates vs state average. Lower is better.">Crime Rate</div>
      <div class="crime-grid">
       <div class="labor-row"><div class="labor-val-col"><span class="labor-val pending" id="cv-1">…</span></div><div class="labor-meta-col"><span class="labor-lbl">Violent crime / 100K</span><div class="labor-bar-track" id="cv-1-bar"><div class="labor-bar"></div></div><div class="labor-state-note" id="cv-1-note"></div></div></div>
@@ -1635,6 +1645,39 @@ function getNearestAirport(lat,lon){
 }
 
 // ══ RENDER TRANSPORT (interstate + airport + port) ══
+
+// ── TRANSPORT CARD RELOAD ──
+async function reloadTransport(s){
+  var lat=slotCache[s]&&slotCache[s].lat;
+  var lon=slotCache[s]&&slotCache[s].lon;
+  if(!lat||!lon) return;
+  var btn=el('hwy-reload-'+s);
+  if(btn) btn.classList.add('spinning');
+  var hwyEl=el('rhwy-'+s);
+  if(hwyEl){hwyEl.textContent='…';hwyEl.classList.add('pending');}
+  el('hwy-'+s).innerHTML='';
+  var airSec=el('air-sec-'+s);if(airSec)airSec.style.display='none';
+  var portSec=el('port-sec-'+s);if(portSec)portSec.style.display='none';
+  try{
+    var result=await fetchHwy(lat,lon);
+    var hwys=result&&result.hwys?result.hwys:null;
+    var elements=result&&result.elements?result.elements:null;
+    var airData=getNearestAirport(lat,lon);
+    var portData=getNearestPort(lat,lon);
+    renderTransport(s,hwys,airData,portData);
+    if(elements){
+      if(hwyMapLayer){MAP.removeLayer(hwyMapLayer);hwyMapLayer=null;}
+      drawHighways(elements);
+    }
+    // Update cache
+    if(slotCache[s]) slotCache[s].hwy=hwys;
+  }catch(e){
+    if(hwyEl){hwyEl.textContent='Failed — try again';hwyEl.classList.remove('pending');}
+  }finally{
+    if(btn) btn.classList.remove('spinning');
+  }
+}
+
 function renderTransport(s,hwys,airports,ports){
   // Interstates
   if(hwys&&hwys.length){
@@ -4956,6 +4999,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
