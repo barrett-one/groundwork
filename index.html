@@ -2119,7 +2119,6 @@ function clearDriveTime(){
   var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
   updateAnalyzeBtn();
   if(typeof setTab==='function') setTab(activeTab);
-  checkAddressInOZ(cache.lat,cache.lon,s);
 }
 
 async function fetchIsochrone(min){
@@ -2972,6 +2971,7 @@ function toggleOZ(){
   ozActive = !ozActive;
   var btn = el('oz-toggle');
   if(btn) btn.classList.toggle('oz-on', ozActive);
+  MAP.off('moveend', onMapMoveOZ);
   if(!ozActive){
     if(ozLayer){ MAP.removeLayer(ozLayer); ozLayer = null; }
     return;
@@ -5207,6 +5207,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
