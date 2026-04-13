@@ -1373,6 +1373,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="hcard permit sec" data-tab="re"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
      <div class="permit-detail" id="permit-detail-0"></div>
     </div>
+    <!-- BROKER INTEL (Intel tab only) -->
+    <div class="hcard" data-tab="intel"><div class="hl" style="margin-bottom:10px">BROKER INTEL</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="broker-btn" data-type="industrial" onclick="brokerIntel('industrial')">Industrial</button><button class="broker-btn" data-type="office" onclick="brokerIntel('office')">Office</button><button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button></div></div>
     </div>
    </div>
 
@@ -1529,18 +1531,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   <span class="oz-dot"></span>OZ Overlay
 </button>
 <div id="toast">🔗 Link copied to clipboard</div>
-    <!-- Intel cards (shown only on Intel tab) -->
-    <div class="hcard" data-tab="intel" style="background:var(--card)">
-      <div class="hl" style="margin-bottom:10px;letter-spacing:.7px">BROKER INTEL</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="broker-btn" onclick="brokerIntel('industrial')">Industrial</button>
-        <button class="broker-btn" onclick="brokerIntel('office')">Office</button>
-        <button class="broker-btn" onclick="brokerIntel('retail')">Retail</button>
-      </div>
-    </div>
-    <div class="hcard" data-tab="intel" style="background:var(--card)">
-      <button onclick="generateSummary()" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:14px">✶</span>Generate Market Summary</button>
-    </div>
     
 <script>
 // ═══════════════ CONSTANTS ═══════════════
@@ -5228,6 +5218,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
