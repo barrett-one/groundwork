@@ -31,7 +31,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #side-inner{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 
 /* header */
-#hd{padding:10px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0}
+#hd{padding:10px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0;position:relative}
 #logo-wrap{justify-content:space-between}
 #logo-inner{display:flex;align-items:center;gap:10px}
 #logo-wrap{display:flex;align-items:center;gap:11px}
@@ -1067,8 +1067,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   transition:color .15s,border-color .15s}
 .stab:hover{color:var(--m2)}
 .stab.on{color:var(--ac);border-bottom-color:var(--ac)}
-#res-wrap{flex:1;overflow-y:auto;min-height:0;padding:8px 12px}
-#intel-tab-panel{padding:8px 12px}
+#res-wrap{display:flex;flex:1;min-height:0;overflow:hidden}
+#intel-tab-panel{display:none;flex-direction:column;gap:8px;padding:8px 12px;overflow-y:auto;flex:1;min-height:0}
 
 
 /* ── SETTINGS HAMBURGER ── */
@@ -1431,7 +1431,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <button id="port-back-btn" onclick="goBackToPortfolio()">← Back to Portfolio</button>
       <button id="add-port-btn" onclick="addCurrentToPortfolio()" style="display:none;width:100%;padding:8px 14px;background:none;border:1px solid var(--b2);border-radius:9px;color:var(--m2);font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gn)';this.style.color='var(--gn)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--m2)'">+ Add to Portfolio</button>
     <button id="gen-summary-btn" onclick="generateSummary()"><span class="gsb-icon">✦</span>Generate Market Summary</button>
-    <div id="action-row2" style="display:none">
+    <div id="action-row2">
       <button id="save-btn" onclick="showSaveForm()">Save Analysis</button>
       <button id="api-key-toggle" onclick="toggleApiKeyForm()">
         <span id="api-key-dot"></span><span id="api-key-label">Add API Key</span>
@@ -3485,7 +3485,7 @@ function setTab(name){
     }
   });
   var ip=el('intel-tab-panel');if(ip)ip.style.display=name==='intel'?'flex':'none';
-  var rw=el('res-wrap');if(rw)rw.style.display=name==='intel'?'none':'';
+  var rw=el('res-wrap');if(rw)rw.style.display=name==='intel'?'none':'flex';
 }
 
 function renderZoning(s,parcels){
@@ -4866,6 +4866,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
