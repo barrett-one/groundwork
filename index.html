@@ -1075,6 +1075,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sp-inp:focus{border-color:var(--ac)}
 .sp-inp::placeholder{color:var(--m1);font-family:'DM Sans',sans-serif;font-size:12px}
 .sp-save{width:100%;padding:8px;background:var(--ac);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif}
+
+/* ── HEADER ICONS ── */
+#hd-icons{display:flex;align-items:center;gap:4px}
+.hd-icon{width:32px;height:32px;padding:0;background:none;border:1px solid var(--b2);border-radius:7px;
+  color:var(--m2);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;position:relative}
+.hd-icon:hover{border-color:var(--ac);color:var(--ac)}
+.hd-icon.active{background:var(--ag);border-color:var(--ac);color:var(--ac)}
+#port-btn{width:auto;padding:0 8px;gap:5px;font-size:11px;font-weight:600}
+#port-btn .port-count{background:var(--ac);color:#fff;font-size:9px;font-weight:700;
+  padding:1px 4px;border-radius:3px;display:none}
+#port-btn .port-count.vis{display:inline-block}
+#summary-icon-btn{border-color:rgba(75,124,243,.3);color:var(--ac)}
+#summary-icon-btn:hover{background:var(--ag)}
+.hd-key-dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;
+  background:var(--m1);pointer-events:none}
+.hd-key-dot.ok{background:var(--gn)}
+/* keep sp-dot in sync */
+#sp-dot{display:none}
 </style>
 </head>
 <body>
@@ -1101,16 +1120,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      
     </div>
     </div><!-- /logo-inner -->
-    <button id="port-btn" onclick="togglePortfolio()" title="Portfolio">⬡ Portfolio<span class="port-count" id="port-count">0</span></button>
-    <button id="settings-btn" onclick="toggleSettings()" title="Settings">⚙</button>
-    <button id="hd-toggle" onclick="toggleSidebar()" title="Toggle sidebar">‹</button>
+    <div id="hd-icons">
+      <button class="hd-icon" id="port-btn" onclick="togglePortfolio()" title="Portfolio">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="port-count" id="port-count"></span>
+      </button>
+      <button class="hd-icon" id="save-icon-btn" onclick="showSaveForm()" title="Save Analysis" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      </button>
+      <button class="hd-icon" id="summary-icon-btn" onclick="generateSummary()" title="Generate Market Summary" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </button>
+      <button class="hd-icon" id="add-port-icon-btn" onclick="addCurrentToPortfolio()" title="Add to Portfolio" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </button>
+      <button class="hd-icon" id="settings-btn" onclick="toggleSettings()" title="API Key">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        <span class="hd-key-dot" id="sp-dot"></span>
+      </button>
+      <button class="hd-icon" id="hd-toggle" onclick="toggleSidebar()" title="Collapse sidebar">‹</button>
+    </div>
    </div>
   
   <div id="settings-panel">
-      <div class="sp-label"><span class="sp-dot" id="sp-dot"></span>Claude API Key</div>
-      <input class="sp-inp" id="sp-inp" type="password" placeholder="sk-ant-api03-…" autocomplete="off"/>
-      <button class="sp-save" onclick="saveKeyFromPanel()">Save Key</button>
-      <div style="font-size:10px;color:var(--m1);margin-top:8px;line-height:1.5">Required for Broker Intel + Market Summary. Stored in browser only.</div>
+      <div class="sp-label">Claude API Key <span style="color:var(--m1);font-weight:400;font-size:10px">(Broker Intel + Market Summary)</span></div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <input class="sp-inp" id="sp-inp" type="password" placeholder="sk-ant-api03-…" autocomplete="off" style="margin-bottom:0;flex:1"/>
+        <button class="sp-save" onclick="saveKeyFromPanel()" style="width:auto;padding:8px 14px;flex-shrink:0">Save</button>
+      </div>
     </div>
   </div>
 
@@ -1390,33 +1427,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
    </div>
   </div><!-- /res-wrap -->
   <div id="action-panel">
-    <!-- Intel tab content (shown/hidden by setTab) -->
+    <!-- Intel tab: Broker Intel buttons -->
     <div id="intel-tab-panel" style="display:none;flex-direction:column;gap:8px;padding:0 0 8px">
-      <div style="display:flex;gap:6px;flex-wrap:wrap" id="broker-btns-tab">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="broker-btn" onclick="brokerIntel('industrial')">Industrial</button>
         <button class="broker-btn" onclick="brokerIntel('office')">Office</button>
         <button class="broker-btn" onclick="brokerIntel('retail')">Retail</button>
       </div>
-      <button onclick="generateSummary()" id="gen-summary-intel" style="width:100%;padding:10px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:14px">✦</span>Generate Market Summary</button>
-    </div>
-    <div id="broker-intel" style="display:none">
-      <div id="broker-lbl">Broker Intel</div>
-      <div id="broker-btns">
-        <button class="broker-btn" data-type="industrial" onclick="brokerIntel('industrial')">Industrial</button>
-        <button class="broker-btn" data-type="office" onclick="brokerIntel('office')">Office</button>
-        <button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button>
-      </div>
     </div>
     <button id="port-back-btn" onclick="goBackToPortfolio()">← Back to Portfolio</button>
-      <button id="add-port-btn" onclick="addCurrentToPortfolio()" style="display:none;width:100%;padding:8px 14px;background:none;border:1px solid var(--b2);border-radius:9px;color:var(--m2);font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gn)';this.style.color='var(--gn)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--m2)'">+ Add to Portfolio</button>
-    <button id="gen-summary-btn" style="display:none" onclick="generateSummary()"><span class="gsb-icon">✦</span>Generate Market Summary</button>
-    <div id="action-row2">
-      <button id="save-btn" onclick="showSaveForm()">Save Analysis</button>
-      <button id="api-key-toggle" onclick="toggleApiKeyForm()">
-        <span id="api-key-dot"></span><span id="api-key-label">Add API Key</span>
-      </button>
+    <!-- Hidden legacy elements (JS refs) -->
+    <div id="broker-intel" style="display:none"><div id="broker-lbl"></div><div id="broker-btns"></div></div>
+    <button id="add-port-btn" style="display:none" onclick="addCurrentToPortfolio()"></button>
+    <button id="gen-summary-btn" style="display:none" onclick="generateSummary()"></button>
+    <div id="action-row2" style="display:none">
+      <button id="save-btn" onclick="showSaveForm()"></button>
+      <button id="api-key-toggle" onclick="toggleApiKeyForm()"><span id="api-key-dot"></span><span id="api-key-label"></span></button>
     </div>
-    <div id="api-key-form">
+    <div id="api-key-form" style="display:none">
       <input id="api-key-inp" type="password" placeholder="sk-ant-api03-…" autocomplete="off"/>
       <button id="api-key-save" onclick="saveApiKey()">Save</button>
     </div>
@@ -4391,6 +4419,7 @@ async function runSlot(s,addr,r){
     var mb=el('mb-circle');if(mb)mb.classList.add('on');
     var mb2=el('mb-drive');if(mb2)mb2.classList.remove('on');
     var apb=el('add-port-btn');if(apb)apb.style.display='none';
+  var apib=el('add-port-icon-btn');if(apib)apib.style.display='none';
     if(!portReturnMode){var bb=el('port-back-btn');if(bb)bb.classList.remove('vis');}
     var bi=el('broker-intel');if(bi)bi.classList.remove('vis');
     document.querySelectorAll('.broker-btn').forEach(function(b){b.classList.remove('active');});
@@ -4787,9 +4816,12 @@ async function run(){
     var mh=document.getElementById('map-hint');
     if(mh) setTimeout(function(){mh.classList.add('fade');},1200);
     var gsb=el('gen-summary-btn');if(gsb)gsb.classList.add('vis');
+  var sib=el('save-icon-btn');if(sib)sib.style.display='flex';
+  var simb=el('summary-icon-btn');if(simb)simb.style.display='flex';
     var bi=el('broker-intel');if(bi)bi.classList.add('vis');
     el('mode-toggle').classList.add('vis');
     var apb=el('add-port-btn');if(apb)apb.style.display='block';
+  var apib=el('add-port-icon-btn');if(apib)apib.style.display='flex';
     if(compareMode&&slotCache[0].pop&&slotCache[1].pop) renderDeltas(0,1);
     // Auto-fit map to all active layers
     setTimeout(function(){
@@ -4848,6 +4880,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
