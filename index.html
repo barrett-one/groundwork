@@ -1480,16 +1480,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     </div>
    </div>
   </div><!-- /res-wrap -->
-  <div id="intel-tab-panel" style="display:none;flex-direction:column;flex:1;min-height:0;overflow-y:auto;padding:12px 18px;gap:10px">
-    <div class="hl" style="margin-bottom:10px">BROKER INTEL</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="broker-btn" onclick="brokerIntel('industrial')">Industrial</button>
-      <button class="broker-btn" onclick="brokerIntel('office')">Office</button>
-      <button class="broker-btn" onclick="brokerIntel('retail')">Retail</button>
-    </div>
-    <button onclick="generateSummary()" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;flex-shrink:0"><span style="font-size:14px">✶</span>Generate Market Summary</button>
-  </div>
-  <div id="action-panel">
+    <div id="action-panel">
     <!-- Intel tab: Broker Intel buttons -->
         <button id="port-back-btn" onclick="goBackToPortfolio()">← Back to Portfolio</button>
     <!-- Hidden legacy elements (JS refs) -->
@@ -1538,6 +1529,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   <span class="oz-dot"></span>OZ Overlay
 </button>
 <div id="toast">🔗 Link copied to clipboard</div>
+    <!-- Intel cards (shown only on Intel tab) -->
+    <div class="hcard" data-tab="intel" style="background:var(--card)">
+      <div class="hl" style="margin-bottom:10px;letter-spacing:.7px">BROKER INTEL</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="broker-btn" onclick="brokerIntel('industrial')">Industrial</button>
+        <button class="broker-btn" onclick="brokerIntel('office')">Office</button>
+        <button class="broker-btn" onclick="brokerIntel('retail')">Retail</button>
+      </div>
+    </div>
+    <div class="hcard" data-tab="intel" style="background:var(--card)">
+      <button onclick="generateSummary()" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:14px">✶</span>Generate Market Summary</button>
+    </div>
+    
 <script>
 // ═══════════════ CONSTANTS ═══════════════
 var NAT_DENSITY=87.3;
@@ -2962,7 +2966,12 @@ function updateApiKeyStatus(){
 // ── SETTINGS PANEL ──
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
-var OZ_FS = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones/FeatureServer/0/query';
+// OZ services - try in order (CDFI official + fallbacks)
+var OZ_SERVICES = [
+  'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones/FeatureServer/0/query',
+  'https://services2.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones_FS/FeatureServer/0/query',
+];
+var OZ_FS = OZ_SERVICES[0];
 var ozLayer = null;
 var ozActive = false;
 var ozCache = {}; // keyed by "zoom:sw:ne"
@@ -3005,14 +3014,27 @@ async function loadOZLayer(){
     resultRecordCount: '500',
     f: 'geojson'
   });
-  try{
-    var resp = await fetch(OZ_FS + '?' + params.toString());
-    if(!resp.ok) return;
-    var geojson = await resp.json();
-    if(!geojson.features || !geojson.features.length) return;
-    ozCache[cacheKey] = geojson;
-    renderOZLayer(geojson);
-  }catch(e){ console.warn('OZ fetch failed:', e); }
+  for(var _si=0;_si<OZ_SERVICES.length;_si++){
+    try{
+      var resp = await fetch(OZ_SERVICES[_si] + '?' + params.toString());
+      if(!resp.ok) continue;
+      var geojson = await resp.json();
+      if(geojson.error){ console.warn('OZ service error:',geojson.error); continue; }
+      if(!geojson.features || !geojson.features.length){
+        // Show message if no OZ in this area
+        var btn=el('oz-toggle');
+        if(btn) btn.setAttribute('title','No Opportunity Zones in current view');
+        return;
+      }
+      OZ_FS=OZ_SERVICES[_si]; // cache working service
+      ozCache[cacheKey] = geojson;
+      renderOZLayer(geojson);
+      return;
+    }catch(e){ console.warn('OZ service',_si,'failed:',e); }
+  }
+  // All services failed - show indicator
+  var btn2=el('oz-toggle');
+  if(btn2){ btn2.setAttribute('title','OZ data unavailable — try again'); }
 }
 
 function renderOZLayer(geojson){
@@ -3700,8 +3722,7 @@ function setTab(name){
       c.style.display=ct===name?'block':'none';
     }
   });
-  var ip=el('intel-tab-panel');if(ip)ip.style.display=name==='intel'?'flex':'none';
-  var rw=el('res-wrap');if(rw)rw.style.display=name==='intel'?'none':'flex';
+  var rw=el('res-wrap');if(rw)rw.style.display='flex'; // always flex - intel cards live inside col-0
 }
 
 
@@ -5207,6 +5228,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
