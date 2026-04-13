@@ -1996,8 +1996,6 @@ function applyDriveResults(s,cache){
   markers[s]=L.marker([cache.lat,cache.lon],{icon:dIcon}).addTo(MAP);
   // Store drive-time min so refreshPopup can use it
   slotCache[s].min=cache.min;
-  // Call refreshPopup so dot click shows data
-  refreshPopup(s, cache.incData?cache.incData.income:null);
   // Fit map (final fit handled by run() post-analysis; this handles single-slot drive)
   if(driveLayer[s]&&!compareMode) try{
     MAP.fitBounds(driveLayer[s].getBounds(),{padding:[50,50]});
@@ -2010,6 +2008,8 @@ function applyDriveResults(s,cache){
   if(cache.data2010) slotCache[s].pop10=cache.data2010.pop;
   // Re-run EPA with drive polygon
     renderPop(s,cache.pop,cache.hu,cache.approxArea);
+  // Now slotCache[s].pop is set — bind popup with correct data
+  refreshPopup(s, cache.incData?cache.incData.income:null);
   el('rs-'+s).textContent='within '+cache.min+'-min drive · '+fmt(cache.hu)+' housing units';
   slotCache[s].stateData=cache.stateData;
   if(cache.incData) renderIncome(s,cache.incData.income,cache.incData.lfpr,cache.incData.unempRate,cache.incData.bachRate,cache.incData.homeValue,cache.incData.workingAgePop,cache.hu,cache.stateData);
@@ -5005,6 +5005,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
