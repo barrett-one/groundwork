@@ -3528,7 +3528,7 @@ function clearExits(){if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(
 // ══ ZONING (MassGIS L3) ══
 var MA_PCL='https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/L3_Parcels_FeatureService_4326/MapServer/1/query';
 async function fetchZoning(lat,lon,r){var g=encodeURIComponent(JSON.stringify({x:lon,y:lat})),all=[],off=0,pg=0;while(pg<4){try{var rr=await fetch(MA_PCL+'?geometry='+g+'&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&distance='+r+'&units=esriSRUnit_StatuteMile&inSR=4326&outFields=USE_CODE,LOT_SIZE,BLD_AREA&returnGeometry=false&resultRecordCount=2000&resultOffset='+off+'&f=json');if(!rr.ok)break;var d=await rr.json(),ff=d.features||[];all=all.concat(ff.map(function(f){return f.attributes;}));if(!d.exceededTransferLimit||!ff.length)break;off+=2000;pg++;}catch(e){break;}}return all.length?all:null;}
-async function fetchZoningPoly(rings){var g=encodeURIComponent(JSON.stringify({rings:[rings],spatialReference:{wkid:4326}})),all=[],off=0,pg=0;while(pg<4){try{var rr=await fetch(MA_PCL+'?geometry='+g+'&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&outFields=USE_CODE,LOT_SIZE,BLD_AREA&returnGeometry=false&resultRecordCount=2000&resultOffset='+off+'&f=json');if(!rr.ok)break;var d=await rr.json(),ff=d.features||[];all=all.concat(ff.map(function(f){return f.attributes;}));if(!d.exceededTransferLimit||!ff.length)break;off+=2000;pg++;}catch(e){break;}}return all.length?all:null;}
+async function fetchZoningPoly(rings){var g=encodeURIComponent(JSON.stringify({rings:[rings],spatialReference:{wkid:4326}})),all=[],off=0,pg=0;while(pg<4){try{var rr=await fetch(MA_PCL+'?geometry='+g+'&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&inSR=4326&outFields=USE_CODE,LOT_SIZE,BLD_AREA&returnGeometry=false&resultRecordCount=2000&resultOffset='+off+'&f=json');if(!rr.ok)break;var d=await rr.json(),ff=d.features||[];all=all.concat(ff.map(function(f){return f.attributes;}));if(!d.exceededTransferLimit||!ff.length)break;off+=2000;pg++;}catch(e){break;}}return all.length?all:null;}
 
 // ── SIDEBAR TABS ──
 var activeTab='demo';
@@ -4999,6 +4999,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
