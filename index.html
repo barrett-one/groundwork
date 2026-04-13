@@ -1967,7 +1967,8 @@ function applyDriveResults(s,cache){
   renderBiz(s,cache.bizData,cache.stateData);
   renderTenure(s,cache.tenureData!==undefined?cache.tenureData:null,cache.stateData);
   renderCrime(s,cache.crimeData||null);
-  if(cache.zoningData){renderZoning(s,cache.zoningData);}else if(cache.stateData&&cache.stateData.fips==='25'&&cache.polyRing){
+  var _driveFips=cache.bgs&&cache.bgs.length?cache.bgs[0].GEOID.slice(0,2):(cache.stateData&&cache.stateData.fips)||'';
+  if(cache.zoningData){renderZoning(s,cache.zoningData);}else if(_driveFips==='25'&&cache.polyRing){
   // Show card with loading state immediately so user knows to expect it
   var _pzc=el('hcard-zoning-'+s);if(_pzc){_pzc.style.display=activeTab==='re'?'block':'none';_pzc.setAttribute('data-zone-visible','1');var _pzcd=el('zoning-'+s);if(_pzcd)_pzcd.innerHTML='<div style="font-size:11px;color:var(--m1);padding:8px 0">Loading parcel data…</div>';}fetchZoningPoly(cache.polyRing).then(function(z){renderZoning(s,z);if(driveCache[s])driveCache[s].zoningData=z;if(typeof setTab==='function')setTab(activeTab);}).catch(function(e){console.warn('ZoningPoly failed:',e);var c=el('hcard-zoning-'+s);if(c)c.style.display='none';});}else{var _zc=el('hcard-zoning-'+s);if(_zc)_zc.style.display='none';}
   renderPermits(s,cache.permitData||null);
@@ -2026,6 +2027,7 @@ function clearDriveTime(){
   var ds=el('drive-status');if(ds)ds.textContent='';
   var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
   updateAnalyzeBtn();
+  if(typeof setTab==='function') setTab(activeTab);
 }
 
 async function fetchIsochrone(min){
@@ -4954,6 +4956,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
