@@ -1342,7 +1342,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
       </div>
      </div>
     </div>
-    <div class="gr">
+    <div class="gr" data-tab="demo">
      <div class="sc"><div class="sl" title="People per square mile within the analysis circle">Pop Density</div><div class="sv" id="rd-0">—</div><div class="su">people / sq mi</div></div>
      <div class="sc"><div class="sl" title="Total housing units (occupied + vacant). Source: 2020 Census">Housing Units</div><div class="sv" id="rh-0">—</div><div class="su">2020 Census</div></div>
      <div class="sc"><div class="sl" title="Average people per occupied housing unit (population ÷ housing units)">Avg HH Size</div><div class="sv" id="hhsz-0">—</div><div class="su">people / household</div></div>
@@ -1374,7 +1374,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="permit-detail" id="permit-detail-0"></div>
     </div>
     <!-- BROKER INTEL (Intel tab only) -->
-    <div class="hcard" data-tab="intel"><div class="hl" style="margin-bottom:10px">BROKER INTEL</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="broker-btn" data-type="industrial" onclick="brokerIntel('industrial')">Industrial</button><button class="broker-btn" data-type="office" onclick="brokerIntel('office')">Office</button><button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button></div></div>
+    <div class="hcard" data-tab="intel"><div class="hl" style="margin-bottom:10px">BROKER INTEL</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><button class="broker-btn" data-type="industrial" onclick="brokerIntel('industrial')">Industrial</button><button class="broker-btn" data-type="office" onclick="brokerIntel('office')">Office</button><button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button></div><button onclick="generateSummary()" style="width:100%;padding:9px 14px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:8px;color:var(--ac);font-size:11.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><span style="font-size:13px">✶</span>Generate Market Summary</button></div>
     </div>
    </div>
 
@@ -1448,7 +1448,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
       </div>
      </div>
     </div>
-    <div class="gr">
+    <div class="gr" data-tab="demo">
      <div class="sc"><div class="sl" title="People per square mile within the analysis circle">Pop Density</div><div class="sv" id="rd-1">—</div><div class="su">people / sq mi</div></div>
      <div class="sc"><div class="sl" title="Total housing units (occupied + vacant). Source: 2020 Census">Housing Units</div><div class="sv" id="rh-1">—</div><div class="su">2020 Census</div></div>
      <div class="sc"><div class="sl" title="Average people per occupied housing unit (population ÷ housing units)">Avg HH Size</div><div class="sv" id="hhsz-1">—</div><div class="su">people / household</div></div>
@@ -3703,11 +3703,12 @@ function setTab(name){
   document.querySelectorAll('.stab').forEach(function(b){
     b.classList.toggle('on',b.dataset.tab===name);
   });
-  document.querySelectorAll('.hcard[data-tab]').forEach(function(c){
+  document.querySelectorAll('[data-tab]').forEach(function(c){
     var ct=c.dataset.tab;
     if(c.id&&c.id.indexOf('hcard-zoning')===0){
-      // Zone card: only show in RE tab AND if MA data available
       c.style.display=(ct===name&&c.getAttribute('data-zone-visible')==='1')?'block':'none';
+    } else if(c.classList.contains('stab')){
+      return; // skip tab buttons themselves
     } else {
       c.style.display=ct===name?'block':'none';
     }
@@ -5218,6 +5219,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
