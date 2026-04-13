@@ -2831,45 +2831,7 @@ function updateApiKeyStatus(){
 
 
 // ── SETTINGS PANEL ──
-function toggleSettings(){var p=el('settings-panel');if(p)p.classList.toggle('vis');}
-document.addEventListener('click',function(e){var btn=el('settings-btn'),panel=el('settings-panel');if(btn&&panel&&!btn.contains(e.target)&&!panel.contains(e.target))panel.classList.remove('vis');});
-function saveKeyFromPanel(){var inp=el('sp-inp');if(!inp||!inp.value.trim())return;localStorage.setItem('claude_api_key',inp.value.trim());updateKeyStatus();el('settings-panel').classList.remove('vis');}
-function updateKeyStatus(){var key=localStorage.getItem('claude_api_key')||'';var dot=el('sp-dot');if(dot)dot.classList.toggle('ok',!!key);var oldDot=el('api-key-dot');if(oldDot)oldDot.classList.toggle('ok',!!key);var inp=el('sp-inp');if(inp&&key)inp.placeholder='API key saved ✓';}
-
-document.addEventListener('DOMContentLoaded',function(){
-  MAP=L.map('map',{zoomControl:true}).setView([42.2,-71.2],9);
-  initCollapsible();
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{
-    maxZoom:16,attribution:'© <a href="https://www.esri.com">Esri</a> · US Census'
-  }).addTo(MAP);
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{
-    maxZoom:16,attribution:''
-  }).addTo(MAP);
-  // Force map to recalculate size after layout settles
-  setTimeout(fixMapSize,100);
-  setTimeout(fixMapSize,300);
-  setTimeout(fixMapSize,600);
-  setTimeout(fixMapSize,1200);
-  // ResizeObserver
-  if(typeof ResizeObserver!=='undefined'){
-    new ResizeObserver(function(){fixMapSize();}).observe(document.getElementById('map'));
-  }
-  // Load from URL params
-  (function(){
-    var p=new URLSearchParams(window.location.search);
-    if(p.get('a')) el('inp-a').value=p.get('a');
-    if(p.get('r')){
-      var r=parseFloat(p.get('r'));
-      radius=r;
-      document.querySelectorAll('.rb').forEach(function(b){b.classList.toggle('on',parseFloat(b.getAttribute('data-r'))===r);});
-    }
-    if(p.get('b')){toggleCompare();el('inp-b').value=p.get('b');}
-    if(p.get('a')) setTimeout(run,400);
-  })();
-  renderSaves();
-  updatePortCount();
-  setTab('demo');
-});
+);
 window.addEventListener('resize',fixMapSize);
 
 
@@ -4853,6 +4815,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
