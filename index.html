@@ -1382,7 +1382,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
         <button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button>
       </div>
       <button onclick="generateSummary()" style="width:100%;padding:9px 14px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:13px">✶</span>Generate Market Summary</button>
-    </div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="broker-btn" data-type="industrial" onclick="brokerIntel('industrial')">Industrial</button><button class="broker-btn" data-type="office" onclick="brokerIntel('office')">Office</button><button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button></div></div>
+    </div>
     </div>
    </div>
 
@@ -5227,6 +5227,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
