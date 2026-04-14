@@ -4757,8 +4757,8 @@ function drawExits(exitEls,hwyEls,cLat,cLon){
     hwyEls.forEach(function(el){
       if(el.type!=='way') return;
       var hw=(el.tags&&el.tags.highway)||'';
-      if(!hw.match(/motorway|trunk/)) return;
-      var ref=(el.tags&&(el.tags.ref||el.tags.name))||'';
+      if(!hw.match(/motorway|trunk|primary/)) return;
+      var ref=(el.tags&&el.tags.ref)||'';
       if(!ref||!el.geometry||el.geometry.length<2) return;
       hwyWays.push({ref:ref,geom:el.geometry});
     });
@@ -4783,10 +4783,17 @@ function drawExits(exitEls,hwyEls,cLat,cLon){
       }
     });
     // Try destination:ref as fallback
-    if(!hwyName&&tags['destination:ref']) hwyName=tags['destination:ref'].split(';')[0];
-    // Normalise: "I 93" → "I-93", "I-93" stays, "MA 128" stays
-    var dh=hwyName
-      .replace(/;.*/,'')
+    if(!hwyName&&tags['destination:ref']) hwyName=tags['destination:ref'];
+    // Pick best ref from semicolon-separated list: Interstate > US > state
+    function pickRef(s){
+      var parts=(s||'').split(';').map(function(p){return p.trim();}).filter(Boolean);
+      var interstates=parts.filter(function(p){return /^I[ -]\d/.test(p);});
+      if(interstates.length) return interstates[0];
+      var us=parts.filter(function(p){return /^US /.test(p);});
+      if(us.length) return us[0];
+      return parts[0]||'';
+    }
+    var dh=pickRef(hwyName)
       .replace(/\bI (\d)/g,'I-$1')
       .replace(/Interstate (\d)/gi,'I-$1')
       .replace(/Massachusetts Route /gi,'MA ')
@@ -6370,6 +6377,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
