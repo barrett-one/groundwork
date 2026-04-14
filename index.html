@@ -1409,6 +1409,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
         <div style="display:flex;gap:4px" id="sales-filter-0">
           <button class="sf-btn on" data-cls="all" onclick="setSalesFilter(0,'all',this)">All</button>
           <button class="sf-btn" data-cls="I" onclick="setSalesFilter(0,'I',this)">Industrial</button>
+          <button class="sf-btn" data-cls="FL" onclick="setSalesFilter(0,'FL',this)">Flex/R&D</button>
           <button class="sf-btn" data-cls="CR" onclick="setSalesFilter(0,'CR',this)">Retail</button>
           <button class="sf-btn" data-cls="CO" onclick="setSalesFilter(0,'CO',this)">Office</button>
           <button class="sf-btn" data-cls="CH" onclick="setSalesFilter(0,'CH',this)">Hotel</button>
@@ -3014,8 +3015,8 @@ function classifySale(code){
   return 'X';
 }
 
-var SALE_LABELS = {I:'Industrial',CR:'Retail/Food',CO:'Office',CH:'Hotel',CA:'Auto/Svc',R:'Residential',X:'Other'};
-var SALE_COLORS = {I:'#f59e42',CR:'#4b7cf3',CO:'#a78bfa',CH:'#e879f9',CA:'#38bdf8',R:'#3ecf8e',X:'#6a768f'};
+var SALE_LABELS = {I:'Industrial',FL:'Flex/R&D',CR:'Retail/Food',CO:'Office',CH:'Hotel',CA:'Auto/Svc',R:'Residential',X:'Other'};
+var SALE_COLORS = {I:'#f59e42',FL:'#fb923c',CR:'#4b7cf3',CO:'#a78bfa',CH:'#e879f9',CA:'#38bdf8',R:'#3ecf8e',X:'#6a768f'};
 
 async function fetchSales(s, lat, lon, r){
   var card = el('hcard-sales-'+s);
@@ -5347,6 +5348,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
