@@ -1607,6 +1607,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="permit-detail" id="permit-detail-1"></div>
     </div>
     </div>
+
+    <!-- SBA Card Slot B -->
+    <div class="hcard" data-tab="intel" id="hcard-sba-1" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="hl" style="margin-bottom:0">SBA LENDING ACTIVITY</div><div style="font-size:9.5px;color:var(--m1)">7(a) loans · 2015–2025</div></div>
+      <div id="sba-content-1"><div style="font-size:11px;color:var(--m1);padding:6px 0">Loading…</div></div>
+      <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">SBA FOIA · FY2015-FY2025 · Zip code level</div>
+    </div>
+
+    <!-- Recent Sales Slot B (MA only) -->
+    <div class="hcard" data-tab="intel" id="hcard-sales-1" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="hl" style="margin-bottom:0">RECENT SALES</div>
+        <div style="display:flex;gap:4px" id="sales-filter-1">
+          <button class="sf-btn on" data-cls="all" onclick="setSalesFilter(1,'all',this)">All</button>
+          <button class="sf-btn" data-cls="I" onclick="setSalesFilter(1,'I',this)">Industrial</button>
+          <button class="sf-btn" data-cls="FL" onclick="setSalesFilter(1,'FL',this)">Flex/R&D</button>
+          <button class="sf-btn" data-cls="CR" onclick="setSalesFilter(1,'CR',this)">Retail</button>
+          <button class="sf-btn" data-cls="CO" onclick="setSalesFilter(1,'CO',this)">Office</button>
+          <button class="sf-btn" data-cls="CH" onclick="setSalesFilter(1,'CH',this)">Hotel</button>
+          <button class="sales-clear-btn" id="sales-clear-1" onclick="clearSalePins(1)" style="display:none">✕ pins</button>
+        </div>
+      </div>
+      <div id="sales-1"><div style="font-size:11px;color:var(--m1);padding:8px 0">Loading sales data…</div></div>
+      <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">MassGIS L3 assessors · Last 36 months · Price > $50K · CRE only · MA only</div>
+    </div>
+    </div>
+    </div>
    </div>
   </div><!-- /res-wrap -->
     <div id="action-panel">
@@ -4299,6 +4326,11 @@ function resetSlot(s){
   var _zc2=el('hcard-zoning-'+s);if(_zc2){_zc2.style.display='none';_zc2.setAttribute('data-zone-visible','0');}
   var _sc=el('hcard-sales-'+s);if(_sc)_sc.style.display='none';
   salesData[s]=null;
+  var _sba=el('hcard-sba-'+s);if(_sba)_sba.style.display='none';
+  var _fs=el('flood-status-'+s);if(_fs)_fs.style.display='none';
+  var _es=el('env-status-'+s);if(_es)_es.style.display='none';
+  // Clear any remaining sale pins for this slot
+  if(typeof clearSalePins==='function') clearSalePins(s);
   ['rp','rs','ri','rbiz','rhwy','pop10','pop20','own'].forEach(function(id){
     var e=el(id+'-'+s); if(e){e.textContent='…';e.classList.add('pending');}
   });
@@ -6217,6 +6249,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
