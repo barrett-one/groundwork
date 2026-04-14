@@ -1134,13 +1134,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   cursor:pointer;font-size:11px;font-weight:600;color:var(--m2);
   transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.2px;
   user-select:none}
-#oz-toggle:hover{border-color:var(--oz-color,#f59e42);color:var(--oz-color,#f59e42)}
+#oz-toggle:hover{border-color:#f472b6;color:#f472b6}
 #oz-toggle.oz-on{
-  background:rgba(245,158,66,.12);border-color:#f59e42;color:#f59e42}
+  background:rgba(244,114,182,.12);border-color:#f472b6;color:#f472b6}
 #oz-toggle .oz-dot{
   width:8px;height:8px;border-radius:50%;border:1.5px solid currentColor;
   flex-shrink:0;transition:background .2s}
-#oz-toggle.oz-on .oz-dot{background:#f59e42;border-color:#f59e42}
+#oz-toggle.oz-on .oz-dot{background:#f472b6;border-color:#f472b6}
 /* OZ badge in sidebar */
 .oz-badge{
   display:inline-flex;align-items:center;gap:5px;
@@ -3029,7 +3029,7 @@ function renderOZLayer(geojson){
   ozLayer = L.geoJSON(geojson,{
     style:function(f){
       var rural = f.properties && f.properties.OZ_RURAL;
-      return{color:'#f59e42',weight:1.5,opacity:0.75,fillColor:rural?'#3ecf8e':'#f59e42',fillOpacity:0.13};
+      return{color:'#f472b6',weight:1.5,opacity:0.75,fillColor:'#f9a8d4',fillOpacity:0.18};
     },
     onEachFeature:function(feature,layer){
       var g = feature.properties && (feature.properties.GEOID||'');
@@ -3056,7 +3056,7 @@ async function checkAddressInOZ(lat,lon,slot){
     var ozData = await ozResp.json();
     var inOZ = ozData.features && ozData.features.length > 0;
     statusEl.style.display = inOZ ? 'block' : 'none';
-    if(inOZ) statusEl.innerHTML = '<span class="oz-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="#f59e42"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>Opportunity Zone</span>';
+    if(inOZ) statusEl.innerHTML = '<span class="oz-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="#f472b6"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>Opportunity Zone</span>';
     // If OZ overlay is active, refresh it for this state
     if(ozActive && inOZ){
       var fips = geoid.slice(0,2);
@@ -5207,6 +5207,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
