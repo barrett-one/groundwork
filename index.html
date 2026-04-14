@@ -3961,7 +3961,7 @@ function toggleOZ(){
   loadOZForCurrentState();
   MAP.on('moveend', onMapMoveOZ);
 }
-async async function loadOZForCurrentState(){
+async function loadOZForCurrentState(){
   // Get state FIPS from analysis or map center
   var fips = (slotCache[0] && slotCache[0].stateData && slotCache[0].stateData.fips) || '';
   if(!fips){
@@ -3980,7 +3980,7 @@ async async function loadOZForCurrentState(){
   loadOZLayer(fips);
 }
 
-async async function loadOZLayer(fips){
+async function loadOZLayer(fips){
   if(ozStateCache[fips]){
     var btn3=el('oz-toggle'); if(btn3) btn3.classList.remove('pill-loading');
     renderOZLayer(ozStateCache[fips]); return;
@@ -4690,7 +4690,7 @@ async function fetchHwy(lat,lon){
 // ══ HIGHWAY EXITS ══
 var exitMapLayer=null;
 var exitsActive=false; // exits toggled off by default
-async async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
+async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
 function drawExits(exitEls,hwyEls,cLat,cLon){
   clearExits();
   if(!exitEls||!exitEls.length||!exitsActive) return;
@@ -6315,6 +6315,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
