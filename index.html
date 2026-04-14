@@ -1201,6 +1201,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 }
 #exits-toggle.pill-loading{--pulse-col:#34d399}
 #oz-toggle.pill-loading{--pulse-col:#f472b6}
+
+/* ── FLOOD + ENV OVERLAYS ── */
+#flood-toggle:hover{border-color:#38bdf8;color:#38bdf8}
+#flood-toggle.oz-on{background:rgba(56,189,248,.12);border-color:#38bdf8;color:#38bdf8}
+#flood-toggle.pill-loading{--pulse-col:#38bdf8}
+#env-toggle:hover{border-color:#f97316;color:#f97316}
+#env-toggle.oz-on{background:rgba(249,115,22,.12);border-color:#f97316;color:#f97316}
+#env-toggle.pill-loading{--pulse-col:#f97316}
+.flood-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(56,189,248,.12);
+  border:1px solid rgba(56,189,248,.4);color:#38bdf8;font-size:10px;font-weight:700;
+  padding:3px 9px;border-radius:12px;letter-spacing:.3px;margin-top:2px}
+.env-badge{display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;
+  letter-spacing:.3px;margin-top:2px}
+.env-marker{width:12px;height:12px;border-radius:50%;border:2px solid #fff;
+  box-shadow:0 0 0 2px var(--mc);cursor:pointer}
 </style>
 </head>
 <body>
@@ -1609,6 +1625,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 <div id="map-toggles">
   <button id="exits-toggle" onclick="toggleExits()" title="Toggle highway exits">
     <span class="oz-dot" style="background:#34d399;border-color:#34d399"></span>Exits
+  </button>
+  <button id="flood-toggle" onclick="toggleFlood()" title="Toggle FEMA flood zones">
+    <span class="oz-dot" style="background:#38bdf8;border-color:#38bdf8"></span>Flood Zones
+  </button>
+  <button id="env-toggle" onclick="toggleEnv()" title="Toggle EPA environmental sites">
+    <span class="oz-dot" style="background:#f97316;border-color:#f97316"></span>Env Hazards
   </button>
   <button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
     <span class="oz-dot"></span>OZ Overlay
@@ -3254,6 +3276,227 @@ function updateSalesClearBtn(s){
   btn.style.display = hasPins ? 'inline-block' : 'none';
 }
 
+
+// ═══════════════ FLOOD ZONES (FEMA NFHL Layer 28) ═══════════════
+var FEMA_URL = 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query';
+var floodLayer = null;
+var floodActive = false;
+var floodCache = {};
+
+var FLOOD_ZONE_INFO = {
+  'VE': {label:'VE',desc:'Coastal High Hazard — wave action',color:'#ef4444',risk:'HIGH'},
+  'AE': {label:'AE',desc:'1% Annual Chance Flood (detailed study)',color:'#f97316',risk:'HIGH'},
+  'AH': {label:'AH',desc:'Shallow Flooding — ponding',color:'#fb923c',risk:'HIGH'},
+  'AO': {label:'AO',desc:'Shallow Flooding — sheet flow',color:'#fb923c',risk:'HIGH'},
+  'A':  {label:'A', desc:'1% Annual Chance (no detailed study)',color:'#fbbf24',risk:'HIGH'},
+  'AR': {label:'AR',desc:'Reduced Risk — levee present',color:'#fbbf24',risk:'MODERATE'},
+  'X':  {label:'X', desc:'Minimal Risk — outside 500-yr flood',color:'#86efac',risk:'MINIMAL'},
+  'D':  {label:'D', desc:'Undetermined Risk',color:'#94a3b8',risk:'UNKNOWN'},
+};
+
+function toggleFlood(){
+  floodActive = !floodActive;
+  var btn = el('flood-toggle');
+  if(btn) btn.classList.toggle('oz-on', floodActive);
+  if(!floodActive){ if(floodLayer){MAP.removeLayer(floodLayer);floodLayer=null;} return; }
+  loadFloodLayer();
+  MAP.on('moveend', onMapMoveFlood);
+}
+function onMapMoveFlood(){ if(floodActive) loadFloodLayer(); }
+
+async function loadFloodLayer(){
+  if(!MAP) return;
+  var b = MAP.getBounds();
+  var key = MAP.getZoom()+':'+b.getSouth().toFixed(2)+':'+b.getWest().toFixed(2);
+  if(floodCache[key]){ renderFloodLayer(floodCache[key]); return; }
+  var btn = el('flood-toggle');
+  if(btn) btn.classList.add('pill-loading');
+  var geom = b.getWest()+','+b.getSouth()+','+b.getEast()+','+b.getNorth();
+  var url = FEMA_URL
+    + '?geometry=' + encodeURIComponent(geom)
+    + '&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects'
+    + '&inSR=4326&outSR=4326&outFields=FLD_ZONE,ZONE_SUBTY,SFHA_TF'
+    + '&returnGeometry=true&resultRecordCount=500&f=geojson';
+  try{
+    var resp = await fetch(url);
+    if(btn) btn.classList.remove('pill-loading');
+    if(!resp.ok) return;
+    var gj = await resp.json();
+    if(!gj.features || !gj.features.length) return;
+    floodCache[key] = gj;
+    renderFloodLayer(gj);
+  }catch(e){
+    if(btn) btn.classList.remove('pill-loading');
+    console.warn('Flood load error:',e);
+  }
+}
+
+function renderFloodLayer(gj){
+  if(floodLayer){ MAP.removeLayer(floodLayer); floodLayer=null; }
+  floodLayer = L.geoJSON(gj, {
+    style: function(f){
+      var zone = (f.properties.FLD_ZONE||'X').trim();
+      var info = FLOOD_ZONE_INFO[zone] || FLOOD_ZONE_INFO['D'];
+      var sfha = f.properties.SFHA_TF === 'T';
+      return {
+        color: info.color, weight: sfha ? 1.5 : 0.8,
+        opacity: sfha ? 0.8 : 0.4,
+        fillColor: info.color,
+        fillOpacity: sfha ? 0.18 : 0.06
+      };
+    },
+    onEachFeature: function(f, layer){
+      var zone = (f.properties.FLD_ZONE||'X').trim();
+      var subty = f.properties.ZONE_SUBTY||'';
+      var info = FLOOD_ZONE_INFO[zone] || {label:zone,desc:'Flood zone '+zone,risk:'UNKNOWN'};
+      var sfha = f.properties.SFHA_TF === 'T';
+      var tip = '<b>Zone ' + info.label + '</b><br>'
+        + info.desc + (subty?'<br><span style="font-size:10px;color:#94a3b8">'+subty+'</span>':'')
+        + '<br><span style="font-size:10px">'
+        + (sfha?'<span style="color:#f97316">⚠ Special Flood Hazard Area</span>':'<span style="color:#86efac">✓ Outside SFHA</span>')
+        + '</span>';
+      layer.bindTooltip(tip, {sticky:true, className:'flood-tooltip'});
+    }
+  }).addTo(MAP);
+  if(floodLayer) floodLayer.bringToBack();
+}
+
+async function checkSubjectFlood(lat, lon, s){
+  var statusEl = el('flood-status-'+s);
+  if(!statusEl) return;
+  try{
+    var url = FEMA_URL + '?geometry=' + lon + ',' + lat
+      + '&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects'
+      + '&inSR=4326&outFields=FLD_ZONE,SFHA_TF&returnGeometry=false&f=json';
+    var resp = await fetch(url);
+    if(!resp.ok) return;
+    var d = await resp.json();
+    var feats = d.features||[];
+    if(!feats.length){ statusEl.style.display='none'; return; }
+    var zone = (feats[0].attributes.FLD_ZONE||'X').trim();
+    var sfha = feats[0].attributes.SFHA_TF==='T';
+    var info = FLOOD_ZONE_INFO[zone] || {label:zone,desc:'Flood zone '+zone,color:'#94a3b8',risk:'UNKNOWN'};
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<span class="flood-badge">'
+      + '<svg width="9" height="9" viewBox="0 0 24 24" fill="'+info.color+'"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm-1-5h2v2h-2zm0-8h2v6h-2z"/></svg>'
+      + (sfha?'⚠ Flood Zone '+info.label:'Zone '+info.label) + '</span>';
+  }catch(e){ console.warn('Flood check:',e); }
+}
+
+// ═══════════════ EPA ENVIRONMENTAL SITES (FRS) ═══════════════
+var EPA_FRS = 'https://geodata.epa.gov/arcgis/rest/services/OEI/FRS_INTERESTS/MapServer/';
+var envLayer = null;
+var envActive = false;
+var envCache = {};
+
+var ENV_TYPE = {
+  'SEMS_NPL':  {label:'Superfund NPL',    short:'NPL',   color:'#ef4444'},
+  'SEMS':      {label:'Superfund/CERCLA', short:'CERCLA',color:'#f97316'},
+  'RCRA_LQG':  {label:'Hazardous Waste',  short:'RCRA',  color:'#f59e0b'},
+  'RCRA_ACTIVE':{label:'RCRA Active',     short:'RCRA',  color:'#f59e0b'},
+  'RCRA':      {label:'RCRA Facility',    short:'RCRA',  color:'#f59e0b'},
+  'TRI':       {label:'Toxic Release',    short:'TRI',   color:'#eab308'},
+  'ACRES':     {label:'Brownfield',       short:'BF',    color:'#a78bfa'},
+  'NPDES':     {label:'Wastewater Discharge',short:'NPDES',color:'#60a5fa'},
+};
+
+// FRS layers to query: 0=ACRES, 15=RCRA, 21=SEMS, 22=SEMS_NPL, 23=TRI
+var ENV_LAYERS = [22, 21, 15, 23, 0];
+
+function toggleEnv(){
+  envActive = !envActive;
+  var btn = el('env-toggle');
+  if(btn) btn.classList.toggle('oz-on', envActive);
+  if(!envActive){ if(envLayer){MAP.removeLayer(envLayer);envLayer=null;} return; }
+  loadEnvLayer();
+}
+
+async function loadEnvLayer(){
+  var s=0;
+  var lat = slotCache[s]&&slotCache[s].lat;
+  var lon = slotCache[s]&&slotCache[s].lon;
+  if(!lat||!lon) return;
+  var key = lat.toFixed(2)+':'+lon.toFixed(2);
+  if(envCache[key]){ renderEnvLayer(envCache[key]); return; }
+  var btn = el('env-toggle');
+  if(btn) btn.classList.add('pill-loading');
+  var sites = [];
+  await Promise.all(ENV_LAYERS.map(async function(layerId){
+    try{
+      var url = EPA_FRS + layerId + '/query?geometry=' + lon + ',' + lat
+        + '&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects'
+        + '&distance=8047&units=esriSRUnit_Meter&inSR=4326&outSR=4326'
+        + '&outFields=PRIMARY_NAME,LOCATION_ADDRESS,CITY_NAME,LATITUDE83,LONGITUDE83,PGM_SYS_ACRNM,INTEREST_TYPE'
+        + '&returnGeometry=false&resultRecordCount=50&f=json';
+      var resp = await fetch(url);
+      if(!resp.ok) return;
+      var d = await resp.json();
+      (d.features||[]).forEach(function(f){
+        var a = f.attributes;
+        if(a.LATITUDE83&&a.LONGITUDE83) sites.push(a);
+      });
+    }catch(e){}
+  }));
+  if(btn) btn.classList.remove('pill-loading');
+  envCache[key] = sites;
+  renderEnvLayer(sites);
+}
+
+function renderEnvLayer(sites){
+  if(envLayer){ MAP.removeLayer(envLayer); envLayer=null; }
+  if(!sites||!sites.length) return;
+  envLayer = L.layerGroup().addTo(MAP);
+  var seen = {};
+  sites.forEach(function(a){
+    var key = a.LATITUDE83.toFixed(4)+':'+a.LONGITUDE83.toFixed(4);
+    if(seen[key]) return;
+    seen[key] = true;
+    var acrnm = (a.PGM_SYS_ACRNM||'').split('-')[0];
+    var info = ENV_TYPE[acrnm] || {label:a.INTEREST_TYPE||acrnm,short:acrnm,color:'#94a3b8'};
+    var icon = L.divIcon({
+      className:'',
+      html:'<div style="width:12px;height:12px;border-radius:50%;background:'+info.color
+        +';border:2px solid rgba(255,255,255,.8);box-shadow:0 0 0 2px '+info.color+'66;cursor:pointer"></div>',
+      iconSize:[12,12], iconAnchor:[6,6]
+    });
+    var marker = L.marker([a.LATITUDE83, a.LONGITUDE83], {icon:icon, interactive:true, zIndexOffset:200});
+    var popup = '<div style="font-family:DM Sans,sans-serif;min-width:140px">'
+      + '<div style="font-size:10px;font-weight:700;color:'+info.color+';letter-spacing:.4px;margin-bottom:2px">'+info.label+'</div>'
+      + '<div style="font-size:12px;font-weight:600;color:#dde3f0;margin-bottom:2px">'+(a.PRIMARY_NAME||'')+'</div>'
+      + '<div style="font-size:11px;color:#8e98b0">'+(a.LOCATION_ADDRESS||'')+', '+(a.CITY_NAME||'')+'</div>'
+      + '</div>';
+    marker.bindPopup(popup, {maxWidth:220});
+    marker.addTo(envLayer);
+  });
+}
+
+async function checkSubjectEnv(lat, lon, s){
+  var statusEl = el('env-status-'+s);
+  if(!statusEl) return;
+  try{
+    // Check 200m radius for subject property proximity
+    var sites = [];
+    await Promise.all([22,21,15,23,0].map(async function(layerId){
+      var url = EPA_FRS + layerId + '/query?geometry=' + lon + ',' + lat
+        + '&geometryType=esriGeometryPoint&distance=200&units=esriSRUnit_Meter'
+        + '&inSR=4326&outFields=PRIMARY_NAME,PGM_SYS_ACRNM,INTEREST_TYPE'
+        + '&returnGeometry=false&resultRecordCount=1&f=json';
+      var resp = await fetch(url);
+      if(!resp.ok) return;
+      var d = await resp.json();
+      if(d.features&&d.features.length) sites.push(d.features[0].attributes);
+    }));
+    if(!sites.length){ statusEl.style.display='none'; return; }
+    var a = sites[0];
+    var acrnm = (a.PGM_SYS_ACRNM||'').split('-')[0];
+    var info = ENV_TYPE[acrnm] || {label:a.INTEREST_TYPE||acrnm,short:acrnm,color:'#f97316'};
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<span class="env-badge" style="background:'+info.color+'22;border:1px solid '+info.color+'66;color:'+info.color+'">'
+      + '<svg width="9" height="9" viewBox="0 0 24 24" fill="'+info.color+'"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'
+      + info.label + ' on/near site</span>';
+  }catch(e){ console.warn('Env check:',e); }
+}
+
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
 // Service: Opportunity_Zones_2 on CDFI/HUD ArcGIS org
 // Field OZ_ON_LIST=1 = actually designated (not just eligible)
@@ -3414,6 +3657,7 @@ document.addEventListener('DOMContentLoaded',function(){
   updatePortCount();
   setTab('demo');
   MAP.on('zoomend',function(){ if(hwyElementsAll&&hwyElementsAll.length) drawHighways(hwyElementsAll); });
+  MAP.on('moveend',function(){ if(floodActive) loadFloodLayer(); });
 });
 window.addEventListener('resize',fixMapSize);
 
@@ -5601,6 +5845,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
