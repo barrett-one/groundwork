@@ -3953,16 +3953,17 @@ function toggleExits(){
   var cacheKey = lat.toFixed(3)+':'+lon.toFixed(3);
   var cached = exitsCache[cacheKey];
   if(cached){
-    // Instant — use pre-fetched exits
-    drawExits(cached, hwyElementsAll, lat, lon);
+    var exitNodes = cached.exits || cached;
+    var exitHwys  = cached.hwys  || hwyElementsAll;
+    drawExits(exitNodes, exitHwys, lat, lon);
     if(btn) btn.classList.remove('pill-loading');
     return;
   }
-  // Not cached yet — fetch (only happens if analysis hasn't pre-fetched yet)
+  // Not cached — fetch now (only if analysis pre-fetch hasn't completed)
   if(btn) btn.classList.add('pill-loading');
   fetchExits(lat,lon,15).then(function(ex){
     if(ex){
-      exitsCache[cacheKey]=ex;
+      exitsCache[cacheKey]={exits:ex,hwys:hwyElementsAll.slice()};
       drawExits(ex, hwyElementsAll, lat, lon);
     }
   }).catch(function(){}).finally(function(){
@@ -4765,8 +4766,7 @@ function drawExits(exitEls,hwyEls,cLat,cLon){
       .replace(/US Route /gi,'US ')
       .replace(/\s+/g,' ')
       .trim();
-    // Skip exits with no identifiable highway — useless without context
-    if(!dh) return;
+    // Show exit even without highway name — better than silently dropping
     var dest=tags.destination||tags['destination:ref']||'';
     var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);
     // Popup
@@ -5947,7 +5947,7 @@ async function runSlot(s,addr,r){
   renderPermits(s,permitData);
   if(stateFips==='25') fetchSales(s,lat,lon,radius);
   slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;slotCache[s].zoningData=zoningData||null;
-  (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]=ex;if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive'&&exitsActive)drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
+  (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]={exits:ex,hwys:he||hwyElementsAll.slice()};if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive'&&exitsActive)drawExits(ex,he||hwyElementsAll,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
@@ -6327,7 +6327,7 @@ async function runDriveFirst(s,addr,min){
   var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
-  (function(la,lo,he){fetchExits(la,lo,15).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]=ex;if(exitsActive)drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,hwyElements);
+  (function(la,lo,he){fetchExits(la,lo,15).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]={exits:ex,hwys:he||hwyElementsAll.slice()};if(exitsActive)drawExits(ex,he||hwyElementsAll,la,lo);}}).catch(function(){});})(lat,lon,hwyElements);
   // Retry highways if failed
   if(!hwyElements){
     setTimeout(async function(){
@@ -6343,6 +6343,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
