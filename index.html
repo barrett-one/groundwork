@@ -3662,7 +3662,6 @@ function renderTowers(els){
     var constr=tags['tower:construction']||'';
     var name=tags.name||tags['operator']||'';
     var height=tags.height||'';
-    // Cell tower icon — purple circle with antenna symbol
     var dotColor=isMobile?'#a78bfa':'#c4b5fd';
     var icon=L.divIcon({
       className:'',
@@ -3673,16 +3672,36 @@ function renderTowers(els){
       iconSize:[14,14],iconAnchor:[7,7]
     });
     var typeLabel=isMobile?'Cell Tower (Mobile)':isRadio?'Broadcast Tower':'Communication Tower';
-    var popupHtml='<div style="font-family:DM Sans,sans-serif;min-width:130px">'
-      +'<div style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.4px;margin-bottom:2px">'+typeLabel+'</div>'
-      +(name?'<div style="font-size:12px;font-weight:600;color:#dde3f0;margin-bottom:2px">'+name+'</div>':'')
+    var coordStr=node.lat.toFixed(5)+', '+node.lon.toFixed(5);
+    var addrId='tower-addr-'+node.id;
+    var popupHtml='<div style="font-family:DM Sans,sans-serif;min-width:160px">'
+      +'<div style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.4px;margin-bottom:4px">'+typeLabel+'</div>'
+      +(name?'<div style="font-size:12px;font-weight:600;color:#dde3f0;margin-bottom:4px">'+name+'</div>':'')
+      +'<div id="'+addrId+'" style="font-size:11px;color:#8e98b0;margin-bottom:4px">'+coordStr+'</div>'
       +(height?'<div style="font-size:11px;color:#8e98b0">Height: '+height+'m</div>':'')
-      +(constr?'<div style="font-size:11px;color:#8e98b0">Construction: '+constr+'</div>':'')
-      +'<div style="font-size:10px;color:#636d85;margin-top:4px;border-top:1px solid rgba(255,255,255,.06);padding-top:4px">'
-      +'Potential ground lease income: $1,500–$3,000/mo</div>'
+      +(constr?'<div style="font-size:11px;color:#8e98b0;text-transform:capitalize">'+constr+'</div>':'')
       +'</div>';
     var marker=L.marker([node.lat,node.lon],{icon:icon,interactive:true,zIndexOffset:250});
-    marker.bindPopup(popupHtml,{maxWidth:220});
+    marker.bindPopup(popupHtml,{maxWidth:240});
+    // Reverse geocode on popup open — replace coords with street address
+    marker.on('popupopen',function(){
+      var addrEl=document.getElementById(addrId);
+      if(!addrEl||addrEl.dataset.resolved) return;
+      addrEl.dataset.resolved='1';
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+node.lat+'&lon='+node.lon+'&zoom=18&addressdetails=1')
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(!d||!d.address) return;
+          var a=d.address;
+          var num=a.house_number||'';
+          var road=a.road||a.pedestrian||a.path||'';
+          var city=a.city||a.town||a.village||a.suburb||'';
+          var state=a.state_abbr||a.state||'';
+          var parts=[num&&road?num+' '+road:road,city,state].filter(Boolean);
+          if(parts.length&&addrEl) addrEl.textContent=parts.join(', ');
+        })
+        .catch(function(){});
+    });
     marker.addTo(towerLayer);
   });
 }
@@ -6324,6 +6343,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
