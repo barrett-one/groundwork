@@ -5085,6 +5085,7 @@ function buildFallbackSummary(d,instructions){
 async function runSlot(s,addr,r){
   resetSlot(s);
   el('col-'+s).classList.add('vis');
+  checkAddressInOZ(lat,lon,s);
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
   if(s===0){
     hwyElementsAll=[];
@@ -5600,6 +5601,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
