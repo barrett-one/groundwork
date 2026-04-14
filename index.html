@@ -3640,6 +3640,7 @@ function renderTowers(els){
 
 // ═══════════════ SBA LENDING ACTIVITY ═══════════════
 var sbaData = null;
+var sbaBench = {};
 var sbaLoading = false;
 var SBA_URL = 'https://raw.githubusercontent.com/barrett-one/groundwork/main/sba_data.json.gz';
 
@@ -3678,8 +3679,11 @@ async function loadSBAData(){
     var merged = new Uint8Array(totalLen);
     var offset = 0;
     chunks.forEach(function(c){merged.set(c,offset);offset+=c.length;});
-    sbaData = JSON.parse(new TextDecoder().decode(merged));
-    console.log('SBA data loaded: '+Object.keys(sbaData).length+' zips');
+    var parsed = JSON.parse(new TextDecoder().decode(merged));
+    sbaBench = parsed._b || {};
+    delete parsed._b;
+    sbaData = parsed;
+    console.log('SBA data loaded: '+Object.keys(sbaData).length+' zips, '+Object.keys(sbaBench).length+' benchmark groups');
     return sbaData;
   }catch(e){
     sbaLoading = false;
@@ -3781,14 +3785,32 @@ async function renderSBACard(s, zips){
   var latest = zipData[latestYr]||{};
   var prevYr = years[years.length-2];
   var prev = prevYr ? zipData[prevYr] : null;
-  var trend = prev&&prev.c ? Math.round((latest.c-prev.c)/prev.c*100) : 0;
-  var trendStr = trend>0?'+'+trend+'%':trend+'%';
-  var trendColor = trend>10?'#3ecf8e':trend<-10?'#ef4444':'#8e98b0';
+  // 3-year CAGR
+  var cagr = 0;
+  if(years.length>=4){
+    var y3ago = zipData[years[years.length-4]];
+    if(y3ago&&y3ago.c&&latest.c) cagr = Math.round((Math.pow(latest.c/y3ago.c, 1/3)-1)*100);
+  }
+  var cagrStr = (cagr>0?'+':'')+cagr+'% / yr';
+  var cagrColor = cagr>10?'#3ecf8e':cagr<-5?'#ef4444':cagr>3?'#86efac':'#8e98b0';
   var recent5 = years.slice(-5);
   var totalLoans = recent5.reduce(function(a,y){return a+(zipData[y].c||0);},0);
   var totalAmt  = recent5.reduce(function(a,y){return a+(zipData[y].t||0);},0);
   var totalJobs = recent5.reduce(function(a,y){return a+(zipData[y].j||0);},0);
   var avgLoan = totalLoans ? Math.round(totalAmt/totalLoans) : 0;
+  // Benchmark: look up 3-digit prefix for first zip
+  var bench = null;
+  if(zips&&zips.length&&sbaBench){
+    var prefix3 = zips[0].slice(0,3);
+    var bGroup = sbaBench[prefix3];
+    if(bGroup&&bGroup[latestYr]) bench = bGroup[latestYr];
+  }
+  // Capital deployed per zip vs benchmark
+  var capPerZip = zips&&zips.length ? Math.round(totalAmt/zips.length) : 0;
+  var benchCapPerZip = bench ? bench.mt : 0;
+  var capVsBench = benchCapPerZip ? Math.round(capPerZip/benchCapPerZip*100) : null;
+  var capScore = capVsBench ? (capVsBench>=150?'Strong':capVsBench>=100?'Average':capVsBench>=50?'Below Avg':'Weak') : null;
+  var capScoreColor = capVsBench ? (capVsBench>=150?'#3ecf8e':capVsBench>=100?'#86efac':capVsBench>=50?'#f59e0b':'#ef4444') : '#8e98b0';
 
   var html = '';
   // Zip count badge
@@ -3806,8 +3828,19 @@ async function renderSBACard(s, zips){
   html += '<div class="sba-stats">'
     +'<div class="sba-stat"><div class="sba-stat-val">$'+(avgLoan>=1000?Math.round(avgLoan/1000)+'K':avgLoan)+'</div><div class="sba-stat-lbl">avg loan</div></div>'
     +'<div class="sba-stat"><div class="sba-stat-val">'+(totalJobs>=1000?Math.round(totalJobs/1000)+'K':totalJobs)+'</div><div class="sba-stat-lbl">jobs (5yr)</div></div>'
-    +'<div class="sba-stat"><div class="sba-stat-val" style="color:'+trendColor+'">'+trendStr+'</div><div class="sba-stat-lbl">YoY</div></div>'
-    +'</div>';
+    +'<div class="sba-stat"><div class="sba-stat-val" style="color:'+cagrColor+'">'+cagrStr+'</div><div class="sba-stat-lbl">3yr trend</div></div>'
+    +'</div>'
+    // Benchmark row
+    +(capVsBench!==null
+      ? '<div style="margin-top:8px;padding:7px 10px;background:var(--b1);border-radius:7px;display:flex;align-items:center;justify-content:space-between">'
+        +'<div style="font-size:10px;color:var(--m1)">Capital vs local market<br><span style="font-size:9px">'+latestYr+' · peer zip comparison</span></div>'
+        +'<div style="text-align:right">'
+        +'<div style="font-size:13px;font-weight:700;color:'+capScoreColor+'">'+capScore+'</div>'
+        +'<div style="font-size:9.5px;color:var(--m2)">'+(capPerZip>=1e6?(capPerZip/1e6).toFixed(1)+'M':Math.round(capPerZip/1000)+'K')+' vs '
+        +(benchCapPerZip>=1e6?(benchCapPerZip/1e6).toFixed(1)+'M':Math.round(benchCapPerZip/1000)+'K')+' median</div>'
+        +'</div></div>'
+      : ''
+    );
   // Top sectors
   var sectors = (latest.n||[]).slice(0,3);
   if(sectors.length){
@@ -6178,6 +6211,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
