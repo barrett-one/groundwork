@@ -3004,15 +3004,13 @@ var salesData = [null, null]; // cache per slot
 var salesFilter = ['all', 'all'];
 
 function classifySale(code){
-  // Strip letters, use first 3 digits — handles 4-digit codes like 3420, 4010 and alpha suffixes like 316I
-  var s=(code||'').toString().replace(/[^0-9]/g,'');
-  var n=parseInt(s.slice(0,3))||0;
-  if(n>=400&&n<500) return 'I';
-  if((n>=300&&n<320)||(n>=330&&n<340)||(n>=360&&n<370)) return 'CR';
-  if(n>=320&&n<330) return 'CA';
-  if(n>=350&&n<360) return 'CH';
-  if((n>=340&&n<350)||(n>=370&&n<400)) return 'CO';
-  if(n>=100&&n<200) return 'R';
+  var c = parseInt(code)||0;
+  if(c>=400&&c<500) return 'I';
+  if((c>=300&&c<320)||(c>=330&&c<340)||(c>=360&&c<370)) return 'CR';
+  if(c>=320&&c<330) return 'CA';
+  if(c>=350&&c<360) return 'CH';
+  if((c>=340&&c<350)||(c>=370&&c<400)) return 'CO';
+  if(c>=100&&c<200) return 'R';
   return 'X';
 }
 
@@ -3074,7 +3072,8 @@ function renderSales(s){
     cont.innerHTML = '<div style="font-size:11px;color:var(--m1);padding:8px 0">No '+SALE_LABELS[cls]+' sales in this period</div>';
     return;
   }
-  var rows = filtered;
+  // Cap at 30 rows
+  var rows = filtered.slice(0,30);
   var html = '<table class="sales-table"><thead><tr>'
     + '<th>Type</th><th>Address</th><th>SF</th><th>Price</th><th>$/SF</th><th>Date</th></tr></thead><tbody>';
   rows.forEach(function(a){
@@ -3097,7 +3096,7 @@ function renderSales(s){
       + '</tr>';
   });
   html += '</tbody></table>';
-
+  if(filtered.length>30) html += '<div style="font-size:9.5px;color:var(--m1);margin-top:6px">Showing 30 of '+filtered.length+' sales</div>';
   cont.innerHTML = html;
 }
 
@@ -5348,7 +5347,6 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
-
 
 
 
