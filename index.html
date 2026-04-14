@@ -1344,6 +1344,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
      <div class="print-ts" id="print-ts"></div>
     </div>
     <div class="ra-label" id="ra-0"></div>
+    <div id="oz-status-0" style="display:none"></div>
+    <div id="flood-status-0" style="display:none"></div>
+    <div id="env-status-0" style="display:none"></div>
     <div class="hcard pop" data-tab="demo"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-0">—</div><div class="hs" id="rs-0"></div>
      <div class="cbar-wrap" id="cbar-0" style="display:none">
       <div class="cbar-row"><div class="cbar-label"><span id="nat-lbl-0"></span><span style="color:var(--m1)" id="nat-ref-0"></span></div><div class="cbar-track"><div class="cbar-fill" id="nat-bar-0"></div></div></div>
@@ -1476,6 +1479,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
    <!-- Slot B -->
    <div class="rcol b-col" id="col-1">
     <div class="ra-label" id="ra-1"></div>
+    <div id="oz-status-1" style="display:none"></div>
+    <div id="flood-status-1" style="display:none"></div>
+    <div id="env-status-1" style="display:none"></div>
     <div class="hcard pop" style="--slot-accent:var(--slot-b)"><div class="hl" data-tip="Total resident population within the radius. Source: 2020 Census, block group level.">Total Population</div><div class="hn pending" id="rp-1">—</div><div class="hs" id="rs-1"></div>
      <div class="cbar-wrap" id="cbar-1" style="display:none">
       <div class="cbar-row"><div class="cbar-label"><span id="nat-lbl-1"></span><span style="color:var(--m1)" id="nat-ref-1"></span></div><div class="cbar-track"><div class="cbar-fill" id="nat-bar-1"></div></div></div>
@@ -5845,6 +5851,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
