@@ -3856,6 +3856,8 @@ async function renderSBACard(s, zips){
   var cont = el('sba-content-'+s);
   if(!card||!cont) return;
   if(!zips||!zips.length){ card.style.display='none'; return; }
+  var parentCol2=card.closest('.rcol');
+  if(parentCol2&&!parentCol2.classList.contains('vis')) return;
   card.style.display = activeTab==='intel'?'block':'none';
 
   cont.innerHTML='<div style="font-size:11px;color:var(--m1)">Loading SBA data\u2026</div>';
@@ -4846,10 +4848,12 @@ function setTab(name){
   });
   document.querySelectorAll('[data-tab]').forEach(function(c){
     var ct=c.dataset.tab;
+    if(c.classList.contains('stab')) return; // skip tab buttons
+    // Skip if parent col is not visible (slot B cards in single-slot mode)
+    var parentCol=c.closest('.rcol');
+    if(parentCol&&!parentCol.classList.contains('vis')) return;
     if(c.id&&c.id.indexOf('hcard-zoning')===0){
       c.style.display=(ct===name&&c.getAttribute('data-zone-visible')==='1')?'block':'none';
-    } else if(c.classList.contains('stab')){
-      return; // skip tab buttons themselves
     } else {
       c.style.display=ct===name?'block':'none';
     }
@@ -6379,6 +6383,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
