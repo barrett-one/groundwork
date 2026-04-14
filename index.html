@@ -3380,16 +3380,18 @@ function toggleFlood(){
   if(!floodActive){
     if(floodLayer){MAP.removeLayer(floodLayer);floodLayer=null;}
     MAP.off('moveend', onMapMoveFlood);
-    // Clear subject badges
+    if(btn) btn.classList.remove('pill-loading');
     [0,1].forEach(function(s){var el2=el('flood-status-'+s);if(el2)el2.style.display='none';});
     return;
   }
+  if(btn) btn.classList.add('pill-loading');
   loadFloodLayer();
   MAP.on('moveend', onMapMoveFlood);
-  // Check subject property for active slots
+  // Check subject property for active slots — was broken (empty loop), now fixed
   [0,1].forEach(function(s){
     var lat=slotCache[s]&&slotCache[s].lat;
     var lon=slotCache[s]&&slotCache[s].lon;
+    if(lat&&lon) checkSubjectFlood(lat,lon,s);
   });
 }
 function onMapMoveFlood(){ if(floodActive) loadFloodLayer(); }
@@ -3400,7 +3402,7 @@ async function loadFloodLayer(){
   var key = MAP.getZoom()+':'+b.getSouth().toFixed(2)+':'+b.getWest().toFixed(2);
   if(floodCache[key]){ renderFloodLayer(floodCache[key]); return; }
   var btn = el('flood-toggle');
-  if(btn) btn.classList.add('pill-loading');
+  // pill-loading already set by toggleFlood
   var geom = b.getWest()+','+b.getSouth()+','+b.getEast()+','+b.getNorth();
   var url = FEMA_URL
     + '?geometry=' + encodeURIComponent(geom)
@@ -3499,9 +3501,11 @@ function toggleEnv(){
   if(btn) btn.classList.toggle('oz-on', envActive);
   if(!envActive){
     if(envLayer){MAP.removeLayer(envLayer);envLayer=null;}
+    if(btn) btn.classList.remove('pill-loading');
     [0,1].forEach(function(s){var el2=el('env-status-'+s);if(el2)el2.style.display='none';});
     return;
   }
+  if(btn) btn.classList.add('pill-loading');
   var lat=null,lon=null;
   if(slotCache[0]&&slotCache[0].lat){ lat=slotCache[0].lat; lon=slotCache[0].lon; }
   else if(slotCache[1]&&slotCache[1].lat){ lat=slotCache[1].lat; lon=slotCache[1].lon; }
@@ -3520,7 +3524,7 @@ async function loadEnvLayer(){
   var key = lat.toFixed(2)+':'+lon.toFixed(2);
   if(envCache[key]){ renderEnvLayer(envCache[key]); return; }
   var btn = el('env-toggle');
-  if(btn) btn.classList.add('pill-loading');
+  // pill-loading already set by toggleEnv
   var sites = [];
   await Promise.all(ENV_LAYERS.map(async function(layerId){
     try{
@@ -3608,12 +3612,19 @@ function toggleTowers(){
   towerActive = !towerActive;
   var btn = el('tower-toggle');
   if(btn) btn.classList.toggle('oz-on', towerActive);
-  if(!towerActive){ if(towerLayer){MAP.removeLayer(towerLayer);towerLayer=null;} return; }
-  var s=0;
-  var lat=slotCache[s]&&slotCache[s].lat;
-  var lon=slotCache[s]&&slotCache[s].lon;
-  var r=slotCache[s]&&slotCache[s].radius||5;
-  if(lat&&lon) loadTowers(lat,lon,Math.max(r,5));
+  if(!towerActive){
+    if(towerLayer){MAP.removeLayer(towerLayer);towerLayer=null;}
+    if(btn) btn.classList.remove('pill-loading');
+    return;
+  }
+  // Use whichever slot is active
+  var lat=null,lon=null,r=5;
+  if(slotCache[0]&&slotCache[0].lat){ lat=slotCache[0].lat; lon=slotCache[0].lon; r=slotCache[0].r||5; }
+  else if(slotCache[1]&&slotCache[1].lat){ lat=slotCache[1].lat; lon=slotCache[1].lon; r=slotCache[1].r||5; }
+  if(lat&&lon){
+    if(btn) btn.classList.add('pill-loading');
+    loadTowers(lat,lon,Math.max(r,5));
+  }
 }
 
 async function loadTowers(lat,lon,r){
@@ -3938,8 +3949,10 @@ function toggleOZ(){
   MAP.off('moveend', onMapMoveOZ);
   if(!ozActive){
     if(ozLayer){ MAP.removeLayer(ozLayer); ozLayer = null; }
+    if(btn) btn.classList.remove('pill-loading');
     return;
   }
+  if(btn) btn.classList.add('pill-loading');
   loadOZForCurrentState();
   MAP.on('moveend', onMapMoveOZ);
 }
@@ -3975,7 +3988,7 @@ async function loadOZLayer(fips){
     }
   }catch(e){}
   var btn = el('oz-toggle');
-  if(btn){ btn.classList.add('pill-loading'); }
+  // pill-loading already set by toggleOZ
   try{
     var url = OZ_FS + '?where=' + encodeURIComponent("STATEFP='"+fips+"' AND OZ_ON_LIST=1")
       + '&outFields=GEOID,STATEFP,OZ_RURAL&returnGeometry=true&outSR=4326&resultRecordCount=2000&f=geojson';
@@ -4073,7 +4086,12 @@ document.addEventListener('DOMContentLoaded',function(){
   updatePortCount();
   setTab('demo');
   MAP.on('zoomend',function(){ if(hwyElementsAll&&hwyElementsAll.length) drawHighways(hwyElementsAll); });
-  MAP.on('moveend',function(){ if(floodActive) loadFloodLayer(); });
+  var floodMoveTimer=null;
+  MAP.on('moveend',function(){
+    if(!floodActive) return;
+    clearTimeout(floodMoveTimer);
+    floodMoveTimer=setTimeout(loadFloodLayer, 400);
+  });
 });
 window.addEventListener('resize',fixMapSize);
 
@@ -6288,6 +6306,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
