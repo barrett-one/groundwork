@@ -3631,7 +3631,7 @@ async function loadTowers(lat,lon,r){
   var key=lat.toFixed(2)+':'+lon.toFixed(2);
   if(towerCache[key]){ renderTowers(towerCache[key]); return; }
   var btn=el('tower-toggle');
-  if(btn) btn.// pill-loading set by toggleTowers;
+  // pill-loading already set by toggleTowers
   var km=Math.min(r*1609,15000); // max 15km
   var query='[out:json][timeout:20];'
     +'node["tower:type"="communication"](around:'+km+','+lat+','+lon+');'
@@ -6306,6 +6306,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
