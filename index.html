@@ -1176,9 +1176,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sale-pin-btn:hover{background:var(--b1);color:var(--ac) !important;opacity:1}
 .sale-pin-btn.pinned{opacity:1 !important;}
 .sale-pin-btn.loading{opacity:1;animation:spin .6s linear infinite}
-.sales-clear-btn{padding:3px 8px;font-size:9.5px;font-weight:600;border:1px solid var(--b2);
-  border-radius:4px;background:none;color:var(--m1);cursor:pointer;transition:all .15s}
-.sales-clear-btn:hover{border-color:#ef5858;color:#ef5858}
+.sales-clear-btn{width:100%;padding:5px 8px;font-size:9.5px;font-weight:600;
+  border:1px solid rgba(239,88,88,.25);border-radius:5px;background:rgba(239,88,88,.05);
+  color:#ef5858;cursor:pointer;transition:all .15s;text-align:center}
+.sales-clear-btn:hover{background:rgba(239,88,88,.12);border-color:#ef5858}
 .sales-pin-popup{font-family:'DM Sans',sans-serif;font-size:11px;min-width:140px}
 .sales-pin-popup .sp-type{font-size:9px;font-weight:700;letter-spacing:.3px;margin-bottom:3px}
 .sales-pin-popup .sp-addr{font-weight:600;margin-bottom:2px}
@@ -1430,17 +1431,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     </div>
     <!-- Recent Sales (MA only, Intel tab) -->
     <div class="hcard" data-tab="intel" id="hcard-sales-0" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div class="hl" style="margin-bottom:0">RECENT SALES</div>
-        <div style="display:flex;align-items:center;gap:4px"><button class="sales-clear-btn" id="sales-clear-0" onclick="clearSalePins(0)" style="display:none">✕ pins</button><div style="display:flex;gap:4px" id="sales-filter-0">
+        <div style="display:flex;gap:4px" id="sales-filter-0">
           <button class="sf-btn on" data-cls="all" onclick="setSalesFilter(0,'all',this)">All</button>
           <button class="sf-btn" data-cls="I" onclick="setSalesFilter(0,'I',this)">Industrial</button>
           <button class="sf-btn" data-cls="FL" onclick="setSalesFilter(0,'FL',this)">Flex/R&D</button>
           <button class="sf-btn" data-cls="CR" onclick="setSalesFilter(0,'CR',this)">Retail</button>
           <button class="sf-btn" data-cls="CO" onclick="setSalesFilter(0,'CO',this)">Office</button>
           <button class="sf-btn" data-cls="CH" onclick="setSalesFilter(0,'CH',this)">Hotel</button>
-        </div></div>
+        </div>
       </div>
+      <button class="sales-clear-btn" id="sales-clear-0" onclick="clearSalePins(0)" style="display:none;margin-bottom:6px">✕ Clear pinned sales</button>
       <div id="sales-0"><div style="font-size:11px;color:var(--m1);padding:8px 0">Loading sales data…</div></div>
       <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">MassGIS L3 assessors · Last 36 months · Price > $50K · CRE only · MA only</div>
     </div>
@@ -5504,6 +5506,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
