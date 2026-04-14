@@ -3510,6 +3510,8 @@ function closePdfTip(){
 // ═══════════════ RESET SLOT ═══════════════
 function resetSlot(s){
   var _zc2=el('hcard-zoning-'+s);if(_zc2){_zc2.style.display='none';_zc2.setAttribute('data-zone-visible','0');}
+  var _sc=el('hcard-sales-'+s);if(_sc)_sc.style.display='none';
+  salesData[s]=null;
   ['rp','rs','ri','rbiz','rhwy','pop10','pop20','own'].forEach(function(id){
     var e=el(id+'-'+s); if(e){e.textContent='…';e.classList.add('pending');}
   });
@@ -4947,6 +4949,7 @@ async function runSlot(s,addr,r){
   renderCrime(s,crimeData);
   renderZoning(s,zoningData);
   renderPermits(s,permitData);
+  if(stateFips==='25') fetchSales(s,lat,lon,radius);
   slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;slotCache[s].zoningData=zoningData||null;
   (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive')drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
@@ -5344,6 +5347,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
