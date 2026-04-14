@@ -3211,6 +3211,8 @@ async function fetchSales(s, lat, lon, r){
     });
     // Filter to CRE only (non-residential) + residential for completeness
     salesData[s] = feats;
+    var salesParentCol=card.closest('.rcol');
+    if(salesParentCol&&!salesParentCol.classList.contains('vis')) return;
     card.style.display = activeTab==='intel' ? 'block' : 'none';
     card.setAttribute('data-zone-visible','1'); // reuse mechanism
     renderSales(s);
@@ -6383,6 +6385,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
