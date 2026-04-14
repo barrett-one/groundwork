@@ -3926,25 +3926,29 @@ function toggleExits(){
   exitsActive = !exitsActive;
   var btn = el('exits-toggle');
   if(btn) btn.classList.toggle('oz-on', exitsActive);
-  if(!exitsActive){
-    clearExits();
-    return;
-  }
-  // Use whichever slot has data
+  if(!exitsActive){ clearExits(); return; }
   var lat=null,lon=null;
   if(slotCache[0]&&slotCache[0].lat){ lat=slotCache[0].lat; lon=slotCache[0].lon; }
   else if(slotCache[1]&&slotCache[1].lat){ lat=slotCache[1].lat; lon=slotCache[1].lon; }
-  if(lat && hwyElementsAll && hwyElementsAll.length){
-    if(btn) btn.classList.add('pill-loading');
-    fetchExits(lat,lon,15).then(function(ex){
-      if(ex) drawExits(ex, hwyElementsAll, lat, lon);
-    }).catch(function(){}).finally(function(){
-      if(btn) btn.classList.remove('pill-loading');
-    });
-  } else if(!hwyElementsAll||!hwyElementsAll.length){
-    // No highway data yet — show brief feedback
+  if(!lat){ if(btn) btn.classList.remove('pill-loading'); return; }
+  var cacheKey = lat.toFixed(3)+':'+lon.toFixed(3);
+  var cached = exitsCache[cacheKey];
+  if(cached){
+    // Instant — use pre-fetched exits
+    drawExits(cached, hwyElementsAll, lat, lon);
     if(btn) btn.classList.remove('pill-loading');
+    return;
   }
+  // Not cached yet — fetch (only happens if analysis hasn't pre-fetched yet)
+  if(btn) btn.classList.add('pill-loading');
+  fetchExits(lat,lon,15).then(function(ex){
+    if(ex){
+      exitsCache[cacheKey]=ex;
+      drawExits(ex, hwyElementsAll, lat, lon);
+    }
+  }).catch(function(){}).finally(function(){
+    if(btn) btn.classList.remove('pill-loading');
+  });
 }
 
 function toggleOZ(){
@@ -4002,7 +4006,6 @@ async function loadOZLayer(fips){
     var url = OZ_FS + '?where=' + encodeURIComponent("STATEFP='"+fips+"' AND OZ_ON_LIST=1")
       + '&outFields=GEOID,STATEFP,OZ_RURAL&returnGeometry=true&outSR=4326&resultRecordCount=2000&f=geojson';
     var resp = await fetch(url);
-    if(btn){ btn.innerHTML = '<span class="oz-dot"></span>OZ Overlay'; btn.classList.remove('pill-loading'); }
     if(btn) btn.classList.remove('pill-loading');
     if(!resp.ok){ console.warn('OZ fetch failed:', resp.status); return; }
     var geojson = await resp.json();
@@ -4014,7 +4017,7 @@ async function loadOZLayer(fips){
     try{ sessionStorage.setItem('oz_'+fips, JSON.stringify(geojson)); }catch(e){}
     renderOZLayer(geojson);
   }catch(e){
-    if(btn) btn.innerHTML = '<span class="oz-dot"></span>OZ Overlay';
+    if(btn) btn.classList.remove('pill-loading');
     console.warn('OZ load error:', e);
   }
 }
@@ -4403,6 +4406,11 @@ function resetSlot(s){
   ['grow-delta','biz-sub','ictx','ra'].forEach(function(id){
     var e=el(id+'-'+s); if(e) e.textContent='';
   });
+  // Clear exits cache for this slot's location
+  if(slotCache[s]&&slotCache[s].lat){
+    var eck=slotCache[s].lat.toFixed(3)+':'+slotCache[s].lon.toFixed(3);
+    delete exitsCache[eck];
+  }
   // Clear map layers for this slot
   if(circles[s]){MAP.removeLayer(circles[s]);circles[s]=null;}
   if(markers[s]){MAP.removeLayer(markers[s]);markers[s]=null;}
@@ -4690,6 +4698,7 @@ async function fetchHwy(lat,lon){
 // ══ HIGHWAY EXITS ══
 var exitMapLayer=null;
 var exitsActive=false; // exits toggled off by default
+var exitsCache={}; // keyed by lat:lon — avoids re-fetching on every toggle
 async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
 function drawExits(exitEls,hwyEls,cLat,cLon){
   clearExits();
@@ -5919,7 +5928,7 @@ async function runSlot(s,addr,r){
   renderPermits(s,permitData);
   if(stateFips==='25') fetchSales(s,lat,lon,radius);
   slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;slotCache[s].zoningData=zoningData||null;
-  (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive')drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
+  (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]=ex;if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive'&&exitsActive)drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
@@ -6299,7 +6308,7 @@ async function runDriveFirst(s,addr,min){
   var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
-  (function(la,lo,he){fetchExits(la,lo,15).then(function(ex){if(ex)drawExits(ex,he,la,lo);}).catch(function(){});})(lat,lon,hwyElements);
+  (function(la,lo,he){fetchExits(la,lo,15).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]=ex;if(exitsActive)drawExits(ex,he,la,lo);}}).catch(function(){});})(lat,lon,hwyElements);
   // Retry highways if failed
   if(!hwyElements){
     setTimeout(async function(){
@@ -6315,6 +6324,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
