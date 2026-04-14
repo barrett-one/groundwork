@@ -3005,13 +3005,15 @@ var salesData = [null, null]; // cache per slot
 var salesFilter = ['all', 'all'];
 
 function classifySale(code){
-  var c = parseInt(code)||0;
-  if(c>=400&&c<500) return 'I';
-  if((c>=300&&c<320)||(c>=330&&c<340)||(c>=360&&c<370)) return 'CR';
-  if(c>=320&&c<330) return 'CA';
-  if(c>=350&&c<360) return 'CH';
-  if((c>=340&&c<350)||(c>=370&&c<400)) return 'CO';
-  if(c>=100&&c<200) return 'R';
+  var s=(code||'').toString().replace(/[^0-9]/g,'');
+  var n=parseInt(s.slice(0,3))||0;
+  if(n>=400&&n<500) return 'I';
+  if(n>=342&&n<346) return 'FL';
+  if((n>=300&&n<320)||(n>=330&&n<340)||(n>=360&&n<370)) return 'CR';
+  if(n>=320&&n<330) return 'CA';
+  if(n>=350&&n<360) return 'CH';
+  if((n>=340&&n<350)||(n>=370&&n<400)) return 'CO';
+  if(n>=100&&n<200) return 'R';
   return 'X';
 }
 
@@ -5348,6 +5350,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
