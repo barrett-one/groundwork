@@ -1612,8 +1612,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="hcard permit sec" data-tab="re"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-1">…</div><div class="hs" id="permit-sub-1"></div>
      <div class="permit-detail" id="permit-detail-1"></div>
     </div>
-    </div>
-
     <!-- SBA Card Slot B -->
     <div class="hcard" data-tab="intel" id="hcard-sba-1" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="hl" style="margin-bottom:0">SBA LENDING ACTIVITY</div><div style="font-size:9.5px;color:var(--m1)">7(a) loans · 2015–2025</div></div>
@@ -1640,6 +1638,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     </div>
     </div>
     </div>
+    </div>
+
    </div>
   </div><!-- /res-wrap -->
     <div id="action-panel">
@@ -3211,8 +3211,7 @@ async function fetchSales(s, lat, lon, r){
     });
     // Filter to CRE only (non-residential) + residential for completeness
     salesData[s] = feats;
-    var salesParentCol=card.closest('.rcol');
-    if(salesParentCol&&!salesParentCol.classList.contains('vis')) return;
+    if(!el('col-'+s)||!el('col-'+s).classList.contains('vis')) return;
     card.style.display = activeTab==='intel' ? 'block' : 'none';
     card.setAttribute('data-zone-visible','1'); // reuse mechanism
     renderSales(s);
@@ -3858,8 +3857,7 @@ async function renderSBACard(s, zips){
   var cont = el('sba-content-'+s);
   if(!card||!cont) return;
   if(!zips||!zips.length){ card.style.display='none'; return; }
-  var parentCol2=card.closest('.rcol');
-  if(parentCol2&&!parentCol2.classList.contains('vis')) return;
+  if(!el('col-'+s)||!el('col-'+s).classList.contains('vis')) return;
   card.style.display = activeTab==='intel'?'block':'none';
 
   cont.innerHTML='<div style="font-size:11px;color:var(--m1)">Loading SBA data\u2026</div>';
@@ -4852,8 +4850,8 @@ function setTab(name){
     var ct=c.dataset.tab;
     if(c.classList.contains('stab')) return; // skip tab buttons
     // Skip if parent col is not visible (slot B cards in single-slot mode)
-    var parentCol=c.closest('.rcol');
-    if(parentCol&&!parentCol.classList.contains('vis')) return;
+    var closestCol=c.closest('#col-0,#col-1');
+    if(closestCol&&!closestCol.classList.contains('vis')) return;
     if(c.id&&c.id.indexOf('hcard-zoning')===0){
       c.style.display=(ct===name&&c.getAttribute('data-zone-visible')==='1')?'block':'none';
     } else {
@@ -6385,6 +6383,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
