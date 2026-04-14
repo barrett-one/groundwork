@@ -3317,7 +3317,6 @@ function toggleFlood(){
   [0,1].forEach(function(s){
     var lat=slotCache[s]&&slotCache[s].lat;
     var lon=slotCache[s]&&slotCache[s].lon;
-    if(lat&&lon) checkSubjectFlood(lat,lon,s);
   });
 }
 function onMapMoveFlood(){ if(floodActive) loadFloodLayer(); }
@@ -3435,7 +3434,6 @@ function toggleEnv(){
   [0,1].forEach(function(s){
     var lat=slotCache[s]&&slotCache[s].lat;
     var lon=slotCache[s]&&slotCache[s].lon;
-    if(lat&&lon) checkSubjectEnv(lat,lon,s);
   });
 }
 
@@ -5873,6 +5871,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
