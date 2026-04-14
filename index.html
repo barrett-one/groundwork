@@ -1190,6 +1190,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   user-select:none}
 #exits-toggle:hover{border-color:#34d399;color:#34d399}
 #exits-toggle.oz-on{background:rgba(52,211,153,.1);border-color:#34d399;color:#34d399}
+
+/* ── PILL LOADING PULSE ── */
+@keyframes pillPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.25);border-color:var(--pulse-col,var(--b2))}
+  50%{box-shadow:0 0 0 4px rgba(255,255,255,.0);border-color:var(--pulse-col,var(--ac))}
+}
+.pill-loading{
+  animation:pillPulse 1s ease-in-out infinite;
+}
+#exits-toggle.pill-loading{--pulse-col:#34d399}
+#oz-toggle.pill-loading{--pulse-col:#f472b6}
 </style>
 </head>
 <body>
@@ -3258,14 +3269,16 @@ function toggleExits(){
     clearExits();
     return;
   }
-  // Re-draw exits using cached highway elements
   var s = 0;
   var lat = slotCache[s]&&slotCache[s].lat;
   var lon = slotCache[s]&&slotCache[s].lon;
   if(lat && hwyElementsAll && hwyElementsAll.length){
+    if(btn) btn.classList.add('pill-loading');
     fetchExits(lat,lon,15).then(function(ex){
       if(ex) drawExits(ex, hwyElementsAll, lat, lon);
-    }).catch(function(){});
+    }).catch(function(){}).finally(function(){
+      if(btn) btn.classList.remove('pill-loading');
+    });
   }
 }
 
@@ -3302,12 +3315,13 @@ async function loadOZForCurrentState(){
 async function loadOZLayer(fips){
   if(ozStateCache[fips]){ renderOZLayer(ozStateCache[fips]); return; }
   var btn = el('oz-toggle');
-  if(btn) btn.textContent = '⧗ Loading OZ…';
+  if(btn){ btn.textContent = '⧗ Loading OZ…'; btn.classList.add('pill-loading'); }
   try{
     var url = OZ_FS + '?where=' + encodeURIComponent("STATEFP='"+fips+"' AND OZ_ON_LIST=1")
       + '&outFields=GEOID,STATEFP,OZ_RURAL&returnGeometry=true&outSR=4326&resultRecordCount=2000&f=geojson';
     var resp = await fetch(url);
-    if(btn) btn.innerHTML = '<span class="oz-dot"></span>OZ Overlay';
+    if(btn){ btn.innerHTML = '<span class="oz-dot"></span>OZ Overlay'; btn.classList.remove('pill-loading'); }
+    if(btn) btn.classList.remove('pill-loading');
     if(!resp.ok){ console.warn('OZ fetch failed:', resp.status); return; }
     var geojson = await resp.json();
     if(geojson.error){ console.warn('OZ error:', geojson.error); return; }
@@ -5584,6 +5598,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
