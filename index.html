@@ -1431,15 +1431,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     </div>
     <!-- Recent Sales (MA only, Intel tab) -->
     <div class="hcard" data-tab="intel" id="hcard-sales-0" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div class="hl" style="margin-bottom:0">RECENT SALES</div>
-        <div style="display:flex;gap:4px" id="sales-filter-0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:nowrap;gap:6px">
+        <div class="hl" style="margin-bottom:0;flex-shrink:0">RECENT SALES</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center" id="sales-filter-0">
           <button class="sf-btn on" data-cls="all" onclick="setSalesFilter(0,'all',this)">All</button>
           <button class="sf-btn" data-cls="I" onclick="setSalesFilter(0,'I',this)">Industrial</button>
           <button class="sf-btn" data-cls="FL" onclick="setSalesFilter(0,'FL',this)">Flex/R&D</button>
           <button class="sf-btn" data-cls="CR" onclick="setSalesFilter(0,'CR',this)">Retail</button>
           <button class="sf-btn" data-cls="CO" onclick="setSalesFilter(0,'CO',this)">Office</button>
           <button class="sf-btn" data-cls="CH" onclick="setSalesFilter(0,'CH',this)">Hotel</button>
+          <button class="sales-clear-btn" id="sales-clear-0" onclick="clearSalePins(0)" style="display:none">✕ pins</button>
         </div>
       </div>
       <button class="sales-clear-btn" id="sales-clear-0" onclick="clearSalePins(0)" style="display:none;margin-bottom:6px">✕ Clear pinned sales</button>
@@ -5506,6 +5507,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
