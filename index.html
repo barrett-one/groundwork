@@ -1236,7 +1236,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sba-sector-bar{height:3px;background:var(--ac);border-radius:2px;margin-top:2px;transition:width .4s}
 
 /* ── ENV LEGEND ── */
-#map-toggles{position:relative}
 .env-leg-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
 .env-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
 .env-leg-label{font-size:11px;font-weight:600;color:var(--tx);margin-bottom:2px}
@@ -6377,6 +6376,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
