@@ -2258,13 +2258,10 @@ function clearDriveTime(){
   checkAddressInOZ(cache.lat,cache.lon,s);
   (async function(){
     try{
-      var gr=await fetch('https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x='+cache.lon+'&y='+cache.lat+'&benchmark=Public_AR_Current&vintage=Current_Current&format=json');
-      if(gr.ok){
-        var gd=await gr.json();
-        var zta=gd.result&&gd.result.geographies&&gd.result.geographies['ZIP Code Tabulation Areas'];
-        if(zta&&zta.length) renderSBACard(s,zta[0].GEOID);
-      }
-    }catch(e){}
+      var poly=cache.polygon||(driveCache[s]&&driveCache[s].polygon);
+      var zips=poly ? await getZipsForPolygon(poly) : await getZipsForRadius(cache.lat,cache.lon,5);
+      if(zips.length) renderSBACard(s,zips);
+    }catch(e){ console.warn('SBA drive:',e); }
   })();
 }
 
@@ -6168,6 +6165,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
