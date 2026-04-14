@@ -3075,8 +3075,7 @@ function renderSales(s){
     cont.innerHTML = '<div style="font-size:11px;color:var(--m1);padding:8px 0">No '+SALE_LABELS[cls]+' sales in this period</div>';
     return;
   }
-  // Cap at 30 rows
-  var rows = filtered.slice(0,30);
+  var rows = filtered;
   var html = '<table class="sales-table"><thead><tr>'
     + '<th>Type</th><th>Address</th><th>SF</th><th>Price</th><th>$/SF</th><th>Date</th></tr></thead><tbody>';
   rows.forEach(function(a){
@@ -3099,7 +3098,7 @@ function renderSales(s){
       + '</tr>';
   });
   html += '</tbody></table>';
-  if(filtered.length>30) html += '<div style="font-size:9.5px;color:var(--m1);margin-top:6px">Showing 30 of '+filtered.length+' sales</div>';
+
   cont.innerHTML = html;
 }
 
@@ -5350,6 +5349,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
