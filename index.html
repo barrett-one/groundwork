@@ -1206,9 +1206,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #flood-toggle:hover{border-color:#38bdf8;color:#38bdf8}
 #flood-toggle.oz-on{background:rgba(56,189,248,.12);border-color:#38bdf8;color:#38bdf8}
 #flood-toggle.pill-loading{--pulse-col:#38bdf8}
-#env-toggle:hover{border-color:#f97316;color:#f97316}
-#env-toggle.oz-on{background:rgba(249,115,22,.12);border-color:#f97316;color:#f97316}
-#env-toggle.pill-loading{--pulse-col:#f97316}
+#env-toggle:hover{border-color:#ef4444;color:#ef4444}
+#env-toggle.oz-on{background:rgba(239,68,68,.12);border-color:#ef4444;color:#ef4444}
+#env-toggle.pill-loading{--pulse-col:#ef4444}
 .flood-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(56,189,248,.12);
   border:1px solid rgba(56,189,248,.4);color:#38bdf8;font-size:10px;font-weight:700;
   padding:3px 9px;border-radius:12px;letter-spacing:.3px;margin-top:2px}
@@ -1636,7 +1636,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <span class="oz-dot" style="background:#38bdf8;border-color:#38bdf8"></span>Flood Zones
   </button>
   <button id="env-toggle" onclick="toggleEnv()" title="Toggle EPA environmental sites">
-    <span class="oz-dot" style="background:#f97316;border-color:#f97316"></span>Env Hazards
+    <span class="oz-dot" style="background:#ef4444;border-color:#ef4444"></span>Env Hazards
   </button>
   <button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
     <span class="oz-dot"></span>OZ Overlay
@@ -3291,7 +3291,7 @@ var floodCache = {};
 
 var FLOOD_ZONE_INFO = {
   'VE': {label:'VE',desc:'Coastal High Hazard — wave action',color:'#ef4444',risk:'HIGH'},
-  'AE': {label:'AE',desc:'1% Annual Chance Flood (detailed study)',color:'#f97316',risk:'HIGH'},
+  'AE': {label:'AE',desc:'1% Annual Chance Flood (detailed study)',color:'#ef4444',risk:'HIGH'},
   'AH': {label:'AH',desc:'Shallow Flooding — ponding',color:'#fb923c',risk:'HIGH'},
   'AO': {label:'AO',desc:'Shallow Flooding — sheet flow',color:'#fb923c',risk:'HIGH'},
   'A':  {label:'A', desc:'1% Annual Chance (no detailed study)',color:'#fbbf24',risk:'HIGH'},
@@ -3304,9 +3304,21 @@ function toggleFlood(){
   floodActive = !floodActive;
   var btn = el('flood-toggle');
   if(btn) btn.classList.toggle('oz-on', floodActive);
-  if(!floodActive){ if(floodLayer){MAP.removeLayer(floodLayer);floodLayer=null;} return; }
+  if(!floodActive){
+    if(floodLayer){MAP.removeLayer(floodLayer);floodLayer=null;}
+    MAP.off('moveend', onMapMoveFlood);
+    // Clear subject badges
+    [0,1].forEach(function(s){var el2=el('flood-status-'+s);if(el2)el2.style.display='none';});
+    return;
+  }
   loadFloodLayer();
   MAP.on('moveend', onMapMoveFlood);
+  // Check subject property for active slots
+  [0,1].forEach(function(s){
+    var lat=slotCache[s]&&slotCache[s].lat;
+    var lon=slotCache[s]&&slotCache[s].lon;
+    if(lat&&lon) checkSubjectFlood(lat,lon,s);
+  });
 }
 function onMapMoveFlood(){ if(floodActive) loadFloodLayer(); }
 
@@ -3359,7 +3371,7 @@ function renderFloodLayer(gj){
       var tip = '<b>Zone ' + info.label + '</b><br>'
         + info.desc + (subty?'<br><span style="font-size:10px;color:#94a3b8">'+subty+'</span>':'')
         + '<br><span style="font-size:10px">'
-        + (sfha?'<span style="color:#f97316">⚠ Special Flood Hazard Area</span>':'<span style="color:#86efac">✓ Outside SFHA</span>')
+        + (sfha?'<span style="color:#ef4444">⚠ Special Flood Hazard Area</span>':'<span style="color:#86efac">✓ Outside SFHA</span>')
         + '</span>';
       layer.bindTooltip(tip, {sticky:true, className:'flood-tooltip'});
     }
@@ -3397,7 +3409,7 @@ var envCache = {};
 
 var ENV_TYPE = {
   'SEMS_NPL':  {label:'Superfund NPL',    short:'NPL',   color:'#ef4444'},
-  'SEMS':      {label:'Superfund/CERCLA', short:'CERCLA',color:'#f97316'},
+  'SEMS':      {label:'Superfund/CERCLA', short:'CERCLA',color:'#ef4444'},
   'RCRA_LQG':  {label:'Hazardous Waste',  short:'RCRA',  color:'#f59e0b'},
   'RCRA_ACTIVE':{label:'RCRA Active',     short:'RCRA',  color:'#f59e0b'},
   'RCRA':      {label:'RCRA Facility',    short:'RCRA',  color:'#f59e0b'},
@@ -3413,8 +3425,18 @@ function toggleEnv(){
   envActive = !envActive;
   var btn = el('env-toggle');
   if(btn) btn.classList.toggle('oz-on', envActive);
-  if(!envActive){ if(envLayer){MAP.removeLayer(envLayer);envLayer=null;} return; }
+  if(!envActive){
+    if(envLayer){MAP.removeLayer(envLayer);envLayer=null;}
+    [0,1].forEach(function(s){var el2=el('env-status-'+s);if(el2)el2.style.display='none';});
+    return;
+  }
   loadEnvLayer();
+  // Check subject property for active slots
+  [0,1].forEach(function(s){
+    var lat=slotCache[s]&&slotCache[s].lat;
+    var lon=slotCache[s]&&slotCache[s].lon;
+    if(lat&&lon) checkSubjectEnv(lat,lon,s);
+  });
 }
 
 async function loadEnvLayer(){
@@ -3495,7 +3517,7 @@ async function checkSubjectEnv(lat, lon, s){
     if(!sites.length){ statusEl.style.display='none'; return; }
     var a = sites[0];
     var acrnm = (a.PGM_SYS_ACRNM||'').split('-')[0];
-    var info = ENV_TYPE[acrnm] || {label:a.INTEREST_TYPE||acrnm,short:acrnm,color:'#f97316'};
+    var info = ENV_TYPE[acrnm] || {label:a.INTEREST_TYPE||acrnm,short:acrnm,color:'#ef4444'};
     statusEl.style.display = 'block';
     statusEl.innerHTML = '<span class="env-badge" style="background:'+info.color+'22;border:1px solid '+info.color+'66;color:'+info.color+'">'
       + '<svg width="9" height="9" viewBox="0 0 24 24" fill="'+info.color+'"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'
@@ -5851,6 +5873,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
