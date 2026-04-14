@@ -3913,6 +3913,7 @@ async function renderSBACard(s, zips){
 
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
+function onMapMoveOZ(){ if(ozActive) loadOZForCurrentState(); }
 // Service: Opportunity_Zones_2 on CDFI/HUD ArcGIS org
 // Field OZ_ON_LIST=1 = actually designated (not just eligible)
 var OZ_FS = 'https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Opportunity_Zones_2/FeatureServer/0/query';
@@ -3929,9 +3930,10 @@ function toggleExits(){
     clearExits();
     return;
   }
-  var s = 0;
-  var lat = slotCache[s]&&slotCache[s].lat;
-  var lon = slotCache[s]&&slotCache[s].lon;
+  // Use whichever slot has data
+  var lat=null,lon=null;
+  if(slotCache[0]&&slotCache[0].lat){ lat=slotCache[0].lat; lon=slotCache[0].lon; }
+  else if(slotCache[1]&&slotCache[1].lat){ lat=slotCache[1].lat; lon=slotCache[1].lon; }
   if(lat && hwyElementsAll && hwyElementsAll.length){
     if(btn) btn.classList.add('pill-loading');
     fetchExits(lat,lon,15).then(function(ex){
@@ -3939,6 +3941,9 @@ function toggleExits(){
     }).catch(function(){}).finally(function(){
       if(btn) btn.classList.remove('pill-loading');
     });
+  } else if(!hwyElementsAll||!hwyElementsAll.length){
+    // No highway data yet — show brief feedback
+    if(btn) btn.classList.remove('pill-loading');
   }
 }
 
@@ -3956,7 +3961,7 @@ function toggleOZ(){
   loadOZForCurrentState();
   MAP.on('moveend', onMapMoveOZ);
 }
-async function loadOZForCurrentState(){
+async async function loadOZForCurrentState(){
   // Get state FIPS from analysis or map center
   var fips = (slotCache[0] && slotCache[0].stateData && slotCache[0].stateData.fips) || '';
   if(!fips){
@@ -3975,14 +3980,18 @@ async function loadOZForCurrentState(){
   loadOZLayer(fips);
 }
 
-async function loadOZLayer(fips){
-  if(ozStateCache[fips]){ renderOZLayer(ozStateCache[fips]); return; }
+async async function loadOZLayer(fips){
+  if(ozStateCache[fips]){
+    var btn3=el('oz-toggle'); if(btn3) btn3.classList.remove('pill-loading');
+    renderOZLayer(ozStateCache[fips]); return;
+  }
   // Check sessionStorage before hitting CDFI (survives page refresh, cleared on tab close)
   try{
     var cached=sessionStorage.getItem('oz_'+fips);
     if(cached){
       var geojson=JSON.parse(cached);
       ozStateCache[fips]=geojson;
+      var btn2=el('oz-toggle'); if(btn2) btn2.classList.remove('pill-loading');
       renderOZLayer(geojson);
       return;
     }
@@ -4681,7 +4690,7 @@ async function fetchHwy(lat,lon){
 // ══ HIGHWAY EXITS ══
 var exitMapLayer=null;
 var exitsActive=false; // exits toggled off by default
-async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
+async async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
 function drawExits(exitEls,hwyEls,cLat,cLon){
   clearExits();
   if(!exitEls||!exitEls.length||!exitsActive) return;
@@ -6306,6 +6315,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
