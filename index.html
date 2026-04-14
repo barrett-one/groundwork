@@ -5594,6 +5594,19 @@ function buildFallbackSummary(d,instructions){
 async function runSlot(s,addr,r){
   resetSlot(s);
   el('col-'+s).classList.add('vis');
+  // SBA zip lookup
+  (async function(){
+    try{
+      var am=addr.match(/\b(\d{5})\b/);
+      if(am){ renderSBACard(s,am[1]); return; }
+      var gr=await fetch('https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x='+lon+'&y='+lat+'&benchmark=Public_AR_Current&vintage=Current_Current&format=json');
+      if(gr.ok){
+        var gd=await gr.json();
+        var zta=gd.result&&gd.result.geographies&&gd.result.geographies['ZIP Code Tabulation Areas'];
+        if(zta&&zta.length) renderSBACard(s,zta[0].GEOID);
+      }
+    }catch(e){}
+  })();
   checkAddressInOZ(lat,lon,s);
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
   if(s===0){
@@ -6110,6 +6123,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
