@@ -1852,7 +1852,7 @@ function getNearestAirport(lat,lon){
 // ══ RENDER TRANSPORT (interstate + airport + port) ══
 
 // ── TRANSPORT CARD RELOAD ──
-async function reloadTransport(s){
+async async function reloadTransport(s){
   var lat=slotCache[s]&&slotCache[s].lat;
   var lon=slotCache[s]&&slotCache[s].lon;
   if(!lat||!lon) return;
@@ -3075,7 +3075,7 @@ function switchModeTab(mode){
     analysisMode='circle';driveMin=0;
     document.querySelectorAll('.drb[data-min]').forEach(function(b){b.classList.remove('on');});
     var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
-    if(slotCache[0].circleCache) setAnalysisMode('circle');
+    if(slotCache[0]&&slotCache[0].circleCache) setAnalysisMode('circle');
   } else {
     analysisMode='drive';
     if(!driveMin){
@@ -5244,7 +5244,8 @@ function showSaveForm(){
 function confirmSave(){
   var name=el('save-name').value.trim();
   if(!name) name='Analysis '+(getSaves().length+1);
-  var cache=slotCache[0];
+  var cache=slotCache[0]||{};
+  if(!cache.lat){ setStatus('warn','Run an analysis first before saving.'); return; }
   var save={
     id:Date.now(),
     name:name,
@@ -6257,6 +6258,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
