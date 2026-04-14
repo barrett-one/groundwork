@@ -1180,7 +1180,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 
 /* map overlay toggle pills share a container */
 #map-toggles{position:absolute;top:10px;right:50px;z-index:1000;
-  display:flex;gap:6px;flex-direction:row}
+  display:flex;gap:5px;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 120px)}
 #exits-toggle,#oz-toggle{
   position:static !important;
   background:var(--panel);border:1px solid var(--b2);border-radius:20px;
@@ -3925,13 +3925,14 @@ function toggleOZ(){
   ozActive = !ozActive;
   var btn = el('oz-toggle');
   if(btn) btn.classList.toggle('oz-on', ozActive);
+  MAP.off('moveend', onMapMoveOZ);
   if(!ozActive){
     if(ozLayer){ MAP.removeLayer(ozLayer); ozLayer = null; }
     return;
   }
   loadOZForCurrentState();
+  MAP.on('moveend', onMapMoveOZ);
 }
-
 async function loadOZForCurrentState(){
   // Get state FIPS from analysis or map center
   var fips = (slotCache[0] && slotCache[0].stateData && slotCache[0].stateData.fips) || '';
@@ -6256,6 +6257,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
