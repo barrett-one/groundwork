@@ -1852,7 +1852,7 @@ function getNearestAirport(lat,lon){
 // ══ RENDER TRANSPORT (interstate + airport + port) ══
 
 // ── TRANSPORT CARD RELOAD ──
-async async function reloadTransport(s){
+async function reloadTransport(s){
   var lat=slotCache[s]&&slotCache[s].lat;
   var lon=slotCache[s]&&slotCache[s].lon;
   if(!lat||!lon) return;
@@ -6258,6 +6258,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
