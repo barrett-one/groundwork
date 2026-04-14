@@ -1234,6 +1234,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sba-stat-lbl{font-size:9px;color:var(--m1);margin-top:1px}
 .sba-sector{font-size:10px;color:var(--m2);padding:2px 0;display:flex;justify-content:space-between}
 .sba-sector-bar{height:3px;background:var(--ac);border-radius:2px;margin-top:2px;transition:width .4s}
+
+/* ── ENV LEGEND ── */
+#map-toggles{position:relative}
+.env-leg-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
+.env-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
+.env-leg-label{font-size:11px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.env-leg-desc{font-size:10px;color:var(--m1);line-height:1.4}
 </style>
 </head>
 <body>
@@ -1694,6 +1701,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   <button id="env-toggle" onclick="toggleEnv()" title="Toggle EPA environmental sites">
     <span class="oz-dot" style="background:#ef4444;border-color:#ef4444"></span>Env Hazards
   </button>
+  <div id="env-legend" style="display:none;position:absolute;top:36px;right:0;background:var(--panel);border:1px solid var(--b2);border-radius:10px;padding:10px 12px;min-width:220px;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:1001">
+    <div style="font-size:9.5px;font-weight:700;color:var(--m1);letter-spacing:.5px;margin-bottom:8px">EPA SITE TYPES</div>
+    <div class="env-leg-row"><span class="env-leg-dot" style="background:#ef4444"></span><div><div class="env-leg-label">Superfund / CERCLA</div><div class="env-leg-desc">Contaminated sites on EPA's cleanup priority list. Can cloud title, restrict use, and require remediation disclosure.</div></div></div>
+    <div class="env-leg-row"><span class="env-leg-dot" style="background:#f59e0b"></span><div><div class="env-leg-label">RCRA Hazardous Waste</div><div class="env-leg-desc">Active or former hazardous waste handlers regulated under federal law. May have ongoing compliance obligations.</div></div></div>
+    <div class="env-leg-row"><span class="env-leg-dot" style="background:#eab308"></span><div><div class="env-leg-label">TRI — Toxic Release</div><div class="env-leg-desc">Facilities reporting toxic chemical releases to air, water, or land. Indicates ongoing industrial emissions, not necessarily cleanup liability.</div></div></div>
+    <div class="env-leg-row"><span class="env-leg-dot" style="background:#a78bfa"></span><div><div class="env-leg-label">Brownfield</div><div class="env-leg-desc">Former industrial/commercial sites with known or suspected contamination. Often eligible for EPA cleanup grants — can be a redevelopment opportunity.</div></div></div>
+    <div class="env-leg-row"><span class="env-leg-dot" style="background:#60a5fa"></span><div><div class="env-leg-label">NPDES Wastewater</div><div class="env-leg-desc">Permitted wastewater discharge point. Indicates industrial or municipal treatment operation — usually not a direct transaction risk.</div></div></div>
+    <div style="font-size:9px;color:var(--m1);margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06)">Source: EPA FRS · 5-mile radius</div>
+  </div>
   <button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
     <span class="oz-dot"></span>OZ Overlay
   </button>
@@ -3499,12 +3515,15 @@ function toggleEnv(){
   envActive = !envActive;
   var btn = el('env-toggle');
   if(btn) btn.classList.toggle('oz-on', envActive);
+  var leg=el('env-legend');
   if(!envActive){
     if(envLayer){MAP.removeLayer(envLayer);envLayer=null;}
     if(btn) btn.classList.remove('pill-loading');
+    if(leg) leg.style.display='none';
     [0,1].forEach(function(s){var el2=el('env-status-'+s);if(el2)el2.style.display='none';});
     return;
   }
+  if(leg) leg.style.display='block';
   if(btn) btn.classList.add('pill-loading');
   var lat=null,lon=null;
   if(slotCache[0]&&slotCache[0].lat){ lat=slotCache[0].lat; lon=slotCache[0].lon; }
@@ -4117,6 +4136,14 @@ document.addEventListener('DOMContentLoaded',function(){
   renderSaves();
   updatePortCount();
   setTab('demo');
+  // Close env legend on outside click
+  document.addEventListener('click',function(e){
+    var lg=el('env-legend');
+    var btn=el('env-toggle');
+    if(lg&&lg.style.display!=='none'&&!lg.contains(e.target)&&(!btn||!btn.contains(e.target))){
+      // Don't close — legend is informational, user might be reading it
+    }
+  });
   MAP.on('zoomend',function(){ if(hwyElementsAll&&hwyElementsAll.length) drawHighways(hwyElementsAll); });
   var floodMoveTimer=null;
   MAP.on('moveend',function(){
@@ -6343,6 +6370,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
