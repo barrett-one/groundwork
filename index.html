@@ -1217,6 +1217,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   letter-spacing:.3px;margin-top:2px}
 .env-marker{width:12px;height:12px;border-radius:50%;border:2px solid #fff;
   box-shadow:0 0 0 2px var(--mc);cursor:pointer}
+
+#tower-toggle:hover{border-color:#a78bfa;color:#a78bfa}
+#tower-toggle.oz-on{background:rgba(167,139,250,.12);border-color:#a78bfa;color:#a78bfa}
+#tower-toggle.pill-loading{--pulse-col:#a78bfa}
 </style>
 </head>
 <body>
@@ -1631,6 +1635,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 <div id="map-toggles">
   <button id="exits-toggle" onclick="toggleExits()" title="Toggle highway exits">
     <span class="oz-dot" style="background:#34d399;border-color:#34d399"></span>Exits
+  </button>
+  <button id="tower-toggle" onclick="toggleTowers()" title="Toggle cell towers">
+    <span class="oz-dot" style="background:#a78bfa;border-color:#a78bfa"></span>Cell Towers
   </button>
   <button id="flood-toggle" onclick="toggleFlood()" title="Toggle FEMA flood zones">
     <span class="oz-dot" style="background:#38bdf8;border-color:#38bdf8"></span>Flood Zones
@@ -3521,6 +3528,84 @@ async function checkSubjectEnv(lat, lon, s){
       + '<svg width="9" height="9" viewBox="0 0 24 24" fill="'+info.color+'"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'
       + info.label + ' on/near site</span>';
   }catch(e){ console.warn('Env check:',e); }
+}
+
+
+// ═══════════════ CELL TOWERS (OpenStreetMap via Overpass) ═══════════════
+var towerLayer = null;
+var towerActive = false;
+var towerCache = {};
+
+function toggleTowers(){
+  towerActive = !towerActive;
+  var btn = el('tower-toggle');
+  if(btn) btn.classList.toggle('oz-on', towerActive);
+  if(!towerActive){ if(towerLayer){MAP.removeLayer(towerLayer);towerLayer=null;} return; }
+  var s=0;
+  var lat=slotCache[s]&&slotCache[s].lat;
+  var lon=slotCache[s]&&slotCache[s].lon;
+  var r=slotCache[s]&&slotCache[s].radius||5;
+  if(lat&&lon) loadTowers(lat,lon,Math.max(r,5));
+}
+
+async function loadTowers(lat,lon,r){
+  var key=lat.toFixed(2)+':'+lon.toFixed(2);
+  if(towerCache[key]){ renderTowers(towerCache[key]); return; }
+  var btn=el('tower-toggle');
+  if(btn) btn.classList.add('pill-loading');
+  var km=Math.min(r*1609,15000); // max 15km
+  var query='[out:json][timeout:20];'
+    +'node["tower:type"="communication"](around:'+km+','+lat+','+lon+');'
+    +'out body;';
+  try{
+    var resp=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query));
+    if(btn) btn.classList.remove('pill-loading');
+    if(!resp.ok) return;
+    var d=await resp.json();
+    var els=d.elements||[];
+    towerCache[key]=els;
+    renderTowers(els);
+  }catch(e){
+    if(btn) btn.classList.remove('pill-loading');
+    console.warn('Tower load error:',e);
+  }
+}
+
+function renderTowers(els){
+  if(towerLayer){MAP.removeLayer(towerLayer);towerLayer=null;}
+  if(!els||!els.length) return;
+  towerLayer=L.layerGroup().addTo(MAP);
+  els.forEach(function(node){
+    if(!node.lat||!node.lon) return;
+    var tags=node.tags||{};
+    var isMobile=tags['communication:mobile_phone']==='yes';
+    var isRadio=tags['communication:radio']==='yes';
+    var constr=tags['tower:construction']||'';
+    var name=tags.name||tags['operator']||'';
+    var height=tags.height||'';
+    // Cell tower icon — purple circle with antenna symbol
+    var dotColor=isMobile?'#a78bfa':'#c4b5fd';
+    var icon=L.divIcon({
+      className:'',
+      html:'<div style="width:14px;height:14px;border-radius:50%;background:'+dotColor
+        +';border:2px solid rgba(255,255,255,.8);box-shadow:0 0 0 3px '+dotColor+'44;cursor:pointer;display:flex;align-items:center;justify-content:center">'
+        +'<div style="width:2px;height:6px;background:#fff;border-radius:1px;margin-top:-2px"></div>'
+        +'</div>',
+      iconSize:[14,14],iconAnchor:[7,7]
+    });
+    var typeLabel=isMobile?'Cell Tower (Mobile)':isRadio?'Broadcast Tower':'Communication Tower';
+    var popupHtml='<div style="font-family:DM Sans,sans-serif;min-width:130px">'
+      +'<div style="font-size:10px;font-weight:700;color:#a78bfa;letter-spacing:.4px;margin-bottom:2px">'+typeLabel+'</div>'
+      +(name?'<div style="font-size:12px;font-weight:600;color:#dde3f0;margin-bottom:2px">'+name+'</div>':'')
+      +(height?'<div style="font-size:11px;color:#8e98b0">Height: '+height+'m</div>':'')
+      +(constr?'<div style="font-size:11px;color:#8e98b0">Construction: '+constr+'</div>':'')
+      +'<div style="font-size:10px;color:#636d85;margin-top:4px;border-top:1px solid rgba(255,255,255,.06);padding-top:4px">'
+      +'Potential ground lease income: $1,500–$3,000/mo</div>'
+      +'</div>';
+    var marker=L.marker([node.lat,node.lon],{icon:icon,interactive:true,zIndexOffset:250});
+    marker.bindPopup(popupHtml,{maxWidth:220});
+    marker.addTo(towerLayer);
+  });
 }
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
@@ -5871,6 +5956,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
