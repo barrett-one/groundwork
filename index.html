@@ -1031,7 +1031,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #mode-toggle{display:none!important}
 #drive-status-new{font-size:10px;color:var(--m1);margin-left:4px}
 #drive-ctl{display:none!important}
-.exit-marker{display:inline-flex;align-items:center;gap:3px;background:#0d1117;border:1.5px solid #4b7cf3;border-radius:5px;padding:2px 6px;box-shadow:0 2px 10px rgba(0,0,0,.9);cursor:pointer;white-space:nowrap}.exit-hwy{font-size:9px;font-weight:700;color:#93c5fd;font-family:monospace}.exit-num-badge{background:#4b7cf3;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;font-family:monospace}.exit-popup .leaflet-popup-content-wrapper{background:#10131c!important;border:1px solid #1e2435!important;border-radius:7px!important;padding:0!important}.exit-popup .leaflet-popup-content{margin:10px 12px!important}.exit-popup .leaflet-popup-tip{background:#10131c!important}
+.exit-marker{display:flex;align-items:center;gap:2px;background:#0d3d2e;border:1.5px solid #34d399;border-radius:4px;padding:2px 5px;font-family:IBM Plex Mono,monospace;font-size:10px;font-weight:700;color:#34d399;line-height:1;cursor:pointer;white-space:nowrap}.exit-hwy{color:#34d399;opacity:.8;font-size:9px;border-right:1px solid rgba(52,211,153,.3);padding-right:4px;margin-right:1px}.exit-num-badge{color:#34d399}.exit-popup .leaflet-popup-content-wrapper{background:#10131c!important;border:1px solid #1e2435!important;border-radius:7px!important;padding:0!important}.exit-popup .leaflet-popup-content{margin:10px 12px!important}.exit-popup .leaflet-popup-tip{background:#10131c!important}
 
 /* ── Crime / Permits / Traffic cards ── */
 .hcard.crime::before{background:var(--rd)}
@@ -1183,6 +1183,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sales-pin-popup .sp-type{font-size:9px;font-weight:700;letter-spacing:.3px;margin-bottom:3px}
 .sales-pin-popup .sp-addr{font-weight:600;margin-bottom:2px}
 .sales-pin-popup .sp-detail{color:#6a768f;font-size:10px}
+
+#exits-toggle{
+  position:absolute;top:10px;right:130px;z-index:1000;
+  background:var(--panel);border:1px solid var(--b2);border-radius:20px;
+  padding:5px 12px 5px 9px;display:flex;align-items:center;gap:6px;
+  cursor:pointer;font-size:11px;font-weight:600;color:var(--m2);
+  transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.2px;
+  user-select:none}
+#exits-toggle:hover{border-color:#34d399;color:#34d399}
+#exits-toggle.oz-on{background:rgba(52,211,153,.1);border-color:#34d399;color:#34d399}
 </style>
 </head>
 <body>
@@ -1586,6 +1596,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 </div><!-- /side -->
 <div id="map-hint">Drag to explore · type address to analyze</div>
 <div id="map"></div>
+<button id="exits-toggle" onclick="toggleExits()" title="Toggle highway exits">
+  <span class="oz-dot" style="background:#34d399;border-color:#34d399"></span>Exits
+</button>
 <button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
   <span class="oz-dot"></span>OZ Overlay
 </button>
@@ -3231,6 +3244,26 @@ var ozLayer = null;
 var ozActive = false;
 var ozStateCache = {}; // keyed by state FIPS
 
+
+function toggleExits(){
+  exitsActive = !exitsActive;
+  var btn = el('exits-toggle');
+  if(btn) btn.classList.toggle('oz-on', exitsActive);
+  if(!exitsActive){
+    clearExits();
+    return;
+  }
+  // Re-draw exits using cached highway elements
+  var s = 0;
+  var lat = slotCache[s]&&slotCache[s].lat;
+  var lon = slotCache[s]&&slotCache[s].lon;
+  if(lat && hwyElementsAll && hwyElementsAll.length){
+    fetchExits(lat,lon,15).then(function(ex){
+      if(ex) drawExits(ex, hwyElementsAll, lat, lon);
+    }).catch(function(){});
+  }
+}
+
 function toggleOZ(){
   ozActive = !ozActive;
   var btn = el('oz-toggle');
@@ -3937,8 +3970,9 @@ async function fetchHwy(lat,lon){
 
 // ══ HIGHWAY EXITS ══
 var exitMapLayer=null;
+var exitsActive=false; // exits toggled off by default
 async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
-function drawExits(exitEls,hwyEls,cLat,cLon){clearExits();if(!exitEls||!exitEls.length)return;exitMapLayer=L.layerGroup().addTo(MAP);var seen={};exitEls.forEach(function(node){if(!node.lat||!node.lon)return;var tags=node.tags||{};var exitNum=tags.ref||tags.name||'';if(!exitNum||exitNum.length>6)return;var key=Math.round(node.lat*1000)+'|'+Math.round(node.lon*1000);if(seen[key])return;seen[key]=true;var hwyName='',bd=999;if(hwyEls&&hwyEls.length){hwyEls.forEach(function(way){var wt=way.tags||{};if(wt.highway!=='motorway'&&wt.highway!=='trunk')return;var wRef=wt.ref||wt.name||'';if(!wRef||!way.geometry)return;for(var j=0;j<way.geometry.length-1;j++){var dd=ptSeg(node.lon,node.lat,way.geometry[j].lon,way.geometry[j].lat,way.geometry[j+1].lon,way.geometry[j+1].lat);if(dd<bd){bd=dd;hwyName=wRef;}}});}var dest=tags.destination||tags['destination:street']||'';var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);var dh=hwyName?hwyName.replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA ').replace(/US Route /g,'US '):'';var popup='<div style="min-width:120px"><div style="font-size:15px;font-weight:700;color:#4b7cf3;margin-bottom:2px">Exit '+exitNum+'</div>'+(hwyName?'<div style="font-size:12px;font-weight:600;color:#dde3f0;margin-bottom:2px">'+hwyName+'</div>':'')+(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:3px">'+dest+'</div>':'')+'<div style="font-size:11px;color:#636d85">'+distMi+' mi from center</div></div>';var badge='<div class="exit-marker">'+(dh?'<span class="exit-hwy">'+dh+'</span>':'')+'<span class="exit-num-badge">'+exitNum+'</span></div>';L.marker([node.lat,node.lon],{icon:L.divIcon({className:'',html:badge,iconSize:[64,24],iconAnchor:[32,12]}),interactive:true,zIndexOffset:300}).bindPopup(popup,{maxWidth:200,className:'exit-popup'}).addTo(exitMapLayer);});}
+function drawExits(exitEls,hwyEls,cLat,cLon){clearExits();if(!exitEls||!exitEls.length)return;if(!exitsActive)return;exitMapLayer=L.layerGroup().addTo(MAP);var seen={};exitEls.forEach(function(node){if(!node.lat||!node.lon)return;var tags=node.tags||{};var exitNum=tags.ref||tags.name||'';if(!exitNum||exitNum.length>6)return;var key=Math.round(node.lat*1000)+'|'+Math.round(node.lon*1000);if(seen[key])return;seen[key]=true;var hwyName='',bd=999;if(hwyEls&&hwyEls.length){hwyEls.forEach(function(way){var wt=way.tags||{};if(wt.highway!=='motorway'&&wt.highway!=='trunk')return;var wRef=wt.ref||wt.name||'';if(!wRef||!way.geometry)return;for(var j=0;j<way.geometry.length-1;j++){var dd=ptSeg(node.lon,node.lat,way.geometry[j].lon,way.geometry[j].lat,way.geometry[j+1].lon,way.geometry[j+1].lat);if(dd<bd){bd=dd;hwyName=wRef;}}});}var dest=tags.destination||tags['destination:street']||'';var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);var dh=hwyName?hwyName.replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA ').replace(/US Route /g,'US '):'';var popup='<div style="min-width:130px"><div style="font-family:IBM Plex Mono,monospace;font-size:14px;font-weight:700;color:#34d399;margin-bottom:2px">Exit '+exitNum+(dh?' · '+dh:'')+'</div>'+(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:3px">'+dest+'</div>':'')+'<div style="font-size:11px;color:#636d85">'+distMi+' mi from center</div></div>';var badge='<div class="exit-marker">'+(dh?'<span class="exit-hwy">'+dh+'</span>':'')+'<span class="exit-num-badge">'+exitNum+'</span></div>';L.marker([node.lat,node.lon],{icon:L.divIcon({className:'',html:badge,iconSize:[64,24],iconAnchor:[32,12]}),interactive:true,zIndexOffset:300}).bindPopup(popup,{maxWidth:200,className:'exit-popup'}).addTo(exitMapLayer);});}
 function clearExits(){if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(e){}exitMapLayer=null;}}
 
 // ══ ZONING (MassGIS L3) ══
@@ -5470,6 +5504,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
