@@ -3978,9 +3978,26 @@ async function fetchHwy(lat,lon){
 var exitMapLayer=null;
 var exitsActive=false; // exits toggled off by default
 async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
-function drawExits(exitEls,hwyEls,cLat,cLon){clearExits();if(!exitEls||!exitEls.length)return;if(!exitsActive)return;exitMapLayer=L.layerGroup().addTo(MAP);var seen={};exitEls.forEach(function(node){if(!node.lat||!node.lon)return;var tags=node.tags||{};var exitNum=tags.ref||tags.name||'';if(!exitNum||exitNum.length>6)return;var key=Math.round(node.lat*1000)+'|'+Math.round(node.lon*1000);if(seen[key])return;seen[key]=true;var hwyName='',bd=999;if(hwyEls&&hwyEls.length){hwyEls.forEach(function(way){var wt=way.tags||{};
-        // Accept motorway, motorway_link, trunk, trunk_link
-        if(!wt.highway||wt.highway.indexOf('motorway')<0&&wt.highway.indexOf('trunk')<0) return;
+function drawExits(exitEls,hwyEls,cLat,cLon){
+  clearExits();
+  if(!exitEls||!exitEls.length||!exitsActive) return;
+  exitMapLayer=L.layerGroup().addTo(MAP);
+  var seen={};
+  exitEls.forEach(function(node){
+    if(!node.lat||!node.lon) return;
+    var tags=node.tags||{};
+    var exitNum=tags.ref||tags.name||'';
+    if(!exitNum||exitNum.length>6) return;
+    var key=Math.round(node.lat*1000)+'|'+Math.round(node.lon*1000);
+    if(seen[key]) return;
+    seen[key]=true;
+    // Find nearest highway name
+    var hwyName='',bd=999;
+    if(hwyEls&&hwyEls.length){
+      hwyEls.forEach(function(way){
+        var wt=way.tags||{};
+        var hw=wt.highway||'';
+        if(hw!=='motorway'&&hw!=='trunk'&&hw!=='motorway_link'&&hw!=='trunk_link') return;
         var wRef=wt.ref||wt.name||'';
         if(!wRef||!way.geometry) return;
         for(var j=0;j<way.geometry.length-1;j++){
@@ -3988,23 +4005,41 @@ function drawExits(exitEls,hwyEls,cLat,cLon){clearExits();if(!exitEls||!exitEls.
           if(dd<bd){bd=dd;hwyName=wRef;}
         }
       });
-      // If no match from geometry (ramp exit), try tag-based match
-      if(!hwyName&&tags['highway:ref']) hwyName=tags['highway:ref'];
-      if(!hwyName&&tags.network) hwyName=tags.network;
-    }var dest=tags.destination||tags['destination:street']||'';var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);var dh=hwyName?hwyName.replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA ').replace(/US Route /g,'US '):'';var popup='<div style="min-width:130px"><div style="font-family:IBM Plex Mono,monospace;font-size:14px;font-weight:700;color:#34d399;margin-bottom:2px">Exit '+exitNum+(dh?' · '+dh:'')+'</div>'+(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:3px">'+dest+'</div>':'')+'<div style="font-size:11px;color:#636d85">'+distMi+' mi from center</div></div>';var badge='<div class="exit-marker">'+(dh?'<span class="exit-hwy">'+dh+'</span>':'')+'<span class="exit-num-badge">'+exitNum+'</span></div>';(function(b,p){
-        var tmp=document.createElement('div');
-        tmp.style.cssText='position:absolute;visibility:hidden;display:inline-flex';
-        tmp.innerHTML=b;
-        document.body.appendChild(tmp);
-        var w=Math.max(tmp.offsetWidth||70,40);
-        var h=tmp.offsetHeight||24;
-        document.body.removeChild(tmp);
-        L.marker([node.lat,node.lon],{
-          icon:L.divIcon({className:'',html:b,iconSize:[w,h],iconAnchor:[w/2,h/2]}),
-          interactive:true,
-          zIndexOffset:300
-        }).bindPopup(p,{maxWidth:220,className:'exit-popup'}).addTo(exitMapLayer);
-      })(badge,popup);});}
+    }
+    // Clean up highway name
+    var dh=hwyName?hwyName
+      .replace(/;.*/,'')  // take first ref if semicolon-separated
+      .replace(/Interstate /g,'I-')
+      .replace(/Massachusetts Route /g,'MA ')
+      .replace(/US Route /g,'US ')
+      .trim():'';
+    var dest=tags.destination||tags['destination:ref']||'';
+    var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);
+    // Popup content
+    var popupHtml='<div style="font-family:DM Sans,sans-serif;min-width:130px">'
+      +'<div style="font-family:IBM Plex Mono,monospace;font-size:13px;font-weight:700;color:#34d399;margin-bottom:3px">'
+      +'Exit '+exitNum+(dh?' &middot; '+dh:'')+'</div>'
+      +(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:2px">&#8594; '+dest+'</div>':'')
+      +'<div style="font-size:11px;color:#636d85">'+distMi+' mi from center</div>'
+      +'</div>';
+    // Badge — simple inline styles, no DOM measurement needed
+    var badgeHtml='<div style="display:inline-flex;align-items:center;gap:3px;'
+      +'background:#0a2a1e;border:1.5px solid #34d399;border-radius:4px;'
+      +'padding:3px 7px;font-family:IBM Plex Mono,monospace;font-size:10px;'
+      +'font-weight:700;color:#34d399;line-height:1;white-space:nowrap;'
+      +'box-shadow:0 2px 8px rgba(0,0,0,.8);cursor:pointer">'
+      +(dh?'<span style="opacity:.8;font-size:9px;border-right:1px solid rgba(52,211,153,.3);padding-right:4px;margin-right:1px">'+dh+'</span>':'')
+      +'<span>'+exitNum+'</span>'
+      +'</div>';
+    var marker=L.marker([node.lat,node.lon],{
+      icon:L.divIcon({className:'',html:badgeHtml,iconSize:null,iconAnchor:[0,12]}),
+      interactive:true,
+      zIndexOffset:300
+    });
+    marker.bindPopup(popupHtml,{maxWidth:220});
+    marker.addTo(exitMapLayer);
+  });
+}
 function clearExits(){if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(e){}exitMapLayer=null;}}
 
 // ══ ZONING (MassGIS L3) ══
@@ -5536,6 +5571,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
