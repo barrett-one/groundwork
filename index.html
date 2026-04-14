@@ -1351,7 +1351,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   <div id="sidebar-tabs">
   <button class="stab on" data-tab="demo" onclick="setTab('demo')">Demographics</button>
   <button class="stab" data-tab="re" onclick="setTab('re')">Real Estate</button>
-  <button class="stab" data-tab="intel" onclick="setTab('intel')">Intel</button>
+  <button class="stab" data-tab="intel" onclick="setTab('intel')">Market Intel</button>
 </div>
 <div id="res-wrap">
    <!-- Slot A -->
@@ -3492,14 +3492,16 @@ function toggleEnv(){
     [0,1].forEach(function(s){var el2=el('env-status-'+s);if(el2)el2.style.display='none';});
     return;
   }
-  loadEnvLayer();
-  // Check subject property for active slots
+  var lat=null,lon=null;
+  if(slotCache[0]&&slotCache[0].lat){ lat=slotCache[0].lat; lon=slotCache[0].lon; }
+  else if(slotCache[1]&&slotCache[1].lat){ lat=slotCache[1].lat; lon=slotCache[1].lon; }
+  if(lat&&lon) loadEnvLayer(lat,lon);
   [0,1].forEach(function(s){
-    var lat=slotCache[s]&&slotCache[s].lat;
-    var lon=slotCache[s]&&slotCache[s].lon;
+    var slat=slotCache[s]&&slotCache[s].lat;
+    var slon=slotCache[s]&&slotCache[s].lon;
+    if(slat&&slon) checkSubjectEnv(slat,slon,s);
   });
 }
-
 async function loadEnvLayer(){
   var s=0;
   var lat = slotCache[s]&&slotCache[s].lat;
@@ -4326,6 +4328,11 @@ function resetSlot(s){
   var _zc2=el('hcard-zoning-'+s);if(_zc2){_zc2.style.display='none';_zc2.setAttribute('data-zone-visible','0');}
   var _sc=el('hcard-sales-'+s);if(_sc)_sc.style.display='none';
   salesData[s]=null;
+  salesFilter[s]='all';
+  var sf=el('sales-filter-'+s);
+  if(sf) sf.querySelectorAll('.sf-btn').forEach(function(b){
+    b.classList.toggle('on',b.dataset.cls==='all');
+  });
   var _sba=el('hcard-sba-'+s);if(_sba)_sba.style.display='none';
   var _fs=el('flood-status-'+s);if(_fs)_fs.style.display='none';
   var _es=el('env-status-'+s);if(_es)_es.style.display='none';
@@ -6249,6 +6256,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
