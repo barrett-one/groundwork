@@ -1167,6 +1167,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sales-psf{font-size:9.5px;color:var(--m2)}
 .sales-type{display:inline-block;font-size:8.5px;font-weight:700;padding:2px 6px;
   border-radius:4px;letter-spacing:.3px;white-space:nowrap}
+
+/* ── SALES MAP PINS ── */
+.sale-pin-btn{background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--m1);
+  font-size:11px;line-height:1;transition:color .15s;vertical-align:middle;flex-shrink:0}
+.sale-pin-btn:hover{color:var(--ac)}
+.sale-pin-btn.pinned{color:#f472b6}
+.sales-clear-btn{padding:3px 8px;font-size:9.5px;font-weight:600;border:1px solid var(--b2);
+  border-radius:4px;background:none;color:var(--m1);cursor:pointer;transition:all .15s}
+.sales-clear-btn:hover{border-color:#ef5858;color:#ef5858}
+.sales-pin-popup{font-family:'DM Sans',sans-serif;font-size:11px;min-width:140px}
+.sales-pin-popup .sp-type{font-size:9px;font-weight:700;letter-spacing:.3px;margin-bottom:3px}
+.sales-pin-popup .sp-addr{font-weight:600;margin-bottom:2px}
+.sales-pin-popup .sp-detail{color:#6a768f;font-size:10px}
 </style>
 </head>
 <body>
@@ -1405,7 +1418,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <!-- Recent Sales (MA only, Intel tab) -->
     <div class="hcard" data-tab="intel" id="hcard-sales-0" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div class="hl" style="margin-bottom:0">RECENT SALES</div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="hl" style="margin-bottom:0">RECENT SALES</div><button class="sales-clear-btn" id="sales-clear-0" onclick="clearSalePins(0)" style="display:none">✕ Clear pins</button></div>
         <div style="display:flex;gap:4px" id="sales-filter-0">
           <button class="sf-btn on" data-cls="all" onclick="setSalesFilter(0,'all',this)">All</button>
           <button class="sf-btn" data-cls="I" onclick="setSalesFilter(0,'I',this)">Industrial</button>
@@ -3088,9 +3101,10 @@ function renderSales(s){
     var psf = bsf>100 ? Math.round(price/bsf) : null;
     var ds = a.LS_DATE ? a.LS_DATE.toString() : '';
     var date = ds.length===8 ? ds.slice(4,6)+'/'+ds.slice(6,8)+'/'+ds.slice(2,4) : ds;
+    var ridx = rows.indexOf(a);
     html += '<tr>'
       + '<td><span class="sales-type" style="background:'+color+'22;border:1px solid '+color+'44;color:'+color+'">'+label+'</span></td>'
-      + '<td><div class="sales-addr">'+addr+'</div><div class="sales-city">'+city+'</div></td>'
+      + '<td><div style="display:flex;align-items:flex-start;gap:4px"><div><div class="sales-addr">'+addr+'</div><div class="sales-city">'+city+'</div></div><button class="sale-pin-btn" title="Show on map" onclick="toggleSalePin('+s+','+ridx+',this)">📍</button></div></td>'
       + '<td class="sales-mono">'+(bsf>0?(bsf>=1000?Math.round(bsf/1000)+'K':bsf):'—')+'</td>'
       + '<td class="sales-mono">$'+(price>=1e6?(price/1e6).toFixed(1)+'M':price>=1000?Math.round(price/1000)+'K':price)+'</td>'
       + '<td class="sales-mono">'+(psf?'$'+psf:'—')+'</td>'
@@ -3100,6 +3114,100 @@ function renderSales(s){
   html += '</tbody></table>';
 
   cont.innerHTML = html;
+}
+
+
+// ── SALES MAP PINS ──
+var salePinLayer = null;
+var salePins = {}; // keyed by sale index
+
+function initSalePinLayer(){
+  if(!salePinLayer) salePinLayer = L.layerGroup().addTo(MAP);
+}
+
+function toggleSalePin(s, idx, btn){
+  initSalePinLayer();
+  var data = salesData[s];
+  if(!data || !data[idx]) return;
+  var a = data[idx];
+  var key = s+'-'+idx;
+
+  if(salePins[key]){
+    // Remove pin
+    salePinLayer.removeLayer(salePins[key]);
+    delete salePins[key];
+    btn.classList.remove('pinned');
+    btn.title = 'Show on map';
+    updateSalesClearBtn(s);
+    return;
+  }
+
+  // Geocode the address and add pin
+  var addr = (a.SITE_ADDR||'') + ', ' + (a.CITY||'') + ', MA';
+  btn.textContent = '⟳';
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(addr)+'&countrycodes=us&limit=1')
+    .then(function(r){ return r.json(); })
+    .then(function(results){
+      btn.textContent = '📍';
+      if(!results || !results.length){ btn.textContent = '📍'; return; }
+      var lat = parseFloat(results[0].lat);
+      var lon = parseFloat(results[0].lon);
+      var color = SALE_COLORS[a._cls]||'#6a768f';
+      var label = SALE_LABELS[a._cls]||'Other';
+      var price = a.LS_PRICE||0;
+      var priceStr = price>=1e6?(price/1e6).toFixed(1)+'M':Math.round(price/1000)+'K';
+      var bsf = a.BLD_AREA||0;
+      var psf = bsf>100?'$'+Math.round(price/bsf)+'/SF':'';
+      var ds = a.LS_DATE ? a.LS_DATE.toString() : '';
+      var date = ds.length===8 ? ds.slice(4,6)+'/'+ds.slice(6,8)+'/'+ds.slice(2,4) : ds;
+
+      var icon = L.divIcon({
+        html: '<div style="width:10px;height:10px;background:'+color+';border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px '+color+'55"></div>',
+        iconSize:[10,10], iconAnchor:[5,5], className:''
+      });
+      var marker = L.marker([lat,lon],{icon:icon}).addTo(salePinLayer);
+      marker.bindPopup(
+        '<div class="sales-pin-popup">'
+        +'<div class="sp-type" style="color:'+color+'">'+label+'</div>'
+        +'<div class="sp-addr">'+(a.SITE_ADDR||'')+'</div>'
+        +'<div class="sp-detail">'+a.CITY+' &nbsp;|&nbsp; $'+priceStr+(bsf?' &nbsp;|&nbsp; '+Math.round(bsf/1000)+'K SF':'')+(psf?' &nbsp;|&nbsp; '+psf:'')+'</div>'
+        +'<div class="sp-detail">'+date+'</div>'
+        +'</div>',
+        {maxWidth:220}
+      );
+      salePins[key] = marker;
+      btn.classList.add('pinned');
+      btn.title = 'Remove from map';
+      updateSalesClearBtn(s);
+      MAP.panTo([lat,lon]);
+    })
+    .catch(function(){ btn.textContent = '📍'; });
+}
+
+function clearSalePins(s){
+  // Remove all pins for this slot
+  var prefix = s+'-';
+  Object.keys(salePins).forEach(function(k){
+    if(k.indexOf(prefix)===0){
+      if(salePinLayer) salePinLayer.removeLayer(salePins[k]);
+      delete salePins[k];
+    }
+  });
+  // Reset all pin buttons
+  var cont = el('sales-'+s);
+  if(cont) cont.querySelectorAll('.sale-pin-btn').forEach(function(b){
+    b.classList.remove('pinned');
+    b.textContent = '📍';
+    b.title = 'Show on map';
+  });
+  updateSalesClearBtn(s);
+}
+
+function updateSalesClearBtn(s){
+  var btn = el('sales-clear-'+s);
+  if(!btn) return;
+  var hasPins = Object.keys(salePins).some(function(k){ return k.indexOf(s+'-')===0; });
+  btn.style.display = hasPins ? 'inline-block' : 'none';
 }
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
@@ -5349,6 +5457,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
