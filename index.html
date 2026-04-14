@@ -1148,6 +1148,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   color:#f59e42;font-size:10px;font-weight:700;padding:3px 9px;
   border-radius:12px;letter-spacing:.3px;margin-top:2px}
 .oz-badge svg{flex-shrink:0}
+
+/* ── RECENT SALES ── */
+.sf-btn{padding:3px 8px;font-size:9.5px;font-weight:600;border:1px solid var(--b2);
+  border-radius:4px;background:none;color:var(--m1);cursor:pointer;transition:all .15s}
+.sf-btn:hover{border-color:var(--ac);color:var(--ac)}
+.sf-btn.on{background:var(--ag);border-color:var(--ac);color:var(--ac)}
+.sales-table{width:100%;border-collapse:collapse;margin-top:2px}
+.sales-table th{font-size:9px;color:var(--m1);text-transform:uppercase;letter-spacing:.4px;
+  text-align:right;padding:0 4px 6px;font-weight:500;border-bottom:1px solid var(--b1)}
+.sales-table th:first-child{text-align:left;padding-left:0}
+.sales-table td{padding:5px 4px;text-align:right;border-bottom:1px solid rgba(255,255,255,.03);
+  font-size:11px;color:var(--tx);vertical-align:top}
+.sales-table td:first-child{text-align:left;padding-left:0}
+.sales-addr{font-size:10.5px;color:var(--tx)}
+.sales-city{font-size:9.5px;color:var(--m1)}
+.sales-mono{font-family:'IBM Plex Mono',monospace;font-size:10.5px}
+.sales-psf{font-size:9.5px;color:var(--m2)}
+.sales-type{display:inline-block;font-size:8.5px;font-weight:700;padding:1px 5px;
+  border-radius:3px;letter-spacing:.3px;margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -1373,15 +1392,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="hcard permit sec" data-tab="re"><div class="hl" data-tip="Housing units by decade of construction within the trade area. High recent-build share signals active development and growing demand. Source: ACS 2022 B25034.">Construction Activity</div><div class="hn pending" id="rpermit-0">…</div><div class="hs" id="permit-sub-0"></div>
      <div class="permit-detail" id="permit-detail-0"></div>
     </div>
-    <!-- BROKER INTEL (Intel tab only) -->
+    <!-- MARKET INTEL (Intel tab only) -->
     <div class="hcard" data-tab="intel">
-      <div class="hl" style="margin-bottom:10px">BROKER INTEL</div>
+      <div class="hl" style="margin-bottom:10px">MARKET INTEL</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         <button class="broker-btn" data-type="industrial" onclick="brokerIntel('industrial')">Industrial</button>
         <button class="broker-btn" data-type="office" onclick="brokerIntel('office')">Office</button>
         <button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button>
       </div>
       <button onclick="generateSummary()" style="width:100%;padding:9px 14px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:13px">✶</span>Generate Market Summary</button>
+    </div>
+    <!-- Recent Sales (MA only, Intel tab) -->
+    <div class="hcard" data-tab="intel" id="hcard-sales-0" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="hl" style="margin-bottom:0">RECENT SALES</div>
+        <div style="display:flex;gap:4px" id="sales-filter-0">
+          <button class="sf-btn on" data-cls="all" onclick="setSalesFilter(0,'all',this)">All</button>
+          <button class="sf-btn" data-cls="I" onclick="setSalesFilter(0,'I',this)">Industrial</button>
+          <button class="sf-btn" data-cls="CR" onclick="setSalesFilter(0,'CR',this)">Retail</button>
+          <button class="sf-btn" data-cls="CO" onclick="setSalesFilter(0,'CO',this)">Office</button>
+        </div>
+      </div>
+      <div id="sales-0"><div style="font-size:11px;color:var(--m1);padding:8px 0">Loading sales data…</div></div>
+      <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">MassGIS L3 assessors · Last 36 months · Price > $50K · MA only</div>
     </div>
     </div>
    </div>
@@ -2065,6 +2098,7 @@ function applyDriveResults(s,cache){
   // Show card with loading state immediately so user knows to expect it
   var _dzr=Math.min(Math.max(Math.sqrt((cache.approxArea||25)/Math.PI),1),15);var _pzc=el('hcard-zoning-'+s);if(_pzc){_pzc.style.display=activeTab==='re'?'block':'none';_pzc.setAttribute('data-zone-visible','1');var _pzcd=el('zoning-'+s);if(_pzcd)_pzcd.innerHTML='<div style="font-size:11px;color:var(--m1);padding:8px 0">Loading parcel data…</div>';}fetchZoning(cache.lat,cache.lon,_dzr).then(function(z){renderZoning(s,z);if(driveCache[s])driveCache[s].zoningData=z;if(typeof setTab==='function')setTab(activeTab);}).catch(function(e){console.warn('Drive zoning failed:',e);var c=el('hcard-zoning-'+s);if(c)c.style.display='none';});}else{var _zc=el('hcard-zoning-'+s);if(_zc)_zc.style.display='none';}
   renderPermits(s,cache.permitData||null);
+  if(_driveFips==='25') fetchSales(s,cache.lat,cache.lon,Math.sqrt((cache.approxArea||25)/Math.PI));
 
   renderGrowth(s,cache.pop,cache.data2010);
   renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
@@ -2962,6 +2996,109 @@ function updateApiKeyStatus(){
 
 
 // ── SETTINGS PANEL ──
+
+
+// ═══════════════ RECENT SALES (MassGIS L3) ═══════════════
+var salesData = [null, null]; // cache per slot
+var salesFilter = ['all', 'all'];
+
+function classifySale(code){
+  var c = parseInt(code)||0;
+  if(c>=400&&c<500) return 'I';
+  if((c>=300&&c<320)||(c>=330&&c<340)||(c>=360&&c<370)) return 'CR';
+  if(c>=320&&c<330) return 'CA';
+  if(c>=350&&c<360) return 'CH';
+  if((c>=340&&c<350)||(c>=370&&c<400)) return 'CO';
+  if(c>=100&&c<200) return 'R';
+  return 'X';
+}
+
+var SALE_LABELS = {I:'Industrial',CR:'Retail/Food',CO:'Office',CH:'Hotel',CA:'Auto/Svc',R:'Residential',X:'Other'};
+var SALE_COLORS = {I:'#f59e42',CR:'#4b7cf3',CO:'#a78bfa',CH:'#e879f9',CA:'#38bdf8',R:'#3ecf8e',X:'#6a768f'};
+
+async function fetchSales(s, lat, lon, r){
+  var card = el('hcard-sales-'+s);
+  if(!card) return;
+  var cutoff = (function(){
+    var d = new Date(); d.setFullYear(d.getFullYear()-3);
+    return d.getFullYear()+''+String(d.getMonth()+1).padStart(2,'0')+''+String(d.getDate()).padStart(2,'0');
+  })();
+  var where = "LS_PRICE>50000 AND LS_DATE>='"+cutoff+"'";
+  var url = 'https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/L3_Parcels_FeatureService_4326/MapServer/1/query?'
+    + 'geometry='+lon+','+lat
+    + '&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects'
+    + '&distance='+Math.min(r,5)+'&units=esriSRUnit_StatuteMile&inSR=4326'
+    + '&where='+encodeURIComponent(where)
+    + '&outFields=USE_CODE,BLD_AREA,LOT_SIZE,LS_DATE,LS_PRICE,SITE_ADDR,CITY,YEAR_BUILT'
+    + '&returnGeometry=false&resultRecordCount=100&orderByFields=LS_DATE+DESC&f=json';
+  try{
+    var resp = await fetch(url);
+    if(!resp.ok) return;
+    var d = await resp.json();
+    var feats = (d.features||[]).map(function(f){ return f.attributes; });
+    // Enrich with asset class
+    feats = feats.map(function(a){
+      a._cls = classifySale(a.USE_CODE);
+      return a;
+    });
+    // Filter to CRE only (non-residential) + residential for completeness
+    salesData[s] = feats;
+    card.style.display = activeTab==='intel' ? 'block' : 'none';
+    card.setAttribute('data-zone-visible','1'); // reuse mechanism
+    renderSales(s);
+  }catch(e){ console.warn('Sales fetch failed:', e); }
+}
+
+function setSalesFilter(s, cls, btn){
+  salesFilter[s] = cls;
+  document.querySelectorAll('#sales-filter-'+s+' .sf-btn').forEach(function(b){
+    b.classList.toggle('on', b.dataset.cls===cls);
+  });
+  renderSales(s);
+}
+
+function renderSales(s){
+  var cont = el('sales-'+s);
+  var data = salesData[s];
+  if(!cont) return;
+  if(!data || !data.length){
+    cont.innerHTML = '<div style="font-size:11px;color:var(--m1);padding:8px 0">No sales found in this period</div>';
+    return;
+  }
+  var cls = salesFilter[s] || 'all';
+  var filtered = cls==='all' ? data : data.filter(function(a){ return a._cls===cls; });
+  if(!filtered.length){
+    cont.innerHTML = '<div style="font-size:11px;color:var(--m1);padding:8px 0">No '+SALE_LABELS[cls]+' sales in this period</div>';
+    return;
+  }
+  // Cap at 30 rows
+  var rows = filtered.slice(0,30);
+  var html = '<table class="sales-table"><thead><tr>'
+    + '<th>Address</th><th>SF</th><th>Price</th><th>$/SF</th><th>Date</th></tr></thead><tbody>';
+  rows.forEach(function(a){
+    var color = SALE_COLORS[a._cls]||'#6a768f';
+    var label = SALE_LABELS[a._cls]||'';
+    var addr = (a.SITE_ADDR||'').replace(/\s+/g,' ').trim();
+    var city = a.CITY||'';
+    var bsf = a.BLD_AREA||0;
+    var price = a.LS_PRICE||0;
+    var psf = bsf>100 ? Math.round(price/bsf) : null;
+    var ds = a.LS_DATE ? a.LS_DATE.toString() : '';
+    var date = ds.length===8 ? ds.slice(4,6)+'/'+ds.slice(6,8)+'/'+ds.slice(2,4) : ds;
+    html += '<tr>'
+      + '<td><div><span class="sales-type" style="background:'+color+'22;color:'+color+'">'+label+'</span></div>'
+      + '<div class="sales-addr">'+addr+'</div>'
+      + '<div class="sales-city">'+city+'</div></td>'
+      + '<td class="sales-mono">'+(bsf>0?(bsf>=1000?Math.round(bsf/1000)+'K':bsf):'—')+'</td>'
+      + '<td class="sales-mono">$'+(price>=1e6?(price/1e6).toFixed(1)+'M':price>=1000?Math.round(price/1000)+'K':price)+'</td>'
+      + '<td class="sales-mono">'+(psf?'$'+psf:'—')+'</td>'
+      + '<td class="sales-mono" style="font-size:10px;color:var(--m2)">'+date+'</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table>';
+  if(filtered.length>30) html += '<div style="font-size:9.5px;color:var(--m1);margin-top:6px">Showing 30 of '+filtered.length+' sales</div>';
+  cont.innerHTML = html;
+}
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
 // Service: Opportunity_Zones_2 on CDFI/HUD ArcGIS org
@@ -4327,7 +4464,7 @@ renderSaves();
 // ── MARKET RENTS via Anthropic API + web search ──
 
 
-// ── BROKER INTEL ──
+// ── MARKET INTEL ──
 var brokerType = '';
 
 function brokerIntel(type){
@@ -5207,6 +5344,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
