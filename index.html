@@ -1031,7 +1031,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #mode-toggle{display:none!important}
 #drive-status-new{font-size:10px;color:var(--m1);margin-left:4px}
 #drive-ctl{display:none!important}
-.exit-marker{display:flex;align-items:center;gap:2px;background:#0d3d2e;border:1.5px solid #34d399;border-radius:4px;padding:2px 5px;font-family:IBM Plex Mono,monospace;font-size:10px;font-weight:700;color:#34d399;line-height:1;cursor:pointer;white-space:nowrap}.exit-hwy{color:#34d399;opacity:.8;font-size:9px;border-right:1px solid rgba(52,211,153,.3);padding-right:4px;margin-right:1px}.exit-num-badge{color:#34d399}.exit-popup .leaflet-popup-content-wrapper{background:#10131c!important;border:1px solid #1e2435!important;border-radius:7px!important;padding:0!important}.exit-popup .leaflet-popup-content{margin:10px 12px!important}.exit-popup .leaflet-popup-tip{background:#10131c!important}
+.exit-marker{display:inline-flex;align-items:center;gap:3px;background:#0a2a1e;border:1.5px solid #34d399;border-radius:4px;padding:3px 7px;font-family:IBM Plex Mono,monospace;font-size:10px;font-weight:700;color:#34d399;line-height:1;cursor:pointer;white-space:nowrap;pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.7)}.exit-hwy{color:#34d399;opacity:.8;font-size:9px;border-right:1px solid rgba(52,211,153,.3);padding-right:4px;margin-right:1px}.exit-num-badge{color:#34d399}.exit-popup .leaflet-popup-content-wrapper{background:#10131c!important;border:1px solid #1e2435!important;border-radius:7px!important;padding:0!important}.exit-popup .leaflet-popup-content{margin:10px 12px!important}.exit-popup .leaflet-popup-tip{background:#10131c!important}
 
 /* ── Crime / Permits / Traffic cards ── */
 .hcard.crime::before{background:var(--rd)}
@@ -3991,7 +3991,20 @@ function drawExits(exitEls,hwyEls,cLat,cLon){clearExits();if(!exitEls||!exitEls.
       // If no match from geometry (ramp exit), try tag-based match
       if(!hwyName&&tags['highway:ref']) hwyName=tags['highway:ref'];
       if(!hwyName&&tags.network) hwyName=tags.network;
-    }var dest=tags.destination||tags['destination:street']||'';var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);var dh=hwyName?hwyName.replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA ').replace(/US Route /g,'US '):'';var popup='<div style="min-width:130px"><div style="font-family:IBM Plex Mono,monospace;font-size:14px;font-weight:700;color:#34d399;margin-bottom:2px">Exit '+exitNum+(dh?' · '+dh:'')+'</div>'+(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:3px">'+dest+'</div>':'')+'<div style="font-size:11px;color:#636d85">'+distMi+' mi from center</div></div>';var badge='<div class="exit-marker">'+(dh?'<span class="exit-hwy">'+dh+'</span>':'')+'<span class="exit-num-badge">'+exitNum+'</span></div>';L.marker([node.lat,node.lon],{icon:L.divIcon({className:'',html:badge,iconSize:[64,24],iconAnchor:[32,12]}),interactive:true,zIndexOffset:300}).bindPopup(popup,{maxWidth:200,className:'exit-popup'}).addTo(exitMapLayer);});}
+    }var dest=tags.destination||tags['destination:street']||'';var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);var dh=hwyName?hwyName.replace(/Interstate /g,'I-').replace(/Massachusetts Route /g,'MA ').replace(/US Route /g,'US '):'';var popup='<div style="min-width:130px"><div style="font-family:IBM Plex Mono,monospace;font-size:14px;font-weight:700;color:#34d399;margin-bottom:2px">Exit '+exitNum+(dh?' · '+dh:'')+'</div>'+(dest?'<div style="font-size:11px;color:#8e98b0;margin-bottom:3px">'+dest+'</div>':'')+'<div style="font-size:11px;color:#636d85">'+distMi+' mi from center</div></div>';var badge='<div class="exit-marker">'+(dh?'<span class="exit-hwy">'+dh+'</span>':'')+'<span class="exit-num-badge">'+exitNum+'</span></div>';(function(b,p){
+        var tmp=document.createElement('div');
+        tmp.style.cssText='position:absolute;visibility:hidden;display:inline-flex';
+        tmp.innerHTML=b;
+        document.body.appendChild(tmp);
+        var w=Math.max(tmp.offsetWidth||70,40);
+        var h=tmp.offsetHeight||24;
+        document.body.removeChild(tmp);
+        L.marker([node.lat,node.lon],{
+          icon:L.divIcon({className:'',html:b,iconSize:[w,h],iconAnchor:[w/2,h/2]}),
+          interactive:true,
+          zIndexOffset:300
+        }).bindPopup(p,{maxWidth:220,className:'exit-popup'}).addTo(exitMapLayer);
+      })(badge,popup);});}
 function clearExits(){if(exitMapLayer){try{MAP.removeLayer(exitMapLayer);}catch(e){}exitMapLayer=null;}}
 
 // ══ ZONING (MassGIS L3) ══
@@ -5523,6 +5536,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
