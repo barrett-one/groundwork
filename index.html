@@ -1221,6 +1221,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #tower-toggle:hover{border-color:#a78bfa;color:#a78bfa}
 #tower-toggle.oz-on{background:rgba(167,139,250,.12);border-color:#a78bfa;color:#a78bfa}
 #tower-toggle.pill-loading{--pulse-col:#a78bfa}
+
+/* ── SBA LENDING ── */
+.sba-chart{display:flex;align-items:flex-end;gap:3px;height:48px;margin:8px 0 4px}
+.sba-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
+.sba-bar{width:100%;background:var(--ag);border-radius:2px 2px 0 0;min-height:2px;transition:background .2s;cursor:default}
+.sba-bar:hover{background:var(--ac)}
+.sba-yr{font-size:7.5px;color:var(--m1);margin-top:2px;writing-mode:horizontal-tb}
+.sba-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.sba-stat{background:var(--b1);border-radius:6px;padding:6px 8px}
+.sba-stat-val{font-size:13px;font-weight:700;color:var(--tx);font-family:'IBM Plex Mono',monospace}
+.sba-stat-lbl{font-size:9px;color:var(--m1);margin-top:1px}
+.sba-sector{font-size:10px;color:var(--m2);padding:2px 0;display:flex;justify-content:space-between}
+.sba-sector-bar{height:3px;background:var(--ac);border-radius:2px;margin-top:2px;transition:width .4s}
 </style>
 </head>
 <body>
@@ -1458,6 +1471,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
         <button class="broker-btn" data-type="retail" onclick="brokerIntel('retail')">Retail</button>
       </div>
       <button onclick="generateSummary()" style="width:100%;padding:9px 14px;background:linear-gradient(135deg,#1a2035,#1e2d45);border:1px solid #2a3a5c;border-radius:9px;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:13px">✶</span>Generate Market Summary</button>
+    </div>
+    <!-- SBA Lending Activity (Intel tab) -->
+    <div class="hcard" data-tab="intel" id="hcard-sba-0" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="hl" style="margin-bottom:0">SBA LENDING ACTIVITY</div>
+        <div style="font-size:9.5px;color:var(--m1)">7(a) loans · 2015–2025</div>
+      </div>
+      <div id="sba-content-0"><div style="font-size:11px;color:var(--m1);padding:6px 0">Loading…</div></div>
+      <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">SBA FOIA · FY2015-FY2025 · Zip code level</div>
     </div>
     <!-- Recent Sales (MA only, Intel tab) -->
     <div class="hcard" data-tab="intel" id="hcard-sales-0" style="display:none">
@@ -3606,6 +3628,138 @@ function renderTowers(els){
     marker.bindPopup(popupHtml,{maxWidth:220});
     marker.addTo(towerLayer);
   });
+}
+
+
+// ═══════════════ SBA LENDING ACTIVITY ═══════════════
+var sbaData = null;
+var sbaLoading = false;
+var SBA_URL = 'https://raw.githubusercontent.com/barrett-one/groundwork/main/sba_data.json.gz';
+
+var NAICS_LABELS = {
+  '11':'Agriculture','21':'Mining','22':'Utilities','23':'Construction',
+  '31':'Manufacturing','32':'Manufacturing','33':'Manufacturing',
+  '42':'Wholesale','44':'Retail','45':'Retail',
+  '48':'Transportation','49':'Transportation',
+  '51':'Information','52':'Finance','53':'Real Estate',
+  '54':'Professional Svcs','56':'Admin Svcs',
+  '61':'Education','62':'Healthcare','71':'Arts/Entertain.',
+  '72':'Food & Hospitality','81':'Other Services','92':'Government'
+};
+
+async function loadSBAData(){
+  if(sbaData) return sbaData;
+  if(sbaLoading) return null;
+  sbaLoading = true;
+  try{
+    var resp = await fetch(SBA_URL);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var ab = await resp.arrayBuffer();
+    // Decompress gzip using DecompressionStream
+    var ds = new DecompressionStream('gzip');
+    var writer = ds.writable.getWriter();
+    var reader = ds.readable.getReader();
+    writer.write(new Uint8Array(ab));
+    writer.close();
+    var chunks = [];
+    while(true){
+      var res = await reader.read();
+      if(res.done) break;
+      chunks.push(res.value);
+    }
+    var totalLen = chunks.reduce(function(a,b){return a+b.length;},0);
+    var merged = new Uint8Array(totalLen);
+    var offset = 0;
+    chunks.forEach(function(c){merged.set(c,offset);offset+=c.length;});
+    sbaData = JSON.parse(new TextDecoder().decode(merged));
+    console.log('SBA data loaded: '+Object.keys(sbaData).length+' zips');
+    return sbaData;
+  }catch(e){
+    sbaLoading = false;
+    console.warn('SBA load error:',e);
+    return null;
+  }
+}
+
+async function renderSBACard(s, zip){
+  var card = el('hcard-sba-'+s);
+  var cont = el('sba-content-'+s);
+  if(!card||!cont) return;
+  if(!zip||zip.length!==5){ card.style.display='none'; return; }
+  card.style.display = activeTab==='intel'?'block':'none';
+
+  var d = await loadSBAData();
+  if(!d){ cont.innerHTML='<div style="font-size:11px;color:var(--m1)">Data unavailable</div>'; return; }
+
+  var zipData = d[zip];
+  if(!zipData||!Object.keys(zipData).length){
+    cont.innerHTML='<div style="font-size:11px;color:var(--m1)">No SBA loan activity for zip '+zip+'</div>';
+    return;
+  }
+
+  var years = Object.keys(zipData).filter(function(y){return parseInt(y)>=2015;}).sort();
+  var counts = years.map(function(y){return zipData[y].c||0;});
+  var maxCount = Math.max.apply(null,counts)||1;
+
+  // Latest year stats
+  var latestYr = years[years.length-1];
+  var latest = zipData[latestYr]||{};
+  var prevYr = years[years.length-2];
+  var prev = prevYr?zipData[prevYr]:{};
+
+  // Trend: compare last 2 years
+  var trend = prev.c?Math.round((latest.c-prev.c)/prev.c*100):0;
+  var trendStr = trend>0?'+'+trend+'%':trend+'%';
+  var trendColor = trend>10?'#3ecf8e':trend<-10?'#ef4444':'#8e98b0';
+
+  // 5-year totals
+  var recent5yrs = years.slice(-5);
+  var totalLoans = recent5yrs.reduce(function(a,y){return a+(zipData[y].c||0);},0);
+  var totalAmt = recent5yrs.reduce(function(a,y){return a+(zipData[y].t||0);},0);
+  var totalJobs = recent5yrs.reduce(function(a,y){return a+(zipData[y].j||0);},0);
+  var avgLoan = totalLoans?Math.round(totalAmt/totalLoans):0;
+
+  // Top sectors from latest year
+  var sectors = (latest.n||[]).slice(0,3);
+  var maxSector = sectors[0]?sectors[0][1]:1;
+
+  // Build HTML
+  var html = '';
+
+  // Bar chart
+  html += '<div class="sba-chart">';
+  years.forEach(function(yr,i){
+    var h = Math.max(Math.round((counts[i]/maxCount)*44),2);
+    var isLatest = yr===latestYr;
+    html += '<div class="sba-bar-wrap">'
+      + '<div class="sba-bar" style="height:'+h+'px'+(isLatest?';background:var(--ac)':'')+'" title="FY'+yr+': '+counts[i]+' loans"></div>'
+      + '<div class="sba-yr">'+yr.slice(2)+'</div>'
+      + '</div>';
+  });
+  html += '</div>';
+
+  // Stats row
+  html += '<div class="sba-stats">'
+    + '<div class="sba-stat"><div class="sba-stat-val">'+totalLoans+'</div><div class="sba-stat-lbl">5yr loans</div></div>'
+    + '<div class="sba-stat"><div class="sba-stat-val">$'+(avgLoan>=1000?Math.round(avgLoan/1000)+'K':avgLoan)+'</div><div class="sba-stat-lbl">avg loan</div></div>'
+    + '<div class="sba-stat"><div class="sba-stat-val" style="color:'+trendColor+'">'+trendStr+'</div><div class="sba-stat-lbl">YoY loans</div></div>'
+    + '</div>';
+
+  // Top sectors
+  if(sectors.length){
+    html += '<div style="margin-top:8px;font-size:9.5px;color:var(--m1);margin-bottom:4px;font-weight:600;letter-spacing:.4px">TOP SECTORS ('+latestYr+')</div>';
+    sectors.forEach(function(s2){
+      var label = NAICS_LABELS[s2[0]]||('NAICS '+s2[0]);
+      var pct = Math.round(s2[1]/maxSector*100);
+      html += '<div class="sba-sector">'
+        + '<span>'+label+'</span>'
+        + '<span style="color:var(--ac);font-family:IBM Plex Mono,monospace">'+s2[1]+'</span>'
+        + '</div>'
+        + '<div class="sba-sector-bar" style="width:'+pct+'%"></div>';
+    });
+  }
+
+  cont.innerHTML = html;
 }
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
@@ -5956,6 +6110,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
