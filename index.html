@@ -1707,6 +1707,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
     <div class="env-leg-row"><span class="env-leg-dot" style="background:#eab308"></span><div><div class="env-leg-label">TRI — Toxic Release</div><div class="env-leg-desc">Facilities reporting toxic chemical releases to air, water, or land. Indicates ongoing industrial emissions, not necessarily cleanup liability.</div></div></div>
     <div class="env-leg-row"><span class="env-leg-dot" style="background:#a78bfa"></span><div><div class="env-leg-label">Brownfield</div><div class="env-leg-desc">Former industrial/commercial sites with known or suspected contamination. Often eligible for EPA cleanup grants — can be a redevelopment opportunity.</div></div></div>
     <div class="env-leg-row"><span class="env-leg-dot" style="background:#60a5fa"></span><div><div class="env-leg-label">NPDES Wastewater</div><div class="env-leg-desc">Permitted wastewater discharge point. Indicates industrial or municipal treatment operation — usually not a direct transaction risk.</div></div></div>
+    <div class="env-leg-row"><span class="env-leg-dot" style="background:#fdba74"></span><div><div class="env-leg-label">VSQG — Very Small Quantity Generator</div><div class="env-leg-desc">Generates ≤100 kg/month of hazardous waste. Lowest tier under RCRA — dry cleaners, auto shops, small manufacturers. Low compliance burden, rarely a transaction risk.</div></div></div>
     <div style="font-size:9px;color:var(--m1);margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06)">Source: EPA FRS · 5-mile radius</div>
   </div>
   <button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
@@ -3505,6 +3506,8 @@ var ENV_TYPE = {
   'TRI':       {label:'Toxic Release',    short:'TRI',   color:'#eab308'},
   'ACRES':     {label:'Brownfield',       short:'BF',    color:'#a78bfa'},
   'NPDES':     {label:'Wastewater Discharge',short:'NPDES',color:'#60a5fa'},
+  'VSQG':      {label:'VSQG Hazardous Waste', short:'VSQG', color:'#fdba74'},
+  'RCRA_VSQG': {label:'VSQG Hazardous Waste', short:'VSQG', color:'#fdba74'},
 };
 
 // FRS layers to query: 0=ACRES, 15=RCRA, 21=SEMS, 22=SEMS_NPL, 23=TRI
@@ -6376,6 +6379,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
