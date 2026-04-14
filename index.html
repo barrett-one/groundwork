@@ -1411,10 +1411,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
           <button class="sf-btn" data-cls="I" onclick="setSalesFilter(0,'I',this)">Industrial</button>
           <button class="sf-btn" data-cls="CR" onclick="setSalesFilter(0,'CR',this)">Retail</button>
           <button class="sf-btn" data-cls="CO" onclick="setSalesFilter(0,'CO',this)">Office</button>
+          <button class="sf-btn" data-cls="CH" onclick="setSalesFilter(0,'CH',this)">Hotel</button>
         </div>
       </div>
       <div id="sales-0"><div style="font-size:11px;color:var(--m1);padding:8px 0">Loading sales data…</div></div>
-      <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">MassGIS L3 assessors · Last 36 months · Price > $50K · MA only</div>
+      <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">MassGIS L3 assessors · Last 36 months · Price > $50K · CRE only · MA only</div>
     </div>
     </div>
    </div>
@@ -3023,7 +3024,7 @@ async function fetchSales(s, lat, lon, r){
     var d = new Date(); d.setFullYear(d.getFullYear()-3);
     return d.getFullYear()+''+String(d.getMonth()+1).padStart(2,'0')+''+String(d.getDate()).padStart(2,'0');
   })();
-  var where = "LS_PRICE>50000 AND LS_DATE>='"+cutoff+"'";
+  var where = "LS_PRICE>50000 AND LS_DATE>='"+ cutoff +"' AND (USE_CODE LIKE '3%' OR USE_CODE LIKE '4%' OR USE_CODE LIKE '9%' OR USE_CODE LIKE '2%')";
   var url = 'https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/L3_Parcels_FeatureService_4326/MapServer/1/query?'
     + 'geometry='+lon+','+lat
     + '&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects'
@@ -5347,6 +5348,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
