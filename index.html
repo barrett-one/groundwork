@@ -3805,12 +3805,17 @@ async function renderSBACard(s, zips){
     var bGroup = sbaBench[prefix3];
     if(bGroup&&bGroup[latestYr]) bench = bGroup[latestYr];
   }
-  // Capital deployed per zip vs benchmark
+  // Capital deployed per zip — percentile-based scoring
   var capPerZip = zips&&zips.length ? Math.round(totalAmt/zips.length) : 0;
-  var benchCapPerZip = bench ? bench.mt : 0;
-  var capVsBench = benchCapPerZip ? Math.round(capPerZip/benchCapPerZip*100) : null;
-  var capScore = capVsBench ? (capVsBench>=150?'Strong':capVsBench>=100?'Average':capVsBench>=50?'Below Avg':'Weak') : null;
-  var capScoreColor = capVsBench ? (capVsBench>=150?'#3ecf8e':capVsBench>=100?'#86efac':capVsBench>=50?'#f59e0b':'#ef4444') : '#8e98b0';
+  var capScore = null, capScoreColor = '#8e98b0', capPctLabel = null;
+  if(bench&&capPerZip>0){
+    var p10=bench.p10t||0, p50=bench.p50t||0, p75=bench.p75t||0, p90=bench.p90t||0;
+    if(capPerZip>=p90){      capScore='Exceptional'; capScoreColor='#3ecf8e';  capPctLabel='Top 10%'; }
+    else if(capPerZip>=p75){ capScore='Strong';      capScoreColor='#86efac';  capPctLabel='Top 25%'; }
+    else if(capPerZip>=p50){ capScore='Average';     capScoreColor='#f59e0b';  capPctLabel='Above median'; }
+    else if(capPerZip>=p10){ capScore='Below Avg';   capScoreColor='#fb923c';  capPctLabel='Below median'; }
+    else{                    capScore='Weak';         capScoreColor='#ef4444';  capPctLabel='Bottom 10%'; }
+  }
 
   var html = '';
   // Zip count badge
@@ -3831,13 +3836,14 @@ async function renderSBACard(s, zips){
     +'<div class="sba-stat"><div class="sba-stat-val" style="color:'+cagrColor+'">'+cagrStr+'</div><div class="sba-stat-lbl">3yr trend</div></div>'
     +'</div>'
     // Benchmark row
-    +(capVsBench!==null
+    +(capScore!==null
       ? '<div style="margin-top:8px;padding:7px 10px;background:var(--b1);border-radius:7px;display:flex;align-items:center;justify-content:space-between">'
-        +'<div style="font-size:10px;color:var(--m1)">Capital vs local market<br><span style="font-size:9px">'+latestYr+' · peer zip comparison</span></div>'
+        +'<div style="font-size:10px;color:var(--m1)">Capital vs similar markets<br>'
+        +'<span style="font-size:9px;color:var(--m2)">'+latestYr+' · '+zips.length+'-zip area · '+zips[0].slice(0,3)+'xxx peers</span></div>'
         +'<div style="text-align:right">'
         +'<div style="font-size:13px;font-weight:700;color:'+capScoreColor+'">'+capScore+'</div>'
-        +'<div style="font-size:9.5px;color:var(--m2)">'+(capPerZip>=1e6?(capPerZip/1e6).toFixed(1)+'M':Math.round(capPerZip/1000)+'K')+' vs '
-        +(benchCapPerZip>=1e6?(benchCapPerZip/1e6).toFixed(1)+'M':Math.round(benchCapPerZip/1000)+'K')+' median</div>'
+        +'<div style="font-size:9.5px;color:var(--m2)">'+capPctLabel+'&nbsp;·&nbsp;'
+        +'$'+(capPerZip>=1e6?(capPerZip/1e6).toFixed(1)+'M':Math.round(capPerZip/1000)+'K')+'/zip</div>'
         +'</div></div>'
       : ''
     );
@@ -6211,6 +6217,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
