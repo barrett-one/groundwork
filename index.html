@@ -31,7 +31,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #side-inner{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 
 /* header */
-#hd{padding:10px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0}
+#hd{padding:10px 20px 10px;border-bottom:1px solid var(--b1);flex-shrink:0;position:relative}
 #logo-wrap{justify-content:space-between}
 #logo-inner{display:flex;align-items:center;gap:10px}
 #logo-wrap{display:flex;align-items:center;gap:11px}
@@ -2198,6 +2198,7 @@ function clearDriveTime(){
   var dsn=el('drive-status-new');if(dsn)dsn.textContent='';
   updateAnalyzeBtn();
   if(typeof setTab==='function') setTab(activeTab);
+  checkAddressInOZ(cache.lat,cache.lon,s);
 }
 
 async function fetchIsochrone(min){
@@ -3022,6 +3023,7 @@ document.addEventListener('click',function(e){
   if(!btn||!panel) return;
   if(!btn.contains(e.target)&&!panel.contains(e.target)) panel.classList.remove('vis');
 });
+function saveKeyFromPanel(){ saveApiKeyFromSettings(); }
 function saveApiKeyFromSettings(){
   var inp=el('sp-key-inp');
   if(!inp||!inp.value.trim()) return;
@@ -5598,6 +5600,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
