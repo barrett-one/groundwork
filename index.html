@@ -2230,6 +2230,15 @@ function applyDriveResults(s,cache){
   renderGrowth(s,cache.pop,cache.data2010);
   renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
   el('rbg-'+s).textContent=fmt(cache.bgs.length);
+
+  checkAddressInOZ(cache.lat,cache.lon,s);
+  (async function(){
+    try{
+      var ring=cache.polyRing||(driveCache[s]&&driveCache[s].polyRing);
+      var zips=ring ? await getZipsForRing(ring) : await getZipsForRadius(cache.lat,cache.lon,5);
+      if(zips.length) renderSBACard(s,zips);
+    }catch(e){ console.warn('SBA drive:',e); }
+  })();
 }
 
 function applyCircleResults(s){
@@ -6249,6 +6258,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
