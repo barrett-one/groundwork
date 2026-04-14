@@ -1127,13 +1127,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
   border-top-color:#1a2035;z-index:1000}
 
 /* ── OPPORTUNITY ZONE OVERLAY ── */
-#oz-toggle{
-  position:absolute;top:10px;right:50px;z-index:1000;
-  background:var(--panel);border:1px solid var(--b2);border-radius:20px;
-  padding:5px 12px 5px 9px;display:flex;align-items:center;gap:6px;
-  cursor:pointer;font-size:11px;font-weight:600;color:var(--m2);
-  transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.3);letter-spacing:.2px;
-  user-select:none}
 #oz-toggle:hover{border-color:#f472b6;color:#f472b6}
 #oz-toggle.oz-on{
   background:rgba(244,114,182,.12);border-color:#f472b6;color:#f472b6}
@@ -1185,8 +1178,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sales-pin-popup .sp-addr{font-weight:600;margin-bottom:2px}
 .sales-pin-popup .sp-detail{color:#6a768f;font-size:10px}
 
-#exits-toggle{
-  position:absolute;top:10px;right:130px;z-index:1000;
+/* map overlay toggle pills share a container */
+#map-toggles{position:absolute;top:10px;right:50px;z-index:1000;
+  display:flex;gap:6px;flex-direction:row}
+#exits-toggle,#oz-toggle{
+  position:static !important;
   background:var(--panel);border:1px solid var(--b2);border-radius:20px;
   padding:5px 12px 5px 9px;display:flex;align-items:center;gap:6px;
   cursor:pointer;font-size:11px;font-weight:600;color:var(--m2);
@@ -1599,12 +1595,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 </div><!-- /side -->
 <div id="map-hint">Drag to explore · type address to analyze</div>
 <div id="map"></div>
-<button id="exits-toggle" onclick="toggleExits()" title="Toggle highway exits">
-  <span class="oz-dot" style="background:#34d399;border-color:#34d399"></span>Exits
-</button>
-<button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
-  <span class="oz-dot"></span>OZ Overlay
-</button>
+<div id="map-toggles">
+  <button id="exits-toggle" onclick="toggleExits()" title="Toggle highway exits">
+    <span class="oz-dot" style="background:#34d399;border-color:#34d399"></span>Exits
+  </button>
+  <button id="oz-toggle" onclick="toggleOZ()" title="Toggle Opportunity Zone overlay">
+    <span class="oz-dot"></span>OZ Overlay
+  </button>
+</div>
 <div id="toast">🔗 Link copied to clipboard</div>
     
 <script>
@@ -2528,18 +2526,22 @@ function drawHighways(elements,replace){
       allCoords=allCoords.concat(coords);
     });
 
-    // Label at midpoint
+    // Label at midpoint — scale visibility by zoom
     if(allCoords.length){
       var mid=allCoords[Math.floor(allCoords.length/2)];
-      var labelClass=isinterstate?'hwy-label':'hwy-label hwy-label-state';
-      L.marker([mid[0],mid[1]],{
-        icon:L.divIcon({
-          className:labelClass,
-          html:'<span>'+ref+'</span>',
-          iconSize:[0,0],iconAnchor:[0,0]
-        }),
-        interactive:false,zIndexOffset:-100
-      }).addTo(hwyMapLayer);
+      var zoom=MAP?MAP.getZoom():10;
+      var showLabel = isinterstate ? zoom>=8 : zoom>=10;
+      if(showLabel){
+        var labelClass=isinterstate?'hwy-label':'hwy-label hwy-label-state';
+        L.marker([mid[0],mid[1]],{
+          icon:L.divIcon({
+            className:labelClass,
+            html:'<span>'+ref+'</span>',
+            iconSize:[0,0],iconAnchor:[0,0]
+          }),
+          interactive:false,zIndexOffset:-100
+        }).addTo(hwyMapLayer);
+      }
     }
   });
 }
@@ -5507,6 +5509,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
