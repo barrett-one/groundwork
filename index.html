@@ -4024,6 +4024,8 @@ function drawExits(exitEls,hwyEls,cLat,cLon){
       .replace(/US Route /gi,'US ')
       .replace(/\s+/g,' ')
       .trim();
+    // Skip exits with no identifiable highway — useless without context
+    if(!dh) return;
     var dest=tags.destination||tags['destination:ref']||'';
     var distMi=hav(cLat,cLon,node.lat,node.lon).toFixed(1);
     // Popup
@@ -5582,6 +5584,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
