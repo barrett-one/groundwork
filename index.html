@@ -2258,8 +2258,8 @@ function clearDriveTime(){
   checkAddressInOZ(cache.lat,cache.lon,s);
   (async function(){
     try{
-      var poly=cache.polygon||(driveCache[s]&&driveCache[s].polygon);
-      var zips=poly ? await getZipsForPolygon(poly) : await getZipsForRadius(cache.lat,cache.lon,5);
+      var ring=cache.polyRing||(driveCache[s]&&driveCache[s].polyRing);
+      var zips=ring ? await getZipsForRing(ring) : await getZipsForRadius(cache.lat,cache.lon,5);
       if(zips.length) renderSBACard(s,zips);
     }catch(e){ console.warn('SBA drive:',e); }
   })();
@@ -3696,6 +3696,19 @@ async function getZipsForRadius(lat, lon, radiusMi){
     +'&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects'
     +'&distance='+m+'&units=esriSRUnit_Meter&inSR=4326'
     +'&outFields=GEOID&returnGeometry=false&resultRecordCount=50&f=json';
+  var resp = await fetch(url);
+  if(!resp.ok) return [];
+  var d = await resp.json();
+  return (d.features||[]).map(function(f){ return f.attributes.GEOID; });
+}
+
+// ── Get zip codes for a polygon ring [[lon,lat],...] from driveCache
+async function getZipsForRing(ring){
+  var arcPoly = JSON.stringify({rings:[ring],spatialReference:{wkid:4326}});
+  var url = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2022/MapServer/0/query'
+    +'?geometry='+encodeURIComponent(arcPoly)
+    +'&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects'
+    +'&inSR=4326&outFields=GEOID&returnGeometry=false&resultRecordCount=50&f=json';
   var resp = await fetch(url);
   if(!resp.ok) return [];
   var d = await resp.json();
@@ -6165,6 +6178,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
