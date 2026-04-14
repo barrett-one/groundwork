@@ -2232,6 +2232,16 @@ function applyDriveResults(s,cache){
   el('rbg-'+s).textContent=fmt(cache.bgs.length);
 
   checkAddressInOZ(cache.lat,cache.lon,s);
+  // Pre-warm OZ cache for this state
+  (function(){
+    var fips=cache.stateData&&cache.stateData.fips||slotCache[s]&&slotCache[s].stateData&&slotCache[s].stateData.fips;
+    if(fips&&!ozStateCache[fips]){
+      try{
+        var ss=sessionStorage.getItem('oz_'+fips);
+        if(!ss) setTimeout(function(){ loadOZLayer(fips); }, 3000);
+      }catch(e){ setTimeout(function(){ loadOZLayer(fips); }, 3000); }
+    }
+  })();
   (async function(){
     try{
       var ring=cache.polyRing||(driveCache[s]&&driveCache[s].polyRing);
@@ -3954,8 +3964,18 @@ async function loadOZForCurrentState(){
 
 async function loadOZLayer(fips){
   if(ozStateCache[fips]){ renderOZLayer(ozStateCache[fips]); return; }
+  // Check sessionStorage before hitting CDFI (survives page refresh, cleared on tab close)
+  try{
+    var cached=sessionStorage.getItem('oz_'+fips);
+    if(cached){
+      var geojson=JSON.parse(cached);
+      ozStateCache[fips]=geojson;
+      renderOZLayer(geojson);
+      return;
+    }
+  }catch(e){}
   var btn = el('oz-toggle');
-  if(btn){ btn.textContent = '⧗ Loading OZ…'; btn.classList.add('pill-loading'); }
+  if(btn){ btn.classList.add('pill-loading'); }
   try{
     var url = OZ_FS + '?where=' + encodeURIComponent("STATEFP='"+fips+"' AND OZ_ON_LIST=1")
       + '&outFields=GEOID,STATEFP,OZ_RURAL&returnGeometry=true&outSR=4326&resultRecordCount=2000&f=geojson';
@@ -3969,6 +3989,7 @@ async function loadOZLayer(fips){
       if(btn) btn.setAttribute('title','No designated OZ tracts found for this state'); return;
     }
     ozStateCache[fips] = geojson;
+    try{ sessionStorage.setItem('oz_'+fips, JSON.stringify(geojson)); }catch(e){}
     renderOZLayer(geojson);
   }catch(e){
     if(btn) btn.innerHTML = '<span class="oz-dot"></span>OZ Overlay';
@@ -5743,6 +5764,15 @@ async function runSlot(s,addr,r){
     }catch(e){ console.warn('SBA radius:',e); }
   })();
   checkAddressInOZ(lat,lon,s);
+  // Pre-warm OZ state cache in background so overlay toggle is instant
+  (function(fips){
+    if(fips&&!ozStateCache[fips]){
+      try{
+        var ss=sessionStorage.getItem('oz_'+fips);
+        if(!ss) setTimeout(function(){ loadOZLayer(fips); }, 3000);
+      }catch(e){ setTimeout(function(){ loadOZLayer(fips); }, 3000); }
+    }
+  })(stateFips);
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
   if(s===0){
     hwyElementsAll=[];
@@ -6258,6 +6288,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
