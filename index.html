@@ -3397,6 +3397,7 @@ document.addEventListener('DOMContentLoaded',function(){
   renderSaves();
   updatePortCount();
   setTab('demo');
+  MAP.on('zoomend',function(){ if(hwyElementsAll&&hwyElementsAll.length) drawHighways(hwyElementsAll); });
 });
 window.addEventListener('resize',fixMapSize);
 
@@ -5522,6 +5523,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
