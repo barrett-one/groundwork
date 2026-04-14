@@ -3691,86 +3691,127 @@ async function loadSBAData(){
   }
 }
 
-async function renderSBACard(s, zip){
+
+// ── Get zip codes for a radius (point+distance)
+async function getZipsForRadius(lat, lon, radiusMi){
+  var m = Math.round(radiusMi * 1609.34);
+  var url = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2022/MapServer/0/query?geometry='+lon+','+lat
+    +'&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects'
+    +'&distance='+m+'&units=esriSRUnit_Meter&inSR=4326'
+    +'&outFields=GEOID&returnGeometry=false&resultRecordCount=50&f=json';
+  var resp = await fetch(url);
+  if(!resp.ok) return [];
+  var d = await resp.json();
+  return (d.features||[]).map(function(f){ return f.attributes.GEOID; });
+}
+
+// ── Get zip codes for a polygon (drive-time isochrone)
+async function getZipsForPolygon(geojsonPolygon){
+  // Convert GeoJSON polygon to ArcGIS polygon format
+  var coords = geojsonPolygon.coordinates || geojsonPolygon.geometry.coordinates;
+  var rings = coords.map(function(ring){
+    return ring.map(function(pt){ return [pt[0],pt[1]]; });
+  });
+  var arcPoly = JSON.stringify({rings:rings,spatialReference:{wkid:4326}});
+  var url = 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2022/MapServer/0/query?geometry='+encodeURIComponent(arcPoly)
+    +'&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects'
+    +'&inSR=4326&outFields=GEOID&returnGeometry=false&resultRecordCount=50&f=json';
+  var resp = await fetch(url);
+  if(!resp.ok) return [];
+  var d = await resp.json();
+  return (d.features||[]).map(function(f){ return f.attributes.GEOID; });
+}
+
+// ── Aggregate SBA data across multiple zips
+function aggregateSBAZips(data, zips){
+  var agg = {};
+  zips.forEach(function(zip){
+    var zipData = data[zip];
+    if(!zipData) return;
+    Object.keys(zipData).forEach(function(yr){
+      var s = zipData[yr];
+      if(!agg[yr]) agg[yr] = {c:0,t:0,n:{},j:0};
+      agg[yr].c += s.c||0;
+      agg[yr].t += s.t||0;
+      agg[yr].j += s.j||0;
+      (s.n||[]).forEach(function(pair){
+        agg[yr].n[pair[0]] = (agg[yr].n[pair[0]]||0) + pair[1];
+      });
+    });
+  });
+  // Convert n back to sorted array
+  Object.keys(agg).forEach(function(yr){
+    agg[yr].n = Object.entries(agg[yr].n).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+    agg[yr].a = agg[yr].c ? Math.round(agg[yr].t / agg[yr].c) : 0;
+  });
+  return agg;
+}
+
+async function renderSBACard(s, zips){
   var card = el('hcard-sba-'+s);
   var cont = el('sba-content-'+s);
   if(!card||!cont) return;
-  if(!zip||zip.length!==5){ card.style.display='none'; return; }
+  if(!zips||!zips.length){ card.style.display='none'; return; }
   card.style.display = activeTab==='intel'?'block':'none';
 
+  cont.innerHTML='<div style="font-size:11px;color:var(--m1)">Loading SBA data\u2026</div>';
   var d = await loadSBAData();
-  if(!d){ cont.innerHTML='<div style="font-size:11px;color:var(--m1)">Data unavailable</div>'; return; }
+  if(!d){ cont.innerHTML='<div style="font-size:11px;color:var(--m1)">SBA data unavailable</div>'; return; }
 
-  var zipData = d[zip];
-  if(!zipData||!Object.keys(zipData).length){
-    cont.innerHTML='<div style="font-size:11px;color:var(--m1)">No SBA loan activity for zip '+zip+'</div>';
+  var zipData = aggregateSBAZips(d, zips);
+  var years = Object.keys(zipData).filter(function(y){return parseInt(y)>=2015;}).sort();
+  if(!years.length){
+    cont.innerHTML='<div style="font-size:11px;color:var(--m1)">No SBA activity for this trade area</div>';
     return;
   }
 
-  var years = Object.keys(zipData).filter(function(y){return parseInt(y)>=2015;}).sort();
   var counts = years.map(function(y){return zipData[y].c||0;});
   var maxCount = Math.max.apply(null,counts)||1;
-
-  // Latest year stats
   var latestYr = years[years.length-1];
   var latest = zipData[latestYr]||{};
   var prevYr = years[years.length-2];
-  var prev = prevYr?zipData[prevYr]:{};
-
-  // Trend: compare last 2 years
-  var trend = prev.c?Math.round((latest.c-prev.c)/prev.c*100):0;
+  var prev = prevYr ? zipData[prevYr] : null;
+  var trend = prev&&prev.c ? Math.round((latest.c-prev.c)/prev.c*100) : 0;
   var trendStr = trend>0?'+'+trend+'%':trend+'%';
   var trendColor = trend>10?'#3ecf8e':trend<-10?'#ef4444':'#8e98b0';
+  var recent5 = years.slice(-5);
+  var totalLoans = recent5.reduce(function(a,y){return a+(zipData[y].c||0);},0);
+  var totalAmt  = recent5.reduce(function(a,y){return a+(zipData[y].t||0);},0);
+  var totalJobs = recent5.reduce(function(a,y){return a+(zipData[y].j||0);},0);
+  var avgLoan = totalLoans ? Math.round(totalAmt/totalLoans) : 0;
 
-  // 5-year totals
-  var recent5yrs = years.slice(-5);
-  var totalLoans = recent5yrs.reduce(function(a,y){return a+(zipData[y].c||0);},0);
-  var totalAmt = recent5yrs.reduce(function(a,y){return a+(zipData[y].t||0);},0);
-  var totalJobs = recent5yrs.reduce(function(a,y){return a+(zipData[y].j||0);},0);
-  var avgLoan = totalLoans?Math.round(totalAmt/totalLoans):0;
-
-  // Top sectors from latest year
-  var sectors = (latest.n||[]).slice(0,3);
-  var maxSector = sectors[0]?sectors[0][1]:1;
-
-  // Build HTML
   var html = '';
-
+  // Zip count badge
+  html += '<div style="font-size:9.5px;color:var(--m1);margin-bottom:6px">'+zips.length+' zip code'+(zips.length!==1?'s':'')+'&nbsp;·&nbsp;'+totalLoans+' loans (5yr)</div>';
   // Bar chart
   html += '<div class="sba-chart">';
   years.forEach(function(yr,i){
-    var h = Math.max(Math.round((counts[i]/maxCount)*44),2);
-    var isLatest = yr===latestYr;
+    var h = Math.max(Math.round(counts[i]/maxCount*44),2);
     html += '<div class="sba-bar-wrap">'
-      + '<div class="sba-bar" style="height:'+h+'px'+(isLatest?';background:var(--ac)':'')+'" title="FY'+yr+': '+counts[i]+' loans"></div>'
-      + '<div class="sba-yr">'+yr.slice(2)+'</div>'
-      + '</div>';
+      +'<div class="sba-bar" style="height:'+h+'px'+(yr===latestYr?';background:var(--ac)':'')+'" title="FY'+yr+': '+counts[i]+' loans"></div>'
+      +'<div class="sba-yr">\''+yr.slice(2)+'</div></div>';
   });
   html += '</div>';
-
-  // Stats row
+  // Stats
   html += '<div class="sba-stats">'
-    + '<div class="sba-stat"><div class="sba-stat-val">'+totalLoans+'</div><div class="sba-stat-lbl">5yr loans</div></div>'
-    + '<div class="sba-stat"><div class="sba-stat-val">$'+(avgLoan>=1000?Math.round(avgLoan/1000)+'K':avgLoan)+'</div><div class="sba-stat-lbl">avg loan</div></div>'
-    + '<div class="sba-stat"><div class="sba-stat-val" style="color:'+trendColor+'">'+trendStr+'</div><div class="sba-stat-lbl">YoY loans</div></div>'
-    + '</div>';
-
+    +'<div class="sba-stat"><div class="sba-stat-val">$'+(avgLoan>=1000?Math.round(avgLoan/1000)+'K':avgLoan)+'</div><div class="sba-stat-lbl">avg loan</div></div>'
+    +'<div class="sba-stat"><div class="sba-stat-val">'+(totalJobs>=1000?Math.round(totalJobs/1000)+'K':totalJobs)+'</div><div class="sba-stat-lbl">jobs (5yr)</div></div>'
+    +'<div class="sba-stat"><div class="sba-stat-val" style="color:'+trendColor+'">'+trendStr+'</div><div class="sba-stat-lbl">YoY</div></div>'
+    +'</div>';
   // Top sectors
+  var sectors = (latest.n||[]).slice(0,3);
   if(sectors.length){
+    var maxS = sectors[0][1]||1;
     html += '<div style="margin-top:8px;font-size:9.5px;color:var(--m1);margin-bottom:4px;font-weight:600;letter-spacing:.4px">TOP SECTORS ('+latestYr+')</div>';
-    sectors.forEach(function(s2){
-      var label = NAICS_LABELS[s2[0]]||('NAICS '+s2[0]);
-      var pct = Math.round(s2[1]/maxSector*100);
-      html += '<div class="sba-sector">'
-        + '<span>'+label+'</span>'
-        + '<span style="color:var(--ac);font-family:IBM Plex Mono,monospace">'+s2[1]+'</span>'
-        + '</div>'
-        + '<div class="sba-sector-bar" style="width:'+pct+'%"></div>';
+    sectors.forEach(function(p){
+      var label = NAICS_LABELS[p[0]]||('NAICS '+p[0]);
+      html += '<div class="sba-sector"><span>'+label+'</span><span style="color:var(--ac);font-family:IBM Plex Mono,monospace">'+p[1]+'</span></div>'
+        +'<div class="sba-sector-bar" style="width:'+Math.round(p[1]/maxS*100)+'%"></div>';
     });
   }
-
   cont.innerHTML = html;
 }
+
 
 // ═══════════════ OPPORTUNITY ZONES ═══════════════
 // Service: Opportunity_Zones_2 on CDFI/HUD ArcGIS org
@@ -5604,18 +5645,12 @@ function buildFallbackSummary(d,instructions){
 async function runSlot(s,addr,r){
   resetSlot(s);
   el('col-'+s).classList.add('vis');
-  // SBA zip lookup
+  // SBA lending — get all zips in radius
   (async function(){
     try{
-      var am=addr.match(/\b(\d{5})\b/);
-      if(am){ renderSBACard(s,am[1]); return; }
-      var gr=await fetch('https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x='+lon+'&y='+lat+'&benchmark=Public_AR_Current&vintage=Current_Current&format=json');
-      if(gr.ok){
-        var gd=await gr.json();
-        var zta=gd.result&&gd.result.geographies&&gd.result.geographies['ZIP Code Tabulation Areas'];
-        if(zta&&zta.length) renderSBACard(s,zta[0].GEOID);
-      }
-    }catch(e){}
+      var zips=await getZipsForRadius(lat,lon,r||radius);
+      if(zips.length) renderSBACard(s,zips);
+    }catch(e){ console.warn('SBA radius:',e); }
   })();
   checkAddressInOZ(lat,lon,s);
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
@@ -6133,6 +6168,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
