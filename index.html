@@ -3401,14 +3401,14 @@ function toggleFlood(){
   if(btn) btn.classList.toggle('oz-on', floodActive);
   if(!floodActive){
     if(floodLayer){MAP.removeLayer(floodLayer);floodLayer=null;}
-    MAP.off('moveend', onMapMoveFlood);
+    // moveend removed — flood is analysis-scoped
     if(btn) btn.classList.remove('pill-loading');
     [0,1].forEach(function(s){var el2=el('flood-status-'+s);if(el2)el2.style.display='none';});
     return;
   }
   if(btn) btn.classList.add('pill-loading');
   loadFloodLayer();
-  MAP.on('moveend', onMapMoveFlood);
+  // No moveend — flood is scoped to analysis area, not viewport
   // Check subject property for active slots — was broken (empty loop), now fixed
   [0,1].forEach(function(s){
     var lat=slotCache[s]&&slotCache[s].lat;
@@ -3416,39 +3416,59 @@ function toggleFlood(){
     if(lat&&lon) checkSubjectFlood(lat,lon,s);
   });
 }
-function onMapMoveFlood(){ if(floodActive) loadFloodLayer(); }
+// onMapMoveFlood removed — flood scoped to analysis bounds only
 
+function getAnalysisBounds(){
+  // Returns bounds of the active analysis polygon/circle ONLY — not the map viewport
+  var b = null;
+  [0,1].forEach(function(s){
+    if(driveLayer[s]) try{ if(!b) b=L.latLngBounds(driveLayer[s].getBounds()); else b.extend(driveLayer[s].getBounds()); }catch(e){}
+    else if(circles[s]) try{ if(!b) b=L.latLngBounds(circles[s].getBounds()); else b.extend(circles[s].getBounds()); }catch(e){}
+  });
+  return b;
+}
+async function fetchFEMATile(w,s,e,n){
+  // Fetch flood features for one tile bbox, paginate up to 3 pages (1500 features)
+  var geom=w+','+s+','+e+','+n;
+  var base=FEMA_URL
+    +'?geometry='+encodeURIComponent(geom)
+    +'&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects'
+    +'&inSR=4326&outSR=4326&outFields=FLD_ZONE,ZONE_SUBTY,SFHA_TF'
+    +'&returnGeometry=true&resultRecordCount=500&f=geojson';
+  var feats=[];
+  for(var pg=0;pg<3;pg++){
+    try{
+      var r=await fetch(base+'&resultOffset='+(pg*500));
+      if(!r.ok) break;
+      var gj=await r.json();
+      var pf=gj.features||[];
+      feats=feats.concat(pf);
+      if(pf.length<500) break;
+    }catch(e){ break; }
+  }
+  return feats;
+}
 async function loadFloodLayer(){
   if(!MAP) return;
-  // Use analysis bounds expanded to cover full isochrone/circle
-  var b = MAP.getBounds();
-  [0,1].forEach(function(s){
-    if(driveLayer[s]) try{ b.extend(driveLayer[s].getBounds()); }catch(e){}
-    else if(circles[s]) try{ b.extend(circles[s].getBounds()); }catch(e){}
-  });
-  var key = b.getSouth().toFixed(2)+':'+b.getWest().toFixed(2)+':'+b.getNorth().toFixed(2)+':'+b.getEast().toFixed(2);
+  var b = getAnalysisBounds();
+  if(!b) return; // no analysis active
+  var key = 'flood:'+b.getSouth().toFixed(3)+':'+b.getWest().toFixed(3)+':'+b.getNorth().toFixed(3)+':'+b.getEast().toFixed(3);
   if(floodCache[key]){ renderFloodLayer(floodCache[key]); return; }
   var btn = el('flood-toggle');
   if(btn) btn.classList.add('pill-loading');
-  var geom = b.getWest()+','+b.getSouth()+','+b.getEast()+','+b.getNorth();
-  var baseUrl = FEMA_URL
-    + '?geometry=' + encodeURIComponent(geom)
-    + '&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects'
-    + '&inSR=4326&outSR=4326&outFields=FLD_ZONE,ZONE_SUBTY,SFHA_TF'
-    + '&returnGeometry=true&resultRecordCount=500&f=geojson';
+  // Split analysis bounds into 2x2 tile grid to stay under FEMA record caps
+  var s=b.getSouth(),n=b.getNorth(),w=b.getWest(),e=b.getEast();
+  var midLat=(s+n)/2, midLng=(w+e)/2;
   try{
-    // Paginate until FEMA returns < 500 features (last page), max 5 pages = 2500 features
-    var feats = [];
-    var maxPages = 5;
-    for(var pg=0; pg<maxPages; pg++){
-      var r = await fetch(baseUrl+'&resultOffset='+(pg*500));
-      if(!r.ok) break;
-      var gj = await r.json();
-      var pf = gj.features||[];
-      feats = feats.concat(pf);
-      if(pf.length < 500) break; // last page
-    }
+    var tiles = await Promise.all([
+      fetchFEMATile(w,s,midLng,midLat),     // SW
+      fetchFEMATile(midLng,s,e,midLat),      // SE
+      fetchFEMATile(w,midLat,midLng,n),      // NW
+      fetchFEMATile(midLng,midLat,e,n)       // NE
+    ]);
     if(btn) btn.classList.remove('pill-loading');
+    var feats=[];
+    tiles.forEach(function(t){ feats=feats.concat(t); });
     if(!feats.length) return;
     var merged = {type:'FeatureCollection', features: feats};
     floodCache[key] = merged;
@@ -3646,6 +3666,25 @@ async function checkSubjectEnv(lat, lon, s){
 
 
 // ═══════════════ CELL TOWERS (OpenStreetMap via Overpass) ═══════════════
+// ═══════════════ OVERPASS FETCH WITH RETRY ═══════════════
+var OVERPASS_ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+async function overpassFetch(query,timeoutMs){
+  timeoutMs=timeoutMs||22000;
+  for(var ei=0;ei<OVERPASS_ENDPOINTS.length;ei++){
+    try{
+      var ctrl=new AbortController();
+      var tid=setTimeout(function(){ctrl.abort();},timeoutMs);
+      var r=await fetch(OVERPASS_ENDPOINTS[ei]+'?data='+encodeURIComponent(query),{signal:ctrl.signal});
+      clearTimeout(tid);
+      if(r.ok){ var d=await r.json(); return d; }
+    }catch(e){
+      // Try next endpoint
+      continue;
+    }
+  }
+  return null;
+}
+
 var towerLayer = null;
 var towerActive = false;
 var towerCache = {};
@@ -3679,10 +3718,9 @@ async function loadTowers(lat,lon,r){
     +'node["tower:type"="communication"](around:'+km+','+lat+','+lon+');'
     +'out body;';
   try{
-    var resp=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query));
+    var d=await overpassFetch(query,20000);
     if(btn) btn.classList.remove('pill-loading');
-    if(!resp.ok) return;
-    var d=await resp.json();
+    if(!d) return;
     var els=d.elements||[];
     towerCache[key]=els;
     if(towerActive) renderTowers(els); // only render if toggle is on
@@ -4198,12 +4236,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
   });
   MAP.on('zoomend',function(){ if(hwyElementsAll&&hwyElementsAll.length) drawHighways(hwyElementsAll); });
-  var floodMoveTimer=null;
-  MAP.on('moveend',function(){
-    if(!floodActive) return;
-    clearTimeout(floodMoveTimer);
-    floodMoveTimer=setTimeout(loadFloodLayer, 400);
-  });
+  // flood debounce removed — analysis-scoped
 });
 window.addEventListener('resize',fixMapSize);
 
@@ -4764,14 +4797,14 @@ async function fetchHwy(lat,lon){
     try{
       var _ctrl=new AbortController();
       var _tid=setTimeout((function(c){return function(){c.abort();};}(_ctrl)),25000);
-      var [r1,r2]=await Promise.all([
-        fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q1),{signal:_ctrl.signal}),
-        fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q2),{signal:_ctrl.signal})
+      var [d1,d2]=await Promise.all([
+        overpassFetch(q1,25000),
+        overpassFetch(q2,25000)
       ]);
       clearTimeout(_tid);
       var elems=[];
-      if(r1.ok){var d1=await r1.json();if(d1.elements)elems=elems.concat(d1.elements);}
-      if(r2.ok){var d2=await r2.json();if(d2.elements)elems=elems.concat(d2.elements);}
+      if(d1&&d1.elements) elems=elems.concat(d1.elements);
+      if(d2&&d2.elements) elems=elems.concat(d2.elements);
       var d={elements:elems};
       if(!d.elements||!d.elements.length) continue;
       var best={};
@@ -4796,7 +4829,7 @@ async function fetchHwy(lat,lon){
 var exitMapLayer=null;
 var exitsActive=false; // exits toggled off by default
 var exitsCache={}; // keyed by lat:lon — avoids re-fetching on every toggle
-async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';try{var ctrl=new AbortController();setTimeout(function(){ctrl.abort();},22000);var rr=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q),{signal:ctrl.signal});if(!rr.ok)return null;var dd=await rr.json();return dd.elements&&dd.elements.length?dd.elements:null;}catch(e){return null;}}
+async function fetchExits(lat,lon,rm){var m=Math.round(rm*1609.34);var q='[out:json][timeout:20];node["highway"="motorway_junction"](around:'+m+','+lat+','+lon+');out body;';var dd=await overpassFetch(q,22000);if(!dd) return null;return dd.elements&&dd.elements.length?dd.elements:null;}
 function drawExits(exitEls,hwyEls,cLat,cLon){
   clearExits();
   if(!exitEls||!exitEls.length||!exitsActive) return;
@@ -6068,29 +6101,19 @@ async function runSlot(s,addr,r){resetSlot(s);
   // Pre-warm flood layer silently in background
   setTimeout(function(){
     if(!floodActive){
-      var b2=MAP.getBounds();
-      [0,1].forEach(function(si){
-        if(driveLayer[si]) try{ b2.extend(driveLayer[si].getBounds()); }catch(e){}
-        else if(circles[si]) try{ b2.extend(circles[si].getBounds()); }catch(e){}
-      });
-      var fkey=b2.getSouth().toFixed(2)+':'+b2.getWest().toFixed(2)+':'+b2.getNorth().toFixed(2)+':'+b2.getEast().toFixed(2);
+      var b2=getAnalysisBounds();
+      if(!b2) return;
+      var fkey='flood:'+b2.getSouth().toFixed(3)+':'+b2.getWest().toFixed(3)+':'+b2.getNorth().toFixed(3)+':'+b2.getEast().toFixed(3);
       if(!floodCache[fkey]){
-        var fgeom=b2.getWest()+','+b2.getSouth()+','+b2.getEast()+','+b2.getNorth();
-        var fbase=FEMA_URL+'?geometry='+encodeURIComponent(fgeom)+'&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326&outSR=4326&outFields=FLD_ZONE,ZONE_SUBTY,SFHA_TF&returnGeometry=true&resultRecordCount=500&f=geojson';
-        (async function(){
-          try{
-            var ff=[];
-            for(var pg=0;pg<5;pg++){
-              var r=await fetch(fbase+'&resultOffset='+(pg*500));
-              if(!r.ok) break;
-              var gj=await r.json();
-              var pf=gj.features||[];
-              ff=ff.concat(pf);
-              if(pf.length<500) break;
-            }
-            if(ff.length) floodCache[fkey]={type:'FeatureCollection',features:ff};
-          }catch(e){}
-        })();
+        var s2=b2.getSouth(),n2=b2.getNorth(),w2=b2.getWest(),e2=b2.getEast();
+        var mLat2=(s2+n2)/2,mLng2=(w2+e2)/2;
+        Promise.all([
+          fetchFEMATile(w2,s2,mLng2,mLat2),fetchFEMATile(mLng2,s2,e2,mLat2),
+          fetchFEMATile(w2,mLat2,mLng2,n2),fetchFEMATile(mLng2,mLat2,e2,n2)
+        ]).then(function(tiles){
+          var ff=[];tiles.forEach(function(t){ff=ff.concat(t);});
+          if(ff.length) floodCache[fkey]={type:'FeatureCollection',features:ff};
+        }).catch(function(){});
       }
     }
   }, 2000);
