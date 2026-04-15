@@ -1223,7 +1223,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #tower-toggle.pill-loading{--pulse-col:#a78bfa}
 
 /* ── SBA LENDING ── */
-.sba-chart{display:flex;align-items:flex-end;gap:2px;height:48px;margin:6px 0 2px;overflow:hidden}
+.sba-chart{display:flex;align-items:flex-end;gap:2px;height:52px;margin:4px 0 4px;overflow:visible}
 .sba-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
 .sba-bar{width:100%;background:var(--ag);border-radius:2px 2px 0 0;min-height:2px;transition:background .2s;cursor:default}
 .sba-bar-total{font-size:7px;font-family:'IBM Plex Mono',monospace;text-align:center;line-height:1;margin-bottom:2px;font-weight:600;letter-spacing:-.2px;white-space:nowrap}
@@ -3923,7 +3923,7 @@ async function renderSBACard(s, zips){
 
   var html = '';
   // Zip count badge
-  html += '<div style="font-size:9px;color:var(--m1);margin-bottom:3px">'+zips.length+' zip code'+(zips.length!==1?'s':'')+'&nbsp;·&nbsp;'+totalLoans+' loans (5yr)</div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'+'<div style="font-size:9px;color:var(--m1)">'+zips.length+' zip code'+(zips.length!==1?'s':'')+'</div>'+'<div style="font-size:9px;color:var(--m1)">'+totalLoans+' loans · 5yr</div>'+'</div>';
   // Bar chart
   html += '<div class="sba-chart">';
   years.forEach(function(yr,i){
@@ -6020,7 +6020,18 @@ async function runSlot(s,addr,r){
   renderPermits(s,permitData);
   if(stateFips==='25') fetchSales(s,lat,lon,radius);
   slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;slotCache[s].zoningData=zoningData||null;
-  (function(la,lo,rm,ss,he){fetchExits(la,lo,rm).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]={exits:ex,hwys:he||hwyElementsAll.slice()};if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;if(analysisMode!=='drive'&&exitsActive)drawExits(ex,he||hwyElementsAll,la,lo);}}).catch(function(){});})(lat,lon,r,s,hwyElements);
+  (function(la,lo,rm,ss,he){
+    fetchExits(la,lo,rm).then(function(ex){
+      if(ex){
+        var ck=la.toFixed(3)+':'+lo.toFixed(3);
+        exitsCache[ck]={exits:ex,hwys:he||hwyElementsAll.slice()};
+        if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;
+        if(analysisMode!=='drive'&&exitsActive)drawExits(ex,he||hwyElementsAll,la,lo);
+      }
+    }).catch(function(){});
+    // Pre-fetch towers in background too
+    loadTowers(la,lo,Math.max(rm,5));
+  })(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
@@ -6411,7 +6422,14 @@ async function runDriveFirst(s,addr,min){
   var hwyElements=hwyResult&&hwyResult.elements?hwyResult.elements:null;
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
-  (function(la,lo,he){fetchExits(la,lo,15).then(function(ex){if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);exitsCache[ck]={exits:ex,hwys:he||hwyElementsAll.slice()};if(exitsActive)drawExits(ex,he||hwyElementsAll,la,lo);}}).catch(function(){});})(lat,lon,hwyElements);
+  (function(la,lo,he){
+    fetchExits(la,lo,15).then(function(ex){
+      if(ex){var ck=la.toFixed(3)+':'+lo.toFixed(3);
+        exitsCache[ck]={exits:ex,hwys:he||hwyElementsAll.slice()};
+        if(exitsActive)drawExits(ex,he||hwyElementsAll,la,lo);}
+    }).catch(function(){});
+    loadTowers(la,lo,15);
+  })(lat,lon,hwyElements);
   // Retry highways if failed
   if(!hwyElements){
     setTimeout(async function(){
@@ -6432,6 +6450,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
