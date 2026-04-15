@@ -1230,8 +1230,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .sba-bar:hover{background:var(--ac)}
 .sba-yr{font-size:7.5px;color:var(--m1);margin-top:2px;writing-mode:horizontal-tb}
 .sba-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
-.sba-stat{background:var(--b1);border-radius:6px;padding:6px 8px}
-.sba-stat-val{font-size:13px;font-weight:700;color:var(--tx);font-family:'IBM Plex Mono',monospace}
+.sba-stat{background:var(--b1);border-radius:6px;padding:5px 7px;min-width:0;overflow:hidden}
+.sba-stat-val{font-size:12px;font-weight:700;color:var(--tx);font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sba-stat-lbl{font-size:9px;color:var(--m1);margin-top:1px}
 .sba-sector{font-size:10px;color:var(--m2);padding:2px 0;display:flex;justify-content:space-between}
 .sba-sector-bar{height:3px;background:var(--ac);border-radius:2px;margin-top:2px;transition:width .4s}
@@ -2255,8 +2255,12 @@ function applyDriveResults(s,cache){
     if(fips&&!ozStateCache[fips]){
       try{
         var ss=sessionStorage.getItem('oz_'+fips);
-        if(!ss) setTimeout(function(){ loadOZLayer(fips); }, 3000);
-      }catch(e){ setTimeout(function(){ loadOZLayer(fips); }, 3000); }
+        if(!ss) setTimeout(function(){
+          // Silent pre-fetch: populate cache but don't render (user hasn't toggled)
+          if(!ozActive) fetchOZSilent(fips);
+          else loadOZLayer(fips);
+        }, 3000);
+      }catch(e){}
     }
   })();
   (async function(){
@@ -3416,8 +3420,14 @@ function onMapMoveFlood(){ if(floodActive) loadFloodLayer(); }
 
 async function loadFloodLayer(){
   if(!MAP) return;
+  // Use analysis bounds if available (covers full isochrone/circle), else map bounds
   var b = MAP.getBounds();
-  var key = MAP.getZoom()+':'+b.getSouth().toFixed(2)+':'+b.getWest().toFixed(2);
+  // Expand to include any active analysis layers
+  [0,1].forEach(function(s){
+    if(driveLayer[s]) try{ b.extend(driveLayer[s].getBounds()); }catch(e){}
+    else if(circles[s]) try{ b.extend(circles[s].getBounds()); }catch(e){}
+  });
+  var key = b.getSouth().toFixed(2)+':'+b.getWest().toFixed(2)+':'+b.getNorth().toFixed(2)+':'+b.getEast().toFixed(2);
   if(floodCache[key]){ renderFloodLayer(floodCache[key]); return; }
   var btn = el('flood-toggle');
   // pill-loading already set by toggleFlood
@@ -3487,9 +3497,10 @@ async function checkSubjectFlood(lat, lon, s){
     var sfha = feats[0].attributes.SFHA_TF==='T';
     var info = FLOOD_ZONE_INFO[zone] || {label:zone,desc:'Flood zone '+zone,color:'#94a3b8',risk:'UNKNOWN'};
     statusEl.style.display = 'block';
-    statusEl.innerHTML = '<span class="flood-badge">'
-      + '<svg width="9" height="9" viewBox="0 0 24 24" fill="'+info.color+'"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm-1-5h2v2h-2zm0-8h2v6h-2z"/></svg>'
-      + (sfha?'⚠ Flood Zone '+info.label:'Zone '+info.label) + '</span>';
+    var riskText = sfha ? '⚠ SFHA · Zone '+info.label : 'Zone '+info.label+' (Low Risk)';
+    statusEl.innerHTML = '<span class="flood-badge" style="background:'+info.color+'22;border-color:'+info.color+'66;color:'+info.color+'">'
+      + '<svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm-1-5h2v2h-2zm0-8h2v6h-2z"/></svg>'
+      + riskText + '</span>';
   }catch(e){ console.warn('Flood check:',e); }
 }
 
@@ -4014,6 +4025,24 @@ function toggleOZ(){
   loadOZForCurrentState();
   MAP.on('moveend', onMapMoveOZ);
 }
+async function fetchOZSilent(fips){
+  // Fetch + cache OZ data without rendering (pre-warm for later toggle)
+  if(ozStateCache[fips]) return;
+  try{
+    var cached=sessionStorage.getItem('oz_'+fips);
+    if(cached){ ozStateCache[fips]=JSON.parse(cached); return; }
+    var url=OZ_FS+'?where='+encodeURIComponent("STATEFP='"+fips+"' AND OZ_ON_LIST=1")
+      +'&outFields=GEOID,STATEFP,OZ_RURAL&returnGeometry=true&outSR=4326&resultRecordCount=2000&f=geojson';
+    var resp=await fetch(url);
+    if(!resp.ok) return;
+    var gj=await resp.json();
+    if(gj.features&&gj.features.length){
+      ozStateCache[fips]=gj;
+      try{ sessionStorage.setItem('oz_'+fips,JSON.stringify(gj)); }catch(e){}
+    }
+  }catch(e){}
+}
+
 async function loadOZForCurrentState(){
   // Get state FIPS from analysis or map center
   var fips = (slotCache[0] && slotCache[0].stateData && slotCache[0].stateData.fips) || '';
@@ -4104,8 +4133,8 @@ async function checkAddressInOZ(lat,lon,slot){
     var inOZ = ozData.features && ozData.features.length > 0;
     statusEl.style.display = inOZ ? 'block' : 'none';
     if(inOZ) statusEl.innerHTML = '<span class="oz-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="#f472b6"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>Opportunity Zone</span>';
-    // If OZ overlay is active, refresh it for this state
-    if(ozActive && inOZ){
+    // Only refresh overlay if user explicitly toggled it on
+    if(ozActive){
       var fips = geoid.slice(0,2);
       loadOZLayer(fips);
     }
@@ -5865,8 +5894,12 @@ async function runSlot(s,addr,r){
     if(fips&&!ozStateCache[fips]){
       try{
         var ss=sessionStorage.getItem('oz_'+fips);
-        if(!ss) setTimeout(function(){ loadOZLayer(fips); }, 3000);
-      }catch(e){ setTimeout(function(){ loadOZLayer(fips); }, 3000); }
+        if(!ss) setTimeout(function(){
+          // Silent pre-fetch: populate cache but don't render (user hasn't toggled)
+          if(!ozActive) fetchOZSilent(fips);
+          else loadOZLayer(fips);
+        }, 3000);
+      }catch(e){}
     }
   })(stateFips);
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
@@ -6390,6 +6423,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
