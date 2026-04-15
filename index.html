@@ -3927,14 +3927,14 @@ async function renderSBACard(s, zips){
   // Bar chart
   html += '<div class="sba-chart">';
   years.forEach(function(yr,i){
-    var h = Math.max(Math.round(counts[i]/maxCount*44),2);
+    var h = Math.max(Math.round(counts[i]/maxCount*40),2);
     var yrTotal = zipData[yr]?zipData[yr].t||0:0;
     var totalLabel = yrTotal>=1000000?(yrTotal/1000000).toFixed(1)+'M'
                    :yrTotal>=1000?Math.round(yrTotal/1000)+'K':'0';
     var isLatest = yr===latestYr;
     html += '<div class="sba-bar-wrap">'
       +'<div class="sba-bar" style="height:'+h+'px'+(isLatest?';background:var(--ac)':'')+'" title="FY'+yr+': '+counts[i]+' loans · $'+totalLabel+'"></div>'
-      +'<div class="sba-yr">\''+yr.slice(2)+'</div></div>';
+      +(i%2===0?'<div class="sba-yr">\''+yr.slice(2)+'</div>':'<div class="sba-yr"></div>')+'</div>';
   });
   html += '</div>';
   // Stats
@@ -5884,8 +5884,7 @@ function buildFallbackSummary(d,instructions){
 }
 
 // ═══════════════ RUN SLOT ═══════════════
-async function runSlot(s,addr,r){
-  resetSlot(s);
+async function runSlot(s,addr,r){resetSlot(s);
   el('col-'+s).classList.add('vis');
   checkAddressInOZ(lat,lon,s);
   // Pre-warm OZ state cache in background so overlay toggle is instant
@@ -5965,6 +5964,8 @@ async function runSlot(s,addr,r){
 
   // All async in parallel
   setStep('income');
+  // Pre-fetch exits + towers in background while census loads
+  
   var results=await Promise.allSettled([
     fetchIncomeLabor(bgs),
     fetchBiz(lat,lon,r),
@@ -6450,6 +6451,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
