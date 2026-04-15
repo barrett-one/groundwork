@@ -5965,6 +5965,8 @@ async function runSlot(s,addr,r){resetSlot(s);
   // All async in parallel
   setStep('income');
   // Pre-fetch exits + towers in background while census data loads
+  (function(la,lo,rm,ss){ fetchExits(la,lo,rm).then(function(ex){ if(ex){ var ck=la.toFixed(3)+':'+lo.toFixed(3); exitsCache[ck]={exits:ex,hwys:hwyElementsAll.slice()}; if(exitsActive) drawExits(ex,hwyElementsAll,la,lo); } }).catch(function(){}); })(lat,lon,r,s);
+  (function(la,lo,rm){ var tk=la.toFixed(2)+':'+lo.toFixed(2); if(!towerCache[tk]) loadTowers(la,lo,Math.max(rm,5)); })(lat,lon,r||radius);
   var results=await Promise.allSettled([
     fetchIncomeLabor(bgs),
     fetchBiz(lat,lon,r),
@@ -6053,10 +6055,6 @@ async function runSlot(s,addr,r){resetSlot(s);
     }).catch(function(e){ console.warn('SBA radius:',e); });
   })(lat,lon,r||radius);
   // Pre-fetch towers silently so toggle is instant
-  (function(la,lo,rm){
-    var tk=la.toFixed(2)+':'+lo.toFixed(2);
-    if(!towerCache[tk]) loadTowers(la,lo,Math.max(rm,5));
-  })(lat,lon,r||radius);
   updateURL();
 }
 
@@ -6450,6 +6448,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
