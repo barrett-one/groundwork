@@ -4851,7 +4851,9 @@ function setTab(name){
     if(c.classList.contains('stab')) return; // skip tab buttons
     // Skip if parent col is not visible (slot B cards in single-slot mode)
     var closestCol=c.closest('#col-0,#col-1');
-    if(closestCol&&!closestCol.classList.contains('vis')) return;
+    if(closestCol&&!closestCol.classList.contains('vis')){
+      c.style.display='none'; return;  // always hide orphaned col cards
+    }
     if(c.id&&c.id.indexOf('hcard-zoning')===0){
       c.style.display=(ct===name&&c.getAttribute('data-zone-visible')==='1')?'block':'none';
     } else {
@@ -5851,13 +5853,6 @@ function buildFallbackSummary(d,instructions){
 async function runSlot(s,addr,r){
   resetSlot(s);
   el('col-'+s).classList.add('vis');
-  // SBA lending — get all zips in radius
-  (async function(){
-    try{
-      var zips=await getZipsForRadius(lat,lon,r||radius);
-      if(zips.length) renderSBACard(s,zips);
-    }catch(e){ console.warn('SBA radius:',e); }
-  })();
   checkAddressInOZ(lat,lon,s);
   // Pre-warm OZ state cache in background so overlay toggle is instant
   (function(fips){
@@ -6383,6 +6378,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
