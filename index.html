@@ -6022,18 +6022,6 @@ async function runSlot(s,addr,r){resetSlot(s);
   renderPermits(s,permitData);
   if(stateFips==='25') fetchSales(s,lat,lon,radius);
   slotCache[s].crimeData=crimeData;slotCache[s].permitData=permitData;slotCache[s].zoningData=zoningData||null;
-  (function(la,lo,rm,ss,he){
-    fetchExits(la,lo,rm).then(function(ex){
-      if(ex){
-        var ck=la.toFixed(3)+':'+lo.toFixed(3);
-        exitsCache[ck]={exits:ex,hwys:he||hwyElementsAll.slice()};
-        if(slotCache[ss].circleCache)slotCache[ss].circleCache.exitElements=ex;
-        if(analysisMode!=='drive'&&exitsActive)drawExits(ex,he||hwyElementsAll,la,lo);
-      }
-    }).catch(function(){});
-    // Pre-fetch towers in background too
-    loadTowers(la,lo,Math.max(rm,5));
-  })(lat,lon,r,s,hwyElements);
   // Cache circle results for toggle (both slots)
   if(incData) slotCache[s].circleCache={pop:pop,hu:hu,area:area,lat:lat,lon:lon,r:r,stateData:stateData,
     income:incData.income,lfpr:incData.lfpr,unempRate:incData.unempRate,
@@ -6448,6 +6436,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
