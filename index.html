@@ -1223,12 +1223,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 #tower-toggle.pill-loading{--pulse-col:#a78bfa}
 
 /* ── SBA LENDING ── */
-.sba-chart{display:flex;align-items:flex-end;gap:3px;height:52px;margin:6px 0 4px}
+.sba-chart{display:flex;align-items:flex-end;gap:2px;height:48px;margin:6px 0 2px;overflow:hidden}
 .sba-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
 .sba-bar{width:100%;background:var(--ag);border-radius:2px 2px 0 0;min-height:2px;transition:background .2s;cursor:default}
 .sba-bar-total{font-size:7px;font-family:'IBM Plex Mono',monospace;text-align:center;line-height:1;margin-bottom:2px;font-weight:600;letter-spacing:-.2px;white-space:nowrap}
 .sba-bar:hover{background:var(--ac)}
-.sba-yr{font-size:7.5px;color:var(--m1);margin-top:2px;writing-mode:horizontal-tb}
+.sba-yr{font-size:7px;color:var(--m1);margin-top:1px;overflow:hidden;max-width:100%;writing-mode:horizontal-tb}
 .sba-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
 .sba-stat{background:var(--b1);border-radius:6px;padding:5px 7px;min-width:0;overflow:hidden}
 .sba-stat-val{font-size:12px;font-weight:700;color:var(--tx);font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3677,7 +3677,7 @@ async function loadTowers(lat,lon,r){
     var d=await resp.json();
     var els=d.elements||[];
     towerCache[key]=els;
-    renderTowers(els);
+    if(towerActive) renderTowers(els); // only render if toggle is on
   }catch(e){
     if(btn) btn.classList.remove('pill-loading');
     console.warn('Tower load error:',e);
@@ -3923,7 +3923,7 @@ async function renderSBACard(s, zips){
 
   var html = '';
   // Zip count badge
-  html += '<div style="font-size:9.5px;color:var(--m1);margin-bottom:6px">'+zips.length+' zip code'+(zips.length!==1?'s':'')+'&nbsp;·&nbsp;'+totalLoans+' loans (5yr)</div>';
+  html += '<div style="font-size:9px;color:var(--m1);margin-bottom:3px">'+zips.length+' zip code'+(zips.length!==1?'s':'')+'&nbsp;·&nbsp;'+totalLoans+' loans (5yr)</div>';
   // Bar chart
   html += '<div class="sba-chart">';
   years.forEach(function(yr,i){
@@ -3933,7 +3933,7 @@ async function renderSBACard(s, zips){
                    :yrTotal>=1000?Math.round(yrTotal/1000)+'K':'0';
     var isLatest = yr===latestYr;
     html += '<div class="sba-bar-wrap">'
-      +'<div class="sba-bar" style="height:'+h+'px'+(isLatest?';background:var(--ac)':'')+'" title="FY'+yr+': '+counts[i]+' loans · $'+totalLabel+' total"></div>'
+      +'<div class="sba-bar" style="height:'+h+'px'+(isLatest?';background:var(--ac)':'')+'" title="FY'+yr+': '+counts[i]+' loans · $'+totalLabel+'"></div>'
       +'<div class="sba-yr">\''+yr.slice(2)+'</div></div>';
   });
   html += '</div>';
@@ -6041,6 +6041,11 @@ async function runSlot(s,addr,r){
       if(zips&&zips.length) renderSBACard(s,zips);
     }).catch(function(e){ console.warn('SBA radius:',e); });
   })(lat,lon,r||radius);
+  // Pre-fetch towers silently so toggle is instant
+  (function(la,lo,rm){
+    var tk=la.toFixed(2)+':'+lo.toFixed(2);
+    if(!towerCache[tk]) loadTowers(la,lo,Math.max(rm,5));
+  })(lat,lon,r||radius);
   updateURL();
 }
 
@@ -6421,7 +6426,13 @@ async function runDriveFirst(s,addr,min){
   }
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
+  // Pre-fetch towers for drive mode
+  (function(la,lo){
+    var tk=la.toFixed(2)+':'+lo.toFixed(2);
+    if(!towerCache[tk]) loadTowers(la,lo,10);
+  })(lat,lon);
 }
+
 
 
 
