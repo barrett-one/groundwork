@@ -3997,7 +3997,8 @@ function toggleExits(){
   var cached = exitsCache[cacheKey];
   if(cached){
     var exitNodes = cached.exits || cached;
-    var exitHwys  = cached.hwys  || hwyElementsAll;
+    // Use cached hwys only if non-empty; fallback to current hwyElementsAll
+    var exitHwys  = (cached.hwys && cached.hwys.length) ? cached.hwys : hwyElementsAll;
     drawExits(exitNodes, exitHwys, lat, lon);
     if(btn) btn.classList.remove('pill-loading');
     return;
@@ -5965,9 +5966,6 @@ async function runSlot(s,addr,r){resetSlot(s);
 
   // All async in parallel
   setStep('income');
-  // Pre-fetch exits + towers in background while census data loads
-  (function(la,lo,rm,ss){ fetchExits(la,lo,rm).then(function(ex){ if(ex){ var ck=la.toFixed(3)+':'+lo.toFixed(3); exitsCache[ck]={exits:ex,hwys:hwyElementsAll.slice()}; if(exitsActive) drawExits(ex,hwyElementsAll,la,lo); } }).catch(function(){}); })(lat,lon,r,s);
-  (function(la,lo,rm){ var tk=la.toFixed(2)+':'+lo.toFixed(2); if(!towerCache[tk]) loadTowers(la,lo,Math.max(rm,5)); })(lat,lon,r||radius);
   var results=await Promise.allSettled([
     fetchIncomeLabor(bgs),
     fetchBiz(lat,lon,r),
@@ -6015,6 +6013,18 @@ async function runSlot(s,addr,r){resetSlot(s);
   renderTenure(s,tenureData,stateData);
   renderTransport(s,hwyData,airData,portData);
   if(hwyElements) drawHighways(hwyElements);
+  // Pre-fetch exits + towers NOW — hwyElementsAll is populated after drawHighways
+  (function(la,lo,rm){
+    fetchExits(la,lo,rm).then(function(ex){
+      if(ex){
+        var ck=la.toFixed(3)+':'+lo.toFixed(3);
+        exitsCache[ck]={exits:ex,hwys:hwyElementsAll.slice()};
+        if(exitsActive) drawExits(ex,hwyElementsAll,la,lo);
+      }
+    }).catch(function(){});
+    var tk=la.toFixed(2)+':'+lo.toFixed(2);
+    if(!towerCache[tk]) loadTowers(la,lo,Math.max(rm,5));
+  })(lat,lon,r||radius);
   var crimeData=results[6]&&results[6].status==='fulfilled'?results[6].value:null;
   var permitData=results[7]&&results[7].status==='fulfilled'?results[7].value:null;
   var zoningData=results[8]&&results[8].status==='fulfilled'?results[8].value:null;
@@ -6044,6 +6054,27 @@ async function runSlot(s,addr,r){resetSlot(s);
     }).catch(function(e){ console.warn('SBA radius:',e); });
   })(lat,lon,r||radius);
   // Pre-fetch towers silently so toggle is instant
+  // Pre-warm flood layer silently in background
+  setTimeout(function(){
+    if(!floodActive){
+      var b2=MAP.getBounds();
+      [0,1].forEach(function(si){
+        if(driveLayer[si]) try{ b2.extend(driveLayer[si].getBounds()); }catch(e){}
+        else if(circles[si]) try{ b2.extend(circles[si].getBounds()); }catch(e){}
+      });
+      var fkey=b2.getSouth().toFixed(2)+':'+b2.getWest().toFixed(2)+':'+b2.getNorth().toFixed(2)+':'+b2.getEast().toFixed(2);
+      if(!floodCache[fkey]){
+        var fgeom=b2.getWest()+','+b2.getSouth()+','+b2.getEast()+','+b2.getNorth();
+        var fbase=FEMA_URL+'?geometry='+encodeURIComponent(fgeom)+'&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326&outSR=4326&outFields=FLD_ZONE,ZONE_SUBTY,SFHA_TF&returnGeometry=true&resultRecordCount=500&f=geojson';
+        Promise.all([fetch(fbase+'&resultOffset=0'),fetch(fbase+'&resultOffset=500')]).then(function(rs){
+          var ff=[];
+          return Promise.all(rs.map(function(r){return r.ok?r.json().then(function(g){ff=ff.concat(g.features||[]);}):null;})).then(function(){
+            if(ff.length) floodCache[fkey]={type:'FeatureCollection',features:ff};
+          });
+        }).catch(function(){});
+      }
+    }
+  }, 2000);
   updateURL();
 }
 
@@ -6436,6 +6467,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
