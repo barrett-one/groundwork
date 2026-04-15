@@ -5997,6 +5997,12 @@ async function runSlot(s,addr,r){
   clearSteps();
   // Only draw circle if in circle mode; drive mode draws via applyDriveResults
   if(analysisMode!=='drive') drawSlot(s,lat,lon,r,pop,incData?incData.income:null);
+  // SBA lending — lat/lon valid here
+  (function(la,lo,rm){
+    getZipsForRadius(la,lo,rm).then(function(zips){
+      if(zips&&zips.length) renderSBACard(s,zips);
+    }).catch(function(e){ console.warn('SBA radius:',e); });
+  })(lat,lon,r||radius);
   updateURL();
 }
 
@@ -6378,6 +6384,7 @@ async function runDriveFirst(s,addr,min){
   // Run drive time analysis (mode state managed by run())
   await runDriveAnalysis(s,lat,lon,min);
 }
+
 
 
 
