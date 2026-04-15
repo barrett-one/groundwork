@@ -3216,7 +3216,7 @@ async function fetchSales(s, lat, lon, r){
     });
     // Filter to CRE only (non-residential) + residential for completeness
     salesData[s] = feats;
-    if(!el('col-'+s)||!el('col-'+s).classList.contains('vis')) return;
+    if(s!==0&&(!el('col-'+s)||!el('col-'+s).classList.contains('vis'))) return;
     card.style.display = activeTab==='intel' ? 'block' : 'none';
     card.setAttribute('data-zone-visible','1'); // reuse mechanism
     renderSales(s);
@@ -3873,7 +3873,7 @@ async function renderSBACard(s, zips){
   var cont = el('sba-content-'+s);
   if(!card||!cont) return;
   if(!zips||!zips.length){ card.style.display='none'; return; }
-  if(!el('col-'+s)||!el('col-'+s).classList.contains('vis')) return;
+  if(s!==0&&(!el('col-'+s)||!el('col-'+s).classList.contains('vis'))) return;
   card.style.display = activeTab==='intel'?'block':'none';
 
   cont.innerHTML='<div style="font-size:11px;color:var(--m1)">Loading SBA data\u2026</div>';
@@ -4885,9 +4885,9 @@ function setTab(name){
     var ct=c.dataset.tab;
     if(c.classList.contains('stab')) return; // skip tab buttons
     // Skip if parent col is not visible (slot B cards in single-slot mode)
-    var closestCol=c.closest('#col-0,#col-1');
+    var closestCol=c.closest('#col-1');
     if(closestCol&&!closestCol.classList.contains('vis')){
-      c.style.display='none'; return;  // always hide orphaned col cards
+      c.style.display='none'; return;  // hide slot B cards until compare mode active
     }
     if(c.id&&c.id.indexOf('hcard-zoning')===0){
       c.style.display=(ct===name&&c.getAttribute('data-zone-visible')==='1')?'block':'none';
@@ -6436,6 +6436,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
