@@ -3420,9 +3420,8 @@ function onMapMoveFlood(){ if(floodActive) loadFloodLayer(); }
 
 async function loadFloodLayer(){
   if(!MAP) return;
-  // Use analysis bounds if available (covers full isochrone/circle), else map bounds
+  // Use analysis bounds expanded to cover full isochrone/circle
   var b = MAP.getBounds();
-  // Expand to include any active analysis layers
   [0,1].forEach(function(s){
     if(driveLayer[s]) try{ b.extend(driveLayer[s].getBounds()); }catch(e){}
     else if(circles[s]) try{ b.extend(circles[s].getBounds()); }catch(e){}
@@ -3430,21 +3429,26 @@ async function loadFloodLayer(){
   var key = b.getSouth().toFixed(2)+':'+b.getWest().toFixed(2)+':'+b.getNorth().toFixed(2)+':'+b.getEast().toFixed(2);
   if(floodCache[key]){ renderFloodLayer(floodCache[key]); return; }
   var btn = el('flood-toggle');
-  // pill-loading already set by toggleFlood
   var geom = b.getWest()+','+b.getSouth()+','+b.getEast()+','+b.getNorth();
-  var url = FEMA_URL
+  var baseUrl = FEMA_URL
     + '?geometry=' + encodeURIComponent(geom)
     + '&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects'
     + '&inSR=4326&outSR=4326&outFields=FLD_ZONE,ZONE_SUBTY,SFHA_TF'
     + '&returnGeometry=true&resultRecordCount=500&f=geojson';
   try{
-    var resp = await fetch(url);
+    // Fetch first two pages in parallel — FEMA caps at 500/page and the area often has 500-1000+ features
+    var [r1, r2] = await Promise.all([
+      fetch(baseUrl+'&resultOffset=0'),
+      fetch(baseUrl+'&resultOffset=500')
+    ]);
     if(btn) btn.classList.remove('pill-loading');
-    if(!resp.ok) return;
-    var gj = await resp.json();
-    if(!gj.features || !gj.features.length) return;
-    floodCache[key] = gj;
-    renderFloodLayer(gj);
+    var feats = [];
+    if(r1.ok){ var g1=await r1.json(); feats=feats.concat(g1.features||[]); }
+    if(r2.ok){ var g2=await r2.json(); feats=feats.concat(g2.features||[]); }
+    if(!feats.length) return;
+    var merged = {type:'FeatureCollection', features: feats};
+    floodCache[key] = merged;
+    renderFloodLayer(merged);
   }catch(e){
     if(btn) btn.classList.remove('pill-loading');
     console.warn('Flood load error:',e);
@@ -6432,6 +6436,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
