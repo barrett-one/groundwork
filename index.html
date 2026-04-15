@@ -5964,8 +5964,7 @@ async function runSlot(s,addr,r){resetSlot(s);
 
   // All async in parallel
   setStep('income');
-  // Pre-fetch exits + towers in background while census loads
-  
+  // Pre-fetch exits + towers in background while census data loads
   var results=await Promise.allSettled([
     fetchIncomeLabor(bgs),
     fetchBiz(lat,lon,r),
@@ -6451,6 +6450,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
