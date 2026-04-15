@@ -4551,11 +4551,10 @@ async function fetchIncomeLabor(bgs){
     counties[k].geoids[bg.GEOID]=true;
   });
   var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0;
-  for(var k in counties){
-    var c=counties[k];
+  await Promise.all(Object.values(counties).map(async function(c){
     try{
       var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
-      var r=await fetch(url); if(!r.ok) continue;
+      var r=await fetch(url); if(!r.ok) return;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
         var row=rows[i],geoid=row[11]+row[12]+row[13]+row[14];
@@ -4570,7 +4569,7 @@ async function fetchIncomeLabor(bgs){
         }
       }
     }catch(e){}
-  }
+  }));
   return{
     income:incPop>0?Math.round(incWt/incPop):null,
     lfpr:pop16>0?lf/pop16:null,
@@ -4591,11 +4590,10 @@ async function fetchTenure(bgs){
     counties[k].geoids[bg.GEOID]=true;
   });
   var ownHH=0,totHH=0;
-  for(var k in counties){
-    var c=counties[k];
+  await Promise.all(Object.values(counties).map(async function(c){
     try{
       var url='https://api.census.gov/data/2022/acs/acs5?get=B25003_001E,B25003_002E,B25003_003E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
-      var r=await fetch(url); if(!r.ok) continue;
+      var r=await fetch(url); if(!r.ok) return;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
         var row=rows[i],geoid=row[3]+row[4]+row[5]+row[6];
@@ -4605,7 +4603,7 @@ async function fetchTenure(bgs){
         }
       }
     }catch(e){}
-  }
+  }));
   return totHH>0?ownHH/totHH:null;
 }
 
@@ -4618,18 +4616,17 @@ async function fetch2010(bgs){
     counties[k].geoids[bg.GEOID]=true;
   });
   var total=0,matched=0;
-  for(var k in counties){
-    var c=counties[k];
+  await Promise.all(Object.values(counties).map(async function(c){
     try{
       var url='https://api.census.gov/data/2010/dec/sf1?get=P001001&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
-      var r=await fetch(url); if(!r.ok) continue;
+      var r=await fetch(url); if(!r.ok) return;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
         var row=rows[i],geoid=row[1]+row[2]+row[3]+row[4];
         if(c.geoids[geoid]){total+=parseInt(row[0])||0;matched++;}
       }
     }catch(e){}
-  }
+  }));
   return{pop:total,matched:matched};
 }
 
@@ -6205,11 +6202,10 @@ async function fetchPermits(bgs){
       counties[k].geoids[bg.GEOID]=true;
     });
     var total=0,b2020=0,b2010=0,b2000=0,b1990=0,bOlder=0;
-    for(var k in counties){
-      var c=counties[k];
+    await Promise.all(Object.values(counties).map(async function(c){
       try{
         var url='https://api.census.gov/data/2022/acs/acs5?get=B25034_001E,B25034_002E,B25034_003E,B25034_004E,B25034_005E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
-        var r=await fetch(url);if(!r.ok) continue;
+        var r=await fetch(url);if(!r.ok) return;
         var rows=await r.json();
         for(var i=1;i<rows.length;i++){
           var row=rows[i],geoid=row[5]+row[6]+row[7]+row[8];
@@ -6223,7 +6219,7 @@ async function fetchPermits(bgs){
           }
         }
       }catch(e){}
-    }
+    }));
     bOlder=total-b2020-b2010-b2000-b1990;
     return{total:total,b2020:b2020,b2010:b2010,b2000:b2000,b1990:b1990,bOlder:bOlder};
   }catch(e){return null;}
@@ -6436,6 +6432,7 @@ async function runDriveFirst(s,addr,min){
     if(!towerCache[tk]) loadTowers(la,lo,10);
   })(lat,lon);
 }
+
 
 
 
