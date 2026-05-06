@@ -2248,7 +2248,13 @@ function applyDriveResults(s,cache){
   renderComparisons(s,cache.pop,cache.approxArea,cache.stateData);
   el('rbg-'+s).textContent=fmt(cache.bgs.length);
 
-  checkAddressInOZ(cache.lat,cache.lon,s);
+  // Find closest BG and use its tract GEOID for the OZ lookup (skips broken CORS geocoder).
+  var _subjBg=cache.bgs[0],_minD=Infinity;
+  cache.bgs.forEach(function(bg){
+    var d=hav(cache.lat,cache.lon,parseFloat(bg.CENTLAT),parseFloat(bg.CENTLON));
+    if(d<_minD){_minD=d;_subjBg=bg;}
+  });
+  if(_subjBg&&_subjBg.GEOID) checkAddressInOZ(_subjBg.GEOID.slice(0,11),s);
   // Pre-warm OZ cache for this state
   (function(){
     var fips=cache.stateData&&cache.stateData.fips||slotCache[s]&&slotCache[s].stateData&&slotCache[s].stateData.fips;
@@ -4168,17 +4174,15 @@ function renderOZLayer(geojson){
   if(ozLayer) ozLayer.bringToBack();
 }
 
-async function checkAddressInOZ(lat,lon,slot){
+async function checkAddressInOZ(tractGeoid,slot){
+  // tractGeoid is the 11-char state+county+tract GEOID derived from the closest
+  // block group in runSlot. (Previously this fn called geocoding.geo.census.gov
+  // for tract lookup, but that host doesn't send CORS headers so it was always
+  // blocked from the browser.)
   var statusEl = el('oz-status-'+slot);
-  if(!statusEl) return;
+  if(!statusEl||!tractGeoid) return;
   try{
-    var gcResp = await fetch('https://geocoding.geo.census.gov/geocoder/geographies/coordinates?x='+lon+'&y='+lat+'&benchmark=Public_AR_Current&vintage=Current_Current&format=json');
-    if(!gcResp.ok) return;
-    var gcData = await gcResp.json();
-    var tracts = gcData.result&&gcData.result.geographies&&gcData.result.geographies['Census Tracts'];
-    if(!tracts||!tracts.length) return;
-    var geoid = tracts[0].GEOID;
-    var url = OZ_FS + '?where=' + encodeURIComponent("GEOID='"+geoid+"' AND OZ_ON_LIST=1") + '&outFields=GEOID&returnGeometry=false&f=json';
+    var url = OZ_FS + '?where=' + encodeURIComponent("GEOID='"+tractGeoid+"' AND OZ_ON_LIST=1") + '&outFields=GEOID&returnGeometry=false&f=json';
     var ozResp = await fetch(url);
     if(!ozResp.ok) return;
     var ozData = await ozResp.json();
@@ -4187,7 +4191,7 @@ async function checkAddressInOZ(lat,lon,slot){
     if(inOZ) statusEl.innerHTML = '<span class="oz-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="#f472b6"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>Opportunity Zone</span>';
     // Only refresh overlay if user explicitly toggled it on
     if(ozActive){
-      var fips = geoid.slice(0,2);
+      var fips = tractGeoid.slice(0,2);
       loadOZLayer(fips);
     }
   }catch(e){ console.warn('OZ check:',e); }
@@ -5989,10 +5993,16 @@ async function runSlot(s,addr,r){resetSlot(s);
   var area=parseFloat((Math.PI*r*r).toFixed(1));
   var stateFips=bgs[0].GEOID.slice(0,2);
 
-  // Now that lat/lon and stateFips are known, kick off OZ check + cache pre-warm.
+  // Now that bgs and stateFips are known, kick off OZ check + cache pre-warm.
   // (Previously these ran at the top of runSlot before geocoding had completed,
   // which caused checkAddressInOZ to fetch with x=undefined&y=undefined.)
-  checkAddressInOZ(lat,lon,s);
+  // Find the BG closest to the subject point and use its tract GEOID for the OZ lookup.
+  var subjectBg=bgs[0],minDist=Infinity;
+  bgs.forEach(function(bg){
+    var d=hav(lat,lon,parseFloat(bg.CENTLAT),parseFloat(bg.CENTLON));
+    if(d<minDist){minDist=d;subjectBg=bg;}
+  });
+  checkAddressInOZ(subjectBg.GEOID.slice(0,11),s);
   (function(fips){
     if(fips&&!ozStateCache[fips]){
       try{
