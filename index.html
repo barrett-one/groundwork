@@ -5932,20 +5932,6 @@ function buildFallbackSummary(d,instructions){
 // ═══════════════ RUN SLOT ═══════════════
 async function runSlot(s,addr,r){resetSlot(s);
   el('col-'+s).classList.add('vis');
-  checkAddressInOZ(lat,lon,s);
-  // Pre-warm OZ state cache in background so overlay toggle is instant
-  (function(fips){
-    if(fips&&!ozStateCache[fips]){
-      try{
-        var ss=sessionStorage.getItem('oz_'+fips);
-        if(!ss) setTimeout(function(){
-          // Silent pre-fetch: populate cache but don't render (user hasn't toggled)
-          if(!ozActive) fetchOZSilent(fips);
-          else loadOZLayer(fips);
-        }, 3000);
-      }catch(e){}
-    }
-  })(stateFips);
   var sb2=el('save-btn');if(sb2&&s===0){sb2.classList.remove('vis');el('save-form').classList.remove('vis');var gsb=el('gen-summary-btn');if(gsb)gsb.classList.remove('vis');}
   if(s===0){
     hwyElementsAll=[];
@@ -6002,6 +5988,23 @@ async function runSlot(s,addr,r){resetSlot(s);
   bgs.forEach(function(bg){pop+=(bg.POP100||0);hu+=(bg.HU100||0);});
   var area=parseFloat((Math.PI*r*r).toFixed(1));
   var stateFips=bgs[0].GEOID.slice(0,2);
+
+  // Now that lat/lon and stateFips are known, kick off OZ check + cache pre-warm.
+  // (Previously these ran at the top of runSlot before geocoding had completed,
+  // which caused checkAddressInOZ to fetch with x=undefined&y=undefined.)
+  checkAddressInOZ(lat,lon,s);
+  (function(fips){
+    if(fips&&!ozStateCache[fips]){
+      try{
+        var ss=sessionStorage.getItem('oz_'+fips);
+        if(!ss) setTimeout(function(){
+          // Silent pre-fetch: populate cache but don't render (user hasn't toggled)
+          if(!ozActive) fetchOZSilent(fips);
+          else loadOZLayer(fips);
+        }, 3000);
+      }catch(e){}
+    }
+  })(stateFips);
 
   el('rbg-'+s).textContent=fmt(bgs.length);
   renderPop(s,pop,hu,area);
