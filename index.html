@@ -743,7 +743,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
 .hcard.sec{padding:12px 14px}
 
 /* pulsing analysis circle */
-}
 .leaflet-overlay-pane .pulse-active{animation:circPulse 1.4s ease-in-out infinite}
 
 /* PDF tip overlay */
@@ -1502,12 +1501,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
           <button class="sales-clear-btn" id="sales-clear-0" onclick="clearSalePins(0)" style="display:none">✕ pins</button>
         </div>
       </div>
-      <button class="sales-clear-btn" id="sales-clear-0" onclick="clearSalePins(0)" style="display:none;margin-bottom:6px">✕ Clear pinned sales</button>
       <div id="sales-0"><div style="font-size:11px;color:var(--m1);padding:8px 0">Loading sales data…</div></div>
       <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">MassGIS L3 assessors · Last 36 months · Price > $50K · CRE only · MA only</div>
     </div>
     </div>
-   </div>
 
    <!-- Slot B -->
    <div class="rcol b-col" id="col-1">
@@ -1638,10 +1635,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);heigh
       <div style="font-size:9px;color:var(--m1);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.04)">MassGIS L3 assessors · Last 36 months · Price > $50K · CRE only · MA only</div>
     </div>
     </div>
-    </div>
-    </div>
 
-   </div>
   </div><!-- /res-wrap -->
     <div id="action-panel">
     <!-- Intel tab: Broker Intel buttons -->
@@ -3153,16 +3147,16 @@ document.addEventListener('click',function(e){
 });
 function saveKeyFromPanel(){ saveApiKeyFromSettings(); }
 function saveApiKeyFromSettings(){
-  var inp=el('sp-key-inp');
+  var inp=el('sp-inp');
   if(!inp||!inp.value.trim()) return;
-  localStorage.setItem('claude_api_key',inp.value.trim());
+  localStorage.setItem(API_KEY_STORAGE,inp.value.trim());
   updateApiKeyStatus();
   el('settings-panel').classList.remove('vis');
 }
 function updateApiKeyStatus(){
-  var key=localStorage.getItem('claude_api_key')||'';
+  var key=getApiKey();
   var dot=el('sp-key-dot');
-  var inp=el('sp-key-inp');
+  var inp=el('sp-inp');
   if(dot) dot.classList.toggle('ok',!!key);
   // Also sync with existing api-key-dot
   var oldDot=el('api-key-dot');
@@ -3170,6 +3164,7 @@ function updateApiKeyStatus(){
   // Pre-fill input if key exists (masked)
   if(inp&&key) inp.placeholder='Key saved ✓';
 }
+updateApiKeyStatus();
 
 
 // ── SETTINGS PANEL ──
@@ -5776,7 +5771,7 @@ async function sendSummaryMsg(isInitial){
 
   var key=getApiKey();
   if(!key){
-    smUpdateLast('No API key set. Click “Add API Key” in the sidebar to enable this feature.');
+    smUpdateLast('No API key set. Click the ⚙ settings icon (top right) to add your Claude API key.');
     summaryGenerating=false;
     el('summary-send').disabled=false;
     return;
