@@ -4600,7 +4600,7 @@ async function fetchIncomeLabor(bgs){
   var incWt=0,incPop=0,lf=0,pop16=0,unemp=0,bach=0,pop25=0,hmvWt=0,hmvPop=0;
   await Promise.all(Object.values(counties).map(async function(c){
     try{
-      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var url='https://api.census.gov/data/2022/acs/acs5?get=B19013_001E,B01003_001E,B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25077_001E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*'+'&key='+CENSUS_KEY;
       var r=await fetch(url); if(!r.ok) return;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
@@ -4639,7 +4639,7 @@ async function fetchTenure(bgs){
   var ownHH=0,totHH=0;
   await Promise.all(Object.values(counties).map(async function(c){
     try{
-      var url='https://api.census.gov/data/2022/acs/acs5?get=B25003_001E,B25003_002E,B25003_003E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var url='https://api.census.gov/data/2022/acs/acs5?get=B25003_001E,B25003_002E,B25003_003E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*'+'&key='+CENSUS_KEY;
       var r=await fetch(url); if(!r.ok) return;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
@@ -4665,7 +4665,7 @@ async function fetch2010(bgs){
   var total=0,matched=0;
   await Promise.all(Object.values(counties).map(async function(c){
     try{
-      var url='https://api.census.gov/data/2010/dec/sf1?get=P001001&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+      var url='https://api.census.gov/data/2010/dec/sf1?get=P001001&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*'+'&key='+CENSUS_KEY;
       var r=await fetch(url); if(!r.ok) return;
       var rows=await r.json();
       for(var i=1;i<rows.length;i++){
@@ -4682,10 +4682,10 @@ async function fetchState(fips){
   var land=STATE_LAND[fips]; if(!land) return null;
   try{
     var [popResp,bizResp,hhiResp,laborResp]=await Promise.all([
-      fetch('https://api.census.gov/data/2022/acs/acs5?get=B01003_001E,NAME&for=state:'+fips),
-      fetch('https://api.census.gov/data/2021/cbp?get=ESTAB&for=state:'+fips+'&NAICS2017=00'),
-      fetch('https://api.census.gov/data/2022/acs/acs5?get=B19013_001E&for=state:'+fips),
-      fetch('https://api.census.gov/data/2022/acs/acs5?get=B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25003_001E,B25003_002E&for=state:'+fips)
+      fetch('https://api.census.gov/data/2022/acs/acs5?get=B01003_001E,NAME&for=state:'+fips+'&key='+CENSUS_KEY),
+      fetch('https://api.census.gov/data/2021/cbp?get=ESTAB&for=state:'+fips+'&NAICS2017=00'+'&key='+CENSUS_KEY),
+      fetch('https://api.census.gov/data/2022/acs/acs5?get=B19013_001E&for=state:'+fips+'&key='+CENSUS_KEY),
+      fetch('https://api.census.gov/data/2022/acs/acs5?get=B23025_001E,B23025_002E,B23025_005E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B25003_001E,B25003_002E&for=state:'+fips+'&key='+CENSUS_KEY)
     ]);
     if(!popResp.ok) return null;
     var popD=await popResp.json();
@@ -4699,7 +4699,7 @@ async function fetchState(fips){
     // Fetch EMPSZES size breakdown for state
     var stateBizSizes=null;
     try{
-      var szResp=await fetch('https://api.census.gov/data/2021/cbp?get=ESTAB,EMPSZES&for=state:'+fips+'&NAICS2017=00');
+      var szResp=await fetch('https://api.census.gov/data/2021/cbp?get=ESTAB,EMPSZES&for=state:'+fips+'&NAICS2017=00'+'&key='+CENSUS_KEY);
       if(szResp.ok){
         var szD=await szResp.json();
         var szMap={};
@@ -4758,8 +4758,8 @@ async function fetchBiz(lat,lon,r){
     try{
       // Fetch both sector and size class data in parallel
       var [br,sr]=await Promise.all([
-        fetch('https://api.census.gov/data/2018/zbp?get=ESTAB,NAICS2017&for=zipcode:'+z.ZCTA5),
-        fetch('https://api.census.gov/data/2018/zbp?get=ESTAB,EMPSZES&for=zipcode:'+z.ZCTA5+'&NAICS2017=00')
+        fetch('https://api.census.gov/data/2018/zbp?get=ESTAB,NAICS2017&for=zipcode:'+z.ZCTA5+'&key='+CENSUS_KEY),
+        fetch('https://api.census.gov/data/2018/zbp?get=ESTAB,EMPSZES&for=zipcode:'+z.ZCTA5+'&NAICS2017=00'+'&key='+CENSUS_KEY)
       ]);
       if(br.ok){
         var rows=await br.json();
@@ -6131,6 +6131,7 @@ async function runSlot(s,addr,r){resetSlot(s);
 
 // ═══════════════ API: CRIME (FBI CDE — local agency level) ═══════════════
 var FBI_KEY='iiHnOKfno2Mgkt5AynpvPpUQTEyxE77jo1RU8PIv';
+var CENSUS_KEY='2acbd3815d8198f06ba395d06d3cbfb5d20583d4';
 var agencyCache={};
 async function fetchAgencies(stAbbr){
   if(agencyCache[stAbbr]) return agencyCache[stAbbr];
@@ -6289,7 +6290,7 @@ async function fetchPermits(bgs){
     var total=0,b2020=0,b2010=0,b2000=0,b1990=0,bOlder=0;
     await Promise.all(Object.values(counties).map(async function(c){
       try{
-        var url='https://api.census.gov/data/2022/acs/acs5?get=B25034_001E,B25034_002E,B25034_003E,B25034_004E,B25034_005E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*';
+        var url='https://api.census.gov/data/2022/acs/acs5?get=B25034_001E,B25034_002E,B25034_003E,B25034_004E,B25034_005E&for=block%20group:*&in=state:'+c.state+'%20county:'+c.county+'%20tract:*'+'&key='+CENSUS_KEY;
         var r=await fetch(url);if(!r.ok) return;
         var rows=await r.json();
         for(var i=1;i<rows.length;i++){
